@@ -6,8 +6,8 @@
 
 This module is the result of our long-standing collaboration with Highsoft, where we’ve been a trusted partner since 2010 — helping build, maintain, and expand the Highcharts ecosystem. With Ternary Plot, you can easily present complex three-component datasets in a clear and interactive way, without relying on custom implementations or workarounds.
 
-➖ [Live demo](https://blacklabel.github.io/ternary_plot/)  
-➖ [GitHub repository](https://github.com/blacklabel/ternary_plot)
+➖ [Live demo](https://blacklabel.github.io/highcharts-ternary-plot/)  
+➖ [GitHub repository](https://github.com/blacklabel/highcharts-ternary-plot)
 
 ![Demo](assets/docs/demo-image.png)
 ---
@@ -52,7 +52,7 @@ HighchartsTernaryPlot(Highcharts);
 Or include via a `<script>` tag after loading Highcharts:
 ```js
 <script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://blacklabel.github.io/ternary_plot/js/ternary-plot.js"></script>
+<script src="https://blacklabel.github.io/highcharts-ternary-plot/js/ternary-plot.js"></script>
 ```
 
 ## Usage
@@ -93,8 +93,8 @@ If you want to work on this plugin locally:
 
 1. Clone the repository
 ```bash
-git clone https://github.com/blacklabel/ternary_plot.git
-cd ternary_plot
+git clone https://github.com/blacklabel/highcharts-ternary-plot.git
+cd highcharts-ternary-plot
 ```
 2. Install dependencies
 ```bash
@@ -123,7 +123,7 @@ After building, include the plugin file after Highcharts in your index.html:
   <meta charset="UTF-8">
   <title>Highcharts Ternary Plot - Local Dev</title>
   <script src="https://code.highcharts.com/highcharts.js"></script>
-  <script src="dist/ternary_plot.js"></script>
+  <script src="dist/highcharts-ternary-plot.js"></script>
 </head>
 <body>
   <div id="container"></div>

@@ -110,11 +110,23 @@ function TernaryPlotPlugin(H) {
         }
         p.call(this, userOptions, callback);
     });
-    H.wrap(H.Chart.prototype, 'getClipBox', function (p, series, chartCoords) {
-        const ret = p.call(this, series, chartCoords);
-        ret.width = this.xAxis[0].len;
-        return ret;
-    });
+    // Fix for NaN clip box width issue before v12.1.0
+    if (H.Series.prototype.getClipBox) {
+        H.wrap(H.Series.prototype, 'getClipBox', function (p) {
+            const ret = p.call(this);
+            ret.width = this.chart.xAxis[0].len;
+            return ret;
+        });
+    }
+    // Fix for NaN clip box width issue after v12.1.0
+    // (getClipBox moved to Chart prototype)
+    if (H.Chart.prototype.getClipBox) {
+        H.wrap(H.Chart.prototype, 'getClipBox', function (p, series, chartCoords) {
+            const ret = p.call(this, series, chartCoords);
+            ret.width = this.xAxis[0].len;
+            return ret;
+        });
+    }
     // Initialize ternary axes on chart first render:
     H.wrap(H.Chart.prototype, 'firstRender', function (p) {
         const chart = this, options = chart.options, chartOptions = options.chart, 

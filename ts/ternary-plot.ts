@@ -140,18 +140,36 @@ export default function TernaryPlotPlugin(H: any): void {
         p.call(this, userOptions, callback);
     });
 
-    H.wrap(H.Chart.prototype, 'getClipBox', function (
-        this: any,
-        p: any,
-        series: any,
-        chartCoords: any
-    ) {
-        const ret = p.call(this, series, chartCoords);
+    // Fix for NaN clip box width issue before v12.1.0
+    if (H.Series.prototype.getClipBox) {
+        H.wrap(H.Series.prototype, 'getClipBox', function (
+            this: any,
+            p: any
+        ) {
+            const ret = p.call(this);
 
-        ret.width = this.xAxis[0].len;
-    
-        return ret;
-    });
+            ret.width = this.chart.xAxis[0].len;
+        
+            return ret;
+        });
+    }
+
+    // Fix for NaN clip box width issue after v12.1.0
+    // (getClipBox moved to Chart prototype)
+    if (H.Chart.prototype.getClipBox) {
+        H.wrap(H.Chart.prototype, 'getClipBox', function (
+            this: any,
+            p: any,
+            series: any,
+            chartCoords: any
+        ) {
+            const ret = p.call(this, series, chartCoords);
+
+            ret.width = this.xAxis[0].len;
+        
+            return ret;
+        });
+    }
 
     // Initialize ternary axes on chart first render:
     H.wrap(H.Chart.prototype, 'firstRender', function (this: any, p: any) {

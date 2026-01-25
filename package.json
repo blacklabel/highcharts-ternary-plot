@@ -1,7 +1,7 @@
 {
   "name": "highcharts-ternary-plot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Ternary Plot plugin for Highcharts by Black Label",
   "main": "js/ternary-plot.js",
   "types": "types/index.d.ts",
   "exports": {
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/blacklabel/highcharts-ternary-plot.git"
   },
   "keywords": [
     "chart",
@@ -30,9 +30,9 @@
   "author": "Black Label <start@blacklabel.pl> (http://blacklabel.net)",
   "license": "SEE LICENSE IN license.txt",
   "bugs": {
-    "url": ""
+    "url": "https://github.com/blacklabel/highcharts-ternary-plot/issues"
   },
-  "homepage": "",
+  "homepage": "https://blacklabel.github.io/highcharts-ternary-plot/",
   "files": [
     "js/ternary-plot.js",
     "types/"
@@ -61,6 +61,6 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "highcharts": ">=9.0.0"
+    "highcharts": ">=12.0.0"
   }
 }

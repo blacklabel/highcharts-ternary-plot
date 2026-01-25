@@ -11,12 +11,48 @@ export default function TernaryPlotPlugin(H: any): void {
         correctFloat,
         fireEvent,
         seriesType,
-        wrap
+        wrap,
+        Chart,
+        Series
     } = H;
+
+    const defaultTernary = {
+        tickInterval: 50,
+        gridLineWidth: 1,
+        gridLineColor: '#d6d6d6',
+        minorTickInterval: 0,
+        minorGridLineWidth: 0,
+        minorGridLineColor: '#d6d6d6',
+        title: {
+            text: 'Axis',
+            style: {
+                align: 'center',
+                zIndex: 2,
+                fontSize: '0.8em',
+                color: '#000000'
+            }
+        },
+        labels: {
+            align: 'center',
+            zIndex: 2,
+            style: {
+                fontSize: '0.8em'
+            }
+        }
+    } as const;
+
+    const AXES = [
+        // x-axis
+        { corner: [50, 0, 0], rotDefault: 0, titlePos: [0, -1] },
+        // y-axis
+        { corner: [50, 50, 0], rotDefault: 63, titlePos: [-1, 0] },
+        // z-axis
+        { corner: [0, 50, 0], rotDefault: -63, titlePos: [1, 0] }
+    ] as const;
 
     
     // Render ternary axis gridlines. Keep it on chart for easy access
-    H.Chart.prototype.getGrids = function (
+    Chart.prototype.getGrids = function (
         this: any,
         index: number,
         width: number,
@@ -72,7 +108,7 @@ export default function TernaryPlotPlugin(H: any): void {
     };
 
     // Render ternary axis labels. Keep it on chart for easy access
-    H.Chart.prototype.getLabels = function (
+    Chart.prototype.getLabels = function (
         this: any,
         axis: any,
         index: number,
@@ -122,27 +158,20 @@ export default function TernaryPlotPlugin(H: any): void {
     };
 
     // Set ternarySpacing when initializing the chart
-    wrap(H.Chart.prototype, 'init', function (
-        this: any,
-        p: any,
-        userOptions: any,
-        callback: any
-    ) {
-        const chartOptions = userOptions.chart;
+    addEvent(Chart, 'init', function (this: any, e: any) {
+        const userOptions = e.args[0],
+            chartOptions = userOptions.chart;
 
-        if (chartOptions.ternary) {
-            chartOptions.ternarySpacing = pick(
-                chartOptions.ternarySpacing,
-                25
-            );
+        if (!chartOptions.ternary) {
+            return;
         }
 
-        p.call(this, userOptions, callback);
+        chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 25);
     });
 
     // Fix for NaN clip box width issue before v12.1.0
-    if (H.Series.prototype.getClipBox) {
-        H.wrap(H.Series.prototype, 'getClipBox', function (
+    if (Series.prototype.getClipBox) {
+        wrap(H.Series.prototype, 'getClipBox', function (
             this: any,
             p: any
         ) {
@@ -156,8 +185,8 @@ export default function TernaryPlotPlugin(H: any): void {
 
     // Fix for NaN clip box width issue after v12.1.0
     // (getClipBox moved to Chart prototype)
-    if (H.Chart.prototype.getClipBox) {
-        H.wrap(H.Chart.prototype, 'getClipBox', function (
+    if (Chart.prototype.getClipBox) {
+        wrap(Chart.prototype, 'getClipBox', function (
             this: any,
             p: any,
             series: any,
@@ -171,74 +200,42 @@ export default function TernaryPlotPlugin(H: any): void {
         });
     }
 
-    // Initialize ternary axes on chart first render:
-    H.wrap(H.Chart.prototype, 'firstRender', function (this: any, p: any) {
-        const chart = this,
-            options = chart.options,
-            chartOptions = options.chart,
-            // Default ternary axis options
-            defaultTernary = {
-                tickInterval: 50,
-                gridLineWidth: 1,
-                gridLineColor: '#d6d6d6',
-                minorTickInterval: 0,
-                minorGridLineWidth: 0,
-                minorGridLineColor: '#d6d6d6',
-                title: {
-                    text: 'Axis',
-                    style: {
-                        align: 'center',
-                        zIndex: 2,
-                        fontSize: '0.8em',
-                        color: "#000000"
-                    }
-                },
-                labels: {
-                    align: 'center',
-                    zIndex: 2,
-                    style: {
-                        fontSize: '0.8em'
-                    }
-                }
-            };
+    // Initialize ternary axes before rendering the chart
+    addEvent(Chart, 'beforeRender', function (this: any) {
+        const chart = this;
+        const {
+            chart: chartOptions,
+            ternaryAxis: userAxes = []
+        } = chart.options;
 
-        if (chartOptions.ternary) {
-            this.ternaryAxis = [];
-            this.ternarySpacing = chartOptions.ternarySpacing;
+        if (!chartOptions.ternary) return;
 
-            // Set options for 3 ternary axes
-            [
-                // x-axis corner, title rotation, title position
-                [50, 0, 0, 0, [0, -1]],
-                [50, 50, 0, 63, [-1, 0]], // y-axis
-                [0, 50, 0, -63, [1, 0]] // z-axis
-            ].forEach(function (corner, i) {
-                // Merge user defined options with default options
-                const axis = merge(
-                    defaultTernary,
-                    pick(
-                        // User defined options
-                        (options.ternaryAxis || [])[i],
-                        {}
-                    )
-                );
+        chart.ternarySpacing = chartOptions.ternarySpacing;
 
-                axis.corner = corner;
-                axis.title.style.rotation = corner[3];
-                axis.title.pos = corner[4];
-                axis.gridlineTicks = {};
-                axis.gridlineMinorTicks = {};
+        chart.ternaryAxis = AXES.map(({
+            corner,
+            rotDefault,
+            titlePos
+        }, i) => {
+            const axis = merge(defaultTernary, userAxes[i] ?? {});
 
-                chart.ternaryAxis.push(axis);
-            });
-        }
+            axis.corner = corner;
+            axis.title.style.rotation = pick(
+                userAxes[i]?.title?.rotation,
+                rotDefault
+            );
+            axis.title.pos = titlePos;
 
-        p.call(this);
+            axis.gridlineTicks = {};
+            axis.gridlineMinorTicks = {};
+
+            return axis;
+        });
     });
 
     // Position ternary axis titles and render gridlines/labels after
     // setting chart size
-    addEvent(H.Chart, 'afterSetChartSize', function (this: any) {
+    addEvent(Chart, 'afterSetChartSize', function (this: any) {
         const chart = this;
         const { options } = chart;
 
@@ -303,16 +300,18 @@ export default function TernaryPlotPlugin(H: any): void {
                 );
             }
 
-            axis.gridlineLabels = chart.getLabels(
-                axis,
-                i,
-                axis.tickInterval
-            );
+            if (axis.labels.enabled !== false) {
+                axis.gridlineLabels = chart.getLabels(
+                    axis,
+                    i,
+                    axis.tickInterval
+                );
+            }
         });
     });
 
     // Convert ternary x,y (0-100) to perspective plotX,plotY
-    H.Chart.prototype.toPerspective = function (
+    Chart.prototype.toPerspective = function (
         this: any,
         point: any
     ): [number, number] {

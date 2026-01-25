@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "module": "es6",
+    "module": "ES2015",
     "moduleResolution": "Node",
-    "outDir": "js",
+    "outDir": ".cache/tmp",
     "rootDir": "./ts",
     "strict": false,
     "esModuleInterop": true,
@@ -12,13 +12,13 @@
   },
   "include": [
     "ts/**/*",
-    "ts/HighchartsConfig.d.ts",
-    "ts/ternaryPlot.ts"
+    "ts/HighchartsConfig.d.ts"
   ],
   "exclude": [
     "node_modules",
     "js",
     "css",
-    "docs"
+    "docs",
+    ".cache"
   ]
 }

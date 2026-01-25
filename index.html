@@ -1,17 +1,139 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <title>Ternary Plot test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ternary Plot</title>
 
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+
+    <!-- TODO: fix NaN for 12.0.0 -->
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-    <script src="./js/ternaryPlot.js"></script>
+    <script src="js/ternary-plot.js"></script>
 </head>
 
 <body>
-    <div id="container" style="height: 600px"></div>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="title-section">
+                    <h1 class="main-title">Ternary Plot</h1>
+                    <p class="subtitle">
+                        by <a href="https://blacklabel.net/highcharts/" target="_blank" rel="noopener noreferrer">Black Label</a>
+                    </p>
+                </div>
+                <div class="header-logo">
+                    <a href="https://blacklabel.net/highcharts/" target="_blank" rel="noopener noreferrer">
+                        <img src="assets/icons/blLogo.svg" alt="Black Label Logo" class="bl-logo">
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="chart-section">
+                <div class="chart-container">
+                    <div id="chart"></div>
+                </div>
+
+
+                <div class="requirements-content">
+                    <div class="requirement-card">
+                        <div class="requirement-card-header">
+                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Requirements</h3>
+                        </div>
+                        <ul>
+                            <li><span style="display: inline-block; width: 90px">Highcharts</span> 12.0.0 or newer</li>
+                        </ul>
+                    </div>
+                    <div class="requirement-card">
+                        <div class="requirement-card-header">
+                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Code</h3>
+                        </div>
+                        <ul>
+                            <li><span style="display: inline-block; width: 90px">Code</span><a href="https://github.com/blacklabel/ternary_plot"
+                                    target="_blank">Source Code</a></li>
+                            <li><span style="display: inline-block; width: 90px">Issues</span><a href="https://github.com/blacklabel/ternary_plot/issues"
+                                    target="_blank">Bug Reports</a></li>
+                        </ul>
+                    </div>
+                    <div class="requirement-card">
+                        <div class="requirement-card-header">
+                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Installation</h3>
+                        </div>
+                        <div class="install-methods">
+                            <div class="install-method">
+                                <span style="display: inline-block; width: 90px">NPM</span>
+                                <code>npm install highcharts-ternary-plot</code>
+                            </div>
+                            <div class="install-method">
+                                <span style="display: inline-block; width: 90px">CDN</span>
+                                <code>&lt;script src="https://unpkg.com/highcharts-ternary-plot@latest/dist/ternary-plot.js"&gt;&lt;/script&gt;</code>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="requirement-card">
+                        <div class="requirement-card-header">
+                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Usage example</h3>
+                        </div>
+                        <div class="usage-example">
+                            <pre><code>// After loading Highcharts and the plugin
+Highcharts.chart('container', {
+    chart: {
+        ternary: true
+    },
+
+    title: {
+        text: 'Diet macronutrients'
+    },
+
+    ternaryAxis: [{
+        title: {
+            text: 'Protein'
+        }
+    }, {
+        title: {
+            text: 'Fat'
+        }
+    }, {
+        title: {
+            text: 'Carbohydrates'
+        }
+    }],
+
+    series: [{
+        type: 'ternaryscatter',
+        name: 'Diet macronutrients',
+        keys: ['x', 'y', 'z', 'name'],
+        tooltip: {
+            headerFormat: '',
+            pointFormat: `
+                &lt;strong>{point.name} diet:&lt;/strong&gt&lt;br&gt
+                Protein: {point.x}%&lt;br&gt
+                Fat: {point.y}%&lt;br&gt
+                Carbohydrates: {point.z}%
+            `
+        },
+        data: [
+            [20, 70, 10, 'Keto'],
+            [30, 40, 30, 'Paleo'],
+            [20, 35, 45, 'Mediterranean'],
+            [15, 35, 50, 'Standard Western'],
+            [20, 20, 60, 'High-carbohydrate'],
+            [0, 100, 0, 'Fat-only']
+        ]
+    }]
+});</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
     <script>
         const URLS = {
@@ -88,7 +210,6 @@
                 sum: +(d.renewables + d.fossil + d.nuclear).toFixed(2),
             }));
 
-            console.table(data);
             return data;
         }
 
@@ -100,39 +221,77 @@
                 return acc;
             }, {});
 
-            Highcharts.chart('container', {
+            Highcharts.chart('chart', {
 
                 chart: {
                     ternary: true,
-                    // ternarySpacing: 25
+                    ternarySpacing: 35,
+                    height: 600
+                },
+
+                credits: {
+                    enabled: false
                 },
 
                 title: {
-                    text: 'Changes in Electricity Generation Mix (%)<br/>2015-2024'
+                    text: 'Changes in Electricity Generation Mix (%)<br/>2015-2024',
+                    style: {
+                        fontSize: '30px',
+                        fontFamily: 'Inter',
+                        fontWeight: 500
+                    }
                 },
 
                 subtitle: {
                     text: `Each sequence shows annual progression from 2015 to 2024.<br/>
-                        Data source: Our World in Data`
+                        <span style="font-size: 10px;">Data source: Our World in Data<span>`,
+                    style: {
+                        fontSize: '16px',
+                        opacity: 0.6,
+                        fontFamily: 'Inter',
+                        fontWeight: 500
+                    }
                 },
 
                 ternaryAxis: [{
                     tickInterval: 10,
-                    lineColor: 'red',
                     title: {
                         useHTML: true,
-                        text: 'higher renewables share (%) --->',
-                        y: '-40px'
+                        text: 'Higher renewables share (%)',
+                        style: {
+                            fontWeight: '500',
+                        }
+                    },
+                    labels: {
+                        style: {
+                            color: '#9c9c9c'
+                        }
                     }
                 }, {
                     tickInterval: 10,
                     title: {
-                        text: '<--- higher ossil share (%)'
+                        text: 'Higher ossil share (%)',
+                        style: {
+                            fontWeight: '500',
+                        }
+                    },
+                    labels: {
+                        style: {
+                            color: '#9c9c9c'
+                        }
                     }
                 }, {
                     tickInterval: 10,
                     title: {
-                        text: '<--- higher nuclear share (%)'
+                        text: 'Higher nuclear share (%)',
+                        style: {
+                            fontWeight: '500',
+                        }
+                    },
+                    labels: {
+                        style: {
+                            color: '#9c9c9c'
+                        }
                     }
                 }],
 
@@ -148,7 +307,7 @@
                             d.nuclear,
                             d.entity,
                             d.year,
-                            d.year === 2024 ? { radius: 5 } : undefined
+                            d.year === 2024 ? { radius: 6 } : undefined
                         ])),
                         tooltip: {
                             pointFormat: '<b>{point.entity} ({point.year}):</b><br/>' +
@@ -157,7 +316,9 @@
                                 'Nuclear: {point.z}%'
                         },
                         marker: {
-                            radius: 2
+                            radius: 3,
+                            symbol: 'circle',
+                            lineWidth: 0.5
                         },
                         lineWidth: 0.5
                     }))
@@ -167,7 +328,6 @@
 
         init();
 
-        console.log('chart created');
     </script>
 </body>
 

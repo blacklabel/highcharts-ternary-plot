@@ -18,9 +18,9 @@ const decorator = [
   '/**',
   '----',
   '*',
-  '* Highcharts Ternary Plot v0.0.1',
+  '* Highcharts Ternary Plot v1.0.0',
   '*',
-  '* (c) 2012-2025 Black Label',
+  '* (c) 2012-2025 Black Label, Rafał Sebestjański',
   '*',
   '* License: Creative Commons Attribution (CC)',
   '*/',
@@ -29,16 +29,15 @@ const decorator = [
 
 // Step 1: Compile TS → JS (no wrapping yet)
 gulp.task('tsc', () => {
-  return gulp.src('ts/ternaryPlot.ts')
+  return gulp.src('ts/ternary-plot.ts')
     .pipe(tsProject())
     .js
-    .pipe(rename('ternaryPlot.js'))
-    .pipe(gulp.dest('js/tmp'));
-});
+    .pipe(rename('ternary-plot.js'))
+    .pipe(gulp.dest('.cache/tmp')); });
 
 // Step 2: Wrap into UMD
 gulp.task('wrap', () => {
-  return gulp.src('js/tmp/ternaryPlot.js')
+  return gulp.src('.cache/tmp/ternary-plot.js')
     .pipe(through2.obj(function (file, _encoding, callback) {
       if (file.isBuffer()) {
         let fileContent = file.contents.toString('utf8');
@@ -88,8 +87,8 @@ gulp.task('lint', async () => {
 
 // Clean up temporary files
 gulp.task('clean', (done) => {
-  if (fs.existsSync('js/tmp')) {
-    fs.rmSync('js/tmp', { recursive: true, force: true });
+  if (fs.existsSync('.cache/tmp')) {
+    fs.rmSync('.cache/tmp', { recursive: true, force: true });
   }
   log(colors.green('✓ Cleaned temp files'));
   done();

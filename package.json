@@ -1,14 +1,14 @@
 {
   "name": "highcharts-ternary-plot",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "",
-  "main": "js/ternaryPlot.js",
-  "types": "js/ternaryPlot.d.ts",
+  "main": "js/ternary-plot.js",
+  "types": "types/index.d.ts",
   "exports": {
     ".": {
-      "import": "./js/ternaryPlot.js",
-      "require": "./js/ternaryPlot.js",
-      "types": "./js/ternaryPlot.d.ts"
+      "import": "./js/ternary-plot.js",
+      "require": "./js/ternary-plot.js",
+      "types": "./types/index.d.ts"
     }
   },
   "repository": {
@@ -16,22 +16,26 @@
     "url": ""
   },
   "keywords": [
+    "chart",
     "highcharts",
     "highstock",
     "highmaps",
     "ternary",
     "ternary-plot",
-    "highcharts-addon"
+    "ternary-chart",
+    "highcharts-plugin",
+    "highcharts-addon",
+    "black-label"
   ],
-  "author": "Black Label <start@blacklabel.pl> (http://blacklabel.pl)",
+  "author": "Black Label <start@blacklabel.pl> (http://blacklabel.net)",
   "license": "SEE LICENSE IN license.txt",
   "bugs": {
     "url": ""
   },
   "homepage": "",
   "files": [
-    "js/ternaryPlot.js",
-    "js/ternaryPlot.d.ts"
+    "js/ternary-plot.js",
+    "types/"
   ],
   "scripts": {
     "lint": "eslint ts/**/*.ts",

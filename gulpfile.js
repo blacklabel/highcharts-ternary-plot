@@ -18,7 +18,7 @@ const decorator = [
   '/**',
   '----',
   '*',
-  '* Highcharts Ternary Plot v1.0.0',
+  '* Highcharts Ternary Plot v0.1.0',
   '*',
   '* (c) 2012-2025 Black Label, Rafał Sebestjański',
   '*',

@@ -1,6 +1,6 @@
 {
   "name": "highcharts-ternary-plot",
-  "version": "0.1.3",
+  "version": "1.0.0",
   "description": "Ternary Plot plugin for Highcharts by Black Label",
   "main": "js/ternary-plot.js",
   "types": "types/index.d.ts",

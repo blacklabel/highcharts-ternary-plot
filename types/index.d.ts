@@ -1,13 +1,25 @@
-import * as Highcharts from "highcharts";
+import * as _Highcharts from 'highcharts';
 
-declare function HighchartsTernaryPlot(H: typeof Highcharts): void;
+declare module 'highcharts' {
+    interface Options {
+        ternaryAxis?: _Highcharts.AxisOptions[];
+    }
 
-export = HighchartsTernaryPlot;
-export as namespace HighchartsTernaryPlot;
+    interface ChartOptions {
+        ternary?: boolean;
+        ternarySpacing?: number;
+    }
 
-// Highcharts augmentations
-declare module "highcharts" {
-  interface SeriesTypeRegistry {
-    ternaryscatter: typeof Highcharts.Series;
-  }
+    interface SeriesTernaryScatterOptions extends _Highcharts.SeriesOptions, _Highcharts.PlotScatterOptions {
+        type: 'ternaryscatter';
+        data?: Array<number | [number | string, number | null] | null | PointOptionsObject>;
+    }
+
+    interface SeriesOptionsRegistry {
+        ternaryscatter: SeriesTernaryScatterOptions;
+    }
 }
+
+export function factory(highcharts: typeof Highcharts): void;
+export default factory;
+export let Highcharts: typeof _Highcharts;

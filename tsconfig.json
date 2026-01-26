@@ -11,8 +11,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "ts/**/*",
-    "ts/HighchartsConfig.d.ts"
+    "ts/**/*"
   ],
   "exclude": [
     "node_modules",

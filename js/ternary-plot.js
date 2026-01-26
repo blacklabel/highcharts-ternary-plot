@@ -54,16 +54,12 @@ function TernaryPlotPlugin(H) {
     ];
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGrids = function (index, width, interval, stroke) {
-        const chart = this;
-        const { plotTop } = chart;
-        const ticks = {};
+        const chart = this, { plotTop } = chart, ticks = {};
         if (!interval || interval <= 0) {
             return ticks;
         }
         for (let cursor = 0; cursor <= 100; cursor += interval) {
-            let pos;
-            let posEnd;
-            let tick;
+            let pos, posEnd, tick;
             switch (index) {
                 case 1:
                     pos = chart.toPerspective([0, cursor, 0]);
@@ -98,33 +94,28 @@ function TernaryPlotPlugin(H) {
     };
     // Render ternary axis labels. Keep it on chart for easy access
     Chart.prototype.getLabels = function (axis, index, interval) {
-        const chart = this;
-        const { plotTop } = chart;
-        const labels = {};
-        const distance = 20;
+        const chart = this, { plotTop } = chart, labels = {}, distance = 20;
         if (!interval || interval <= 0) {
             return labels;
         }
         const { align, zIndex, style } = axis.labels;
         for (let tick = 0; tick <= 100; tick += interval) {
-            let pos;
-            let offsetX = 0;
-            let offsetY = 0;
+            let pos, offsetX = 0, offsetY = 0;
             switch (index) {
-                case 2: // vertical left
-                    pos = chart.toPerspective([0, 100 - tick, 0]);
-                    offsetY = 3;
-                    offsetX = -distance;
-                    break;
                 case 0: // horizontal
                     pos = chart.toPerspective([tick, 0, 0]);
                     offsetY = distance + 3;
                     offsetX = 0;
                     break;
-                default: // vertical right
+                case 1: // vertical right
                     pos = chart.toPerspective([100 - tick, tick, 0]);
                     offsetY = 3;
                     offsetX = distance;
+                    break;
+                default: // vertical left
+                    pos = chart.toPerspective([0, 100 - tick, 0]);
+                    offsetY = 3;
+                    offsetX = -distance;
             }
             labels[tick] = chart.renderer
                 .text(tick, pos[0] + offsetX, pos[1] + plotTop + offsetY)
@@ -161,8 +152,7 @@ function TernaryPlotPlugin(H) {
     }
     // Initialize ternary axes before rendering the chart
     addEvent(Chart, 'beforeRender', function () {
-        const chart = this;
-        const { chart: chartOptions, ternaryAxis: userAxes = [] } = chart.options;
+        const chart = this, { chart: chartOptions, ternaryAxis: userAxes = [] } = chart.options;
         if (!chartOptions.ternary)
             return;
         chart.ternarySpacing = chartOptions.ternarySpacing;
@@ -180,8 +170,7 @@ function TernaryPlotPlugin(H) {
     // Position ternary axis titles and render gridlines/labels after
     // setting chart size
     addEvent(Chart, 'afterSetChartSize', function () {
-        const chart = this;
-        const { options } = chart;
+        const chart = this, { options } = chart;
         if (!options.chart.ternary || !chart.ternaryAxis) {
             return;
         }
@@ -198,19 +187,16 @@ function TernaryPlotPlugin(H) {
             const title = axis.title;
             if (title === null || title === void 0 ? void 0 : title.text) {
                 if (!axis.titleElem) {
-                    axis.titleElem = chart.renderer
-                        .text(title.text, 0, 0)
-                        .css(title.style)
+                    axis.titleElem = chart.renderer.text(title.text, 0, 0)
                         .attr(title.style)
+                        .css(title.style)
                         .add();
                 }
-                const pos = chart.toPerspective(axis.corner);
-                const bbox = axis.titleElem.getBBox(true);
+                const pos = chart.toPerspective(axis.corner), bbox = axis.titleElem.getBBox(true);
                 pos[1] = i !== 0 ?
                     (pos[1] - chart.ternarySpacing * title.pos[1]) :
                     (pos[1] + bbox.height + chart.ternarySpacing);
-                axis.titleElem.translate(pos[0], pos[1] + chart.plotTop);
-                axis.titleElem.attr({ x: -50 * title.pos[0] });
+                axis.titleElem.translate(pos[0] - 50 * title.pos[0], pos[1] + chart.plotTop);
             }
             // Axis grid lines and labels: destroy previous
             destroyCollection(axis.gridlineTicks);
@@ -230,14 +216,9 @@ function TernaryPlotPlugin(H) {
     });
     // Convert ternary x,y (0-100) to perspective plotX,plotY
     Chart.prototype.toPerspective = function (point) {
-        const chart = this;
-        const spacing = chart.ternarySpacing * 2;
-        const baseWidth = Math.min(chart.plotHeight, chart.plotWidth - 90 < chart.plotHeight ?
+        const chart = this, spacing = chart.ternarySpacing * 2, baseWidth = Math.min(chart.plotHeight, chart.plotWidth - 90 < chart.plotHeight ?
             chart.containerBox.width :
-            chart.plotHeight);
-        const width = Math.max(baseWidth - spacing, 5);
-        const x = pick(point.x, point[0]) * width / 100;
-        const y = pick(point.y, point[1]) * width / 100;
+            chart.plotHeight), width = Math.max(baseWidth - spacing, 5), x = pick(point.x, point[0]) * width / 100, y = pick(point.y, point[1]) * width / 100;
         return [
             x + y / 2 + (chart.containerBox.width - width) / 2,
             chart.plotHeight - y - spacing * 0.7

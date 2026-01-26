@@ -59,18 +59,18 @@ export default function TernaryPlotPlugin(H: any): void {
         interval: number,
         stroke: string
     ) {
-        const chart = this;
-        const { plotTop } = chart;
-        const ticks: Record<string, any> = {};
+        const chart = this,
+            { plotTop } = chart,
+            ticks: Record<string, any> = {};
 
         if (!interval || interval <= 0) {
             return ticks;
         }
 
         for (let cursor = 0; cursor <= 100; cursor += interval) {
-            let pos: any;
-            let posEnd: any;
-            let tick: [number, number];
+            let pos: any,
+                posEnd: any,
+                tick: [number, number];
 
             switch (index) {
                 case 1:
@@ -114,10 +114,10 @@ export default function TernaryPlotPlugin(H: any): void {
         index: number,
         interval: number
     ) {
-        const chart = this;
-        const { plotTop } = chart;
-        const labels: Record<string, any> = {};
-        const distance = 20;
+        const chart = this,
+            { plotTop } = chart,
+            labels: Record<string, any> = {},
+            distance = 20;
 
         if (!interval || interval <= 0) {
             return labels;
@@ -126,25 +126,25 @@ export default function TernaryPlotPlugin(H: any): void {
         const { align, zIndex, style } = axis.labels;
 
         for (let tick = 0; tick <= 100; tick += interval) {
-            let pos: any;
-            let offsetX = 0;
-            let offsetY = 0;
+            let pos: any,
+                offsetX = 0,
+                offsetY = 0;
 
             switch (index) {
-                case 2: // vertical left
-                    pos = chart.toPerspective([0, 100 - tick, 0]);
-                    offsetY = 3;
-                    offsetX = -distance;
-                    break;
                 case 0: // horizontal
                     pos = chart.toPerspective([tick, 0, 0]);
                     offsetY = distance + 3;
                     offsetX = 0;
                     break;
-                default: // vertical right
+                case 1: // vertical right
                     pos = chart.toPerspective([100 - tick, tick, 0]);
                     offsetY = 3;
                     offsetX = distance;
+                    break;
+                default: // vertical left
+                    pos = chart.toPerspective([0, 100 - tick, 0]);
+                    offsetY = 3;
+                    offsetX = -distance;
             }
 
             labels[tick] = chart.renderer
@@ -202,11 +202,11 @@ export default function TernaryPlotPlugin(H: any): void {
 
     // Initialize ternary axes before rendering the chart
     addEvent(Chart, 'beforeRender', function (this: any) {
-        const chart = this;
-        const {
-            chart: chartOptions,
-            ternaryAxis: userAxes = []
-        } = chart.options;
+        const chart = this,
+            {
+                chart: chartOptions,
+                ternaryAxis: userAxes = []
+            } = chart.options;
 
         if (!chartOptions.ternary) return;
 
@@ -236,8 +236,8 @@ export default function TernaryPlotPlugin(H: any): void {
     // Position ternary axis titles and render gridlines/labels after
     // setting chart size
     addEvent(Chart, 'afterSetChartSize', function (this: any) {
-        const chart = this;
-        const { options } = chart;
+        const chart = this, 
+            { options } = chart;
 
         if (!options.chart.ternary || !chart.ternaryAxis) {
             return;
@@ -258,22 +258,23 @@ export default function TernaryPlotPlugin(H: any): void {
             const title = axis.title;
             if (title?.text) {
                 if (!axis.titleElem) {
-                    axis.titleElem = chart.renderer
-                        .text(title.text, 0, 0)
-                        .css(title.style)
+                    axis.titleElem = chart.renderer.text(title.text, 0, 0)
                         .attr(title.style)
+                        .css(title.style)
                         .add();
                 }
 
-                const pos = chart.toPerspective(axis.corner);
-                const bbox = axis.titleElem.getBBox(true);
+                const pos = chart.toPerspective(axis.corner),
+                    bbox = axis.titleElem.getBBox(true);
 
                 pos[1] = i !== 0 ?
                     (pos[1] - chart.ternarySpacing * title.pos[1]) :
                     (pos[1] + bbox.height + chart.ternarySpacing);
 
-                axis.titleElem.translate(pos[0], pos[1] + chart.plotTop);
-                axis.titleElem.attr({ x: -50 * title.pos[0] });
+                axis.titleElem.translate(
+                    pos[0] -50 * title.pos[0],
+                    pos[1] + chart.plotTop
+                );
             }
 
             // Axis grid lines and labels: destroy previous
@@ -315,20 +316,17 @@ export default function TernaryPlotPlugin(H: any): void {
         this: any,
         point: any
     ): [number, number] {
-        const chart = this;
-        const spacing = chart.ternarySpacing * 2;
-
-        const baseWidth = Math.min(
-            chart.plotHeight,
-            chart.plotWidth - 90 < chart.plotHeight ?
-                chart.containerBox.width :
-                chart.plotHeight
-        );
-
-        const width = Math.max(baseWidth - spacing, 5);
-
-        const x = pick(point.x, point[0]) * width / 100;
-        const y = pick(point.y, point[1]) * width / 100;
+        const chart = this,
+            spacing = chart.ternarySpacing * 2,
+            baseWidth = Math.min(
+                chart.plotHeight,
+                chart.plotWidth - 90 < chart.plotHeight ?
+                    chart.containerBox.width :
+                    chart.plotHeight
+            ),
+            width = Math.max(baseWidth - spacing, 5),
+            x = pick(point.x, point[0]) * width / 100,
+            y = pick(point.y, point[1]) * width / 100;
 
         return [
             x + y / 2 + (chart.containerBox.width - width) / 2,
@@ -380,56 +378,56 @@ export default function TernaryPlotPlugin(H: any): void {
 
                 // Translate each point
                 for (i = 0; i < dataLength; i++) {
-                const point = points[i],
-                    xValue = point.x;
+                    const point = points[i],
+                        xValue = point.x;
 
-                point.yBottom = void 0;
+                    point.yBottom = void 0;
 
-                const perspectivePoint = chart.toPerspective(point);
+                    const perspectivePoint = chart.toPerspective(point);
 
-                plotX = perspectivePoint[0] - chart.plotLeft;
-                point.plotX = plotX;
-                point.plotY = perspectivePoint[1];
+                    plotX = perspectivePoint[0] - chart.plotLeft;
+                    point.plotX = plotX;
+                    point.plotY = perspectivePoint[1];
 
-                point.shapeArgs = {
-                    x: point.plotX - chart.plotLeft,
-                    y: point.plotY - chart.plotTop
-                };
+                    point.shapeArgs = {
+                        x: point.plotX - chart.plotLeft,
+                        y: point.plotY - chart.plotTop
+                    };
 
-                // Do we need it? Perhaps for the future
-                //point.isInside = this.isPointInside(point);
-                point.isInside = true;
+                    // Do we need it? Perhaps for the future
+                    //point.isInside = this.isPointInside(point);
+                    point.isInside = true;
 
-                point.tooltipPos = [point.plotX, point.plotY];
+                    point.tooltipPos = [point.plotX, point.plotY];
 
-                // Set client related positions for mouse tracking
-                point.clientX = dynamicallyPlaced ?
-                    correctFloat(
-                        xAxis.translate(
-                            xValue,
-                            false,
-                            false,
-                            false,
-                            true,
-                            pointPlacement
-                        )
-                    ) :
-                    plotX; // #1514, #5383, #5518
+                    // Set client related positions for mouse tracking
+                    point.clientX = dynamicallyPlaced ?
+                        correctFloat(
+                            xAxis.translate(
+                                xValue,
+                                false,
+                                false,
+                                false,
+                                true,
+                                pointPlacement
+                            )
+                        ) :
+                        plotX; // #1514, #5383, #5518
 
-                // Determine auto enabling of markers (#3635, #5099)
-                if (!point.isNull && point.visible !== false) {
-                    if (typeof lastPlotX !== 'undefined') {
-                    closestPointRangePx = Math.min(
-                        closestPointRangePx, 
-                        Math.abs(plotX - lastPlotX)
-                    );
+                    // Determine auto enabling of markers (#3635, #5099)
+                    if (!point.isNull && point.visible !== false) {
+                        if (typeof lastPlotX !== 'undefined') {
+                        closestPointRangePx = Math.min(
+                            closestPointRangePx, 
+                            Math.abs(plotX - lastPlotX)
+                        );
+                        }
+
+                        lastPlotX = plotX;
                     }
 
-                    lastPlotX = plotX;
-                }
-
-                // Zones disabled for now
-                point.zone = void 0;
+                    // Zones disabled for now
+                    point.zone = void 0;
                 }
 
                 series.closestPointRangePx = closestPointRangePx;

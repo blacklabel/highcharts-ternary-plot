@@ -1,5 +1,13 @@
 import type * as Highcharts from "highcharts";
 
-// Plugin function
 declare function HighchartsTernaryPlot(H: typeof Highcharts): void;
-export default HighchartsTernaryPlot;
+
+export = HighchartsTernaryPlot;
+export as namespace HighchartsTernaryPlot;
+
+// Highcharts augmentations
+declare module "highcharts" {
+  interface SeriesTypeRegistry {
+    ternaryscatter: Highcharts.Series;
+  }
+}

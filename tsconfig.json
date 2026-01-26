@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "module": "ES2015",
+    "module": "es6",
     "moduleResolution": "Node",
     "outDir": ".cache/tmp",
     "rootDir": "./ts",

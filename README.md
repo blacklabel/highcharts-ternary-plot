@@ -27,7 +27,7 @@ This module is the result of our long-standing collaboration with Highsoft, wher
 
 | Ternary Plot Version | Highcharts Version |
 | -------------------- | ------------------ |
-| **0.1.0**            | `>= 12.0.0`        |
+| **1.0.0**            | `>= 12.0.0`        |
 
 ## Installation
 

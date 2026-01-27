@@ -42,15 +42,14 @@ export default function TernaryPlotPlugin(H: any): void {
     } as const;
 
     const AXES = [
-        // x-axis
-        { corner: [50, 0, 0], rotDefault: 0, titlePos: [0, -1] },
-        // y-axis
-        { corner: [50, 50, 0], rotDefault: 63, titlePos: [-1, 0] },
-        // z-axis
-        { corner: [0, 50, 0], rotDefault: -63, titlePos: [1, 0] }
+        // horizontal
+        { axisCenter: [50, 0], rotDefault: 0, titleDirection: [0, 1] },
+        // vertical right
+        { axisCenter: [50, 50], rotDefault: 63, titleDirection: [-1, 0] },
+        // vertical left
+        { axisCenter: [0, 50], rotDefault: -63, titleDirection: [1, 0] }
     ] as const;
 
-    
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGrids = function (
         this: any,
@@ -74,18 +73,18 @@ export default function TernaryPlotPlugin(H: any): void {
 
             switch (index) {
                 case 1:
-                    pos = chart.toPerspective([0, cursor, 0]);
-                    posEnd = chart.toPerspective([100 - cursor, cursor, 0]);
+                    pos = chart.toPerspective([0, cursor]);
+                    posEnd = chart.toPerspective([100 - cursor, cursor]);
                     tick = [posEnd[0] + 4, posEnd[1]];
                     break;
                 case 2:
-                    pos = chart.toPerspective([cursor, 0, 0]);
-                    posEnd = chart.toPerspective([0, cursor, 0]);
+                    pos = chart.toPerspective([cursor, 0]);
+                    posEnd = chart.toPerspective([0, cursor]);
                     tick = [posEnd[0] - 2, posEnd[1] - 4];
                     break;
                 default:
-                    pos = chart.toPerspective([cursor, 100 - cursor, 0]);
-                    posEnd = chart.toPerspective([cursor, 0, 0]);
+                    pos = chart.toPerspective([cursor, 100 - cursor]);
+                    posEnd = chart.toPerspective([cursor, 0]);
                     tick = [posEnd[0] - 2, posEnd[1] + 4];
             }
 
@@ -132,17 +131,17 @@ export default function TernaryPlotPlugin(H: any): void {
 
             switch (index) {
                 case 0: // horizontal
-                    pos = chart.toPerspective([tick, 0, 0]);
+                    pos = chart.toPerspective([tick, 0]);
                     offsetY = distance + 3;
                     offsetX = 0;
                     break;
                 case 1: // vertical right
-                    pos = chart.toPerspective([100 - tick, tick, 0]);
+                    pos = chart.toPerspective([100 - tick, tick]);
                     offsetY = 3;
                     offsetX = distance;
                     break;
                 default: // vertical left
-                    pos = chart.toPerspective([0, 100 - tick, 0]);
+                    pos = chart.toPerspective([0, 100 - tick]);
                     offsetY = 3;
                     offsetX = -distance;
             }
@@ -166,7 +165,7 @@ export default function TernaryPlotPlugin(H: any): void {
             return;
         }
 
-        chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 25);
+        chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 35);
     });
 
     // Fix for NaN clip box width issue before v12.1.0
@@ -213,18 +212,18 @@ export default function TernaryPlotPlugin(H: any): void {
         chart.ternarySpacing = chartOptions.ternarySpacing;
 
         chart.ternaryAxis = AXES.map(({
-            corner,
+            axisCenter,
             rotDefault,
-            titlePos
+            titleDirection
         }, i) => {
             const axis = merge(defaultTernary, userAxes[i] ?? {});
 
-            axis.corner = corner;
+            axis.axisCenter = axisCenter;
             axis.title.style.rotation = pick(
                 userAxes[i]?.title?.rotation,
                 rotDefault
             );
-            axis.title.pos = titlePos;
+            axis.title.titleDirection = titleDirection;
 
             axis.gridlineTicks = {};
             axis.gridlineMinorTicks = {};
@@ -254,26 +253,25 @@ export default function TernaryPlotPlugin(H: any): void {
         };
 
         chart.ternaryAxis.forEach((axis: any, i: number) => {
-            // Axis title
             const title = axis.title;
+
             if (title?.text) {
                 if (!axis.titleElem) {
-                    axis.titleElem = chart.renderer.text(title.text, 0, 0)
-                        .attr(title.style)
+                    axis.titleElem = chart.renderer
+                        .text(title.text, 0, 0)
                         .css(title.style)
+                        .attr(title.style)
                         .add();
                 }
 
-                const pos = chart.toPerspective(axis.corner),
-                    bbox = axis.titleElem.getBBox(true);
+                const [x0, y0] = chart.toPerspective(axis.axisCenter),
+                    [dirX, dirY] = title.titleDirection;
 
-                pos[1] = i !== 0 ?
-                    (pos[1] - chart.ternarySpacing * title.pos[1]) :
-                    (pos[1] + bbox.height + chart.ternarySpacing);
-
+                // 50 is thte distance from axis to title in px
+                // TODO: add title.distance or title.margin option
                 axis.titleElem.translate(
-                    pos[0] -50 * title.pos[0],
-                    pos[1] + chart.plotTop
+                    x0 + (-50 * dirX),
+                    y0 + 50 * dirY + chart.plotTop
                 );
             }
 

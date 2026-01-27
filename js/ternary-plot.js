@@ -125,13 +125,13 @@ function TernaryPlotPlugin(H) {
         }
         return labels;
     };
-    // Set ternarySpacing when initializing the chart
+    // Set ternaryPlotSpacing when initializing the chart
     addEvent(Chart, 'init', function (e) {
         const userOptions = e.args[0], chartOptions = userOptions.chart;
         if (!chartOptions.ternary) {
             return;
         }
-        chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 35);
+        chartOptions.ternaryPlotSpacing = pick(chartOptions.ternaryPlotSpacing, 35);
     });
     // Fix for NaN clip box width issue before v12.1.0
     if (Series.prototype.getClipBox) {
@@ -155,7 +155,7 @@ function TernaryPlotPlugin(H) {
         const chart = this, { chart: chartOptions, ternaryAxis: userAxes = [] } = chart.options;
         if (!chartOptions.ternary)
             return;
-        chart.ternarySpacing = chartOptions.ternarySpacing;
+        chart.ternaryPlotSpacing = chartOptions.ternaryPlotSpacing;
         chart.ternaryAxis = AXES.map(({ axisCenter, rotDefault, titleDirection }, i) => {
             var _a, _b, _c;
             const axis = merge(defaultTernary, (_a = userAxes[i]) !== null && _a !== void 0 ? _a : {});
@@ -213,14 +213,16 @@ function TernaryPlotPlugin(H) {
             }
         });
     });
-    // Convert ternary x,y (0-100) to perspective plotX,plotY
+    // chart: {
+    //     ternaryProjection: 'cartesian' | 'equilateral'
+    // }
+    // Convert ternary (x, y) to perspective (plotX, plotY)
     Chart.prototype.toPerspective = function (point) {
-        const chart = this, spacing = chart.ternarySpacing * 2, baseWidth = Math.min(chart.plotHeight, chart.plotWidth - 90 < chart.plotHeight ?
-            chart.containerBox.width :
-            chart.plotHeight), width = Math.max(baseWidth - spacing, 5), x = pick(point.x, point[0]) * width / 100, y = pick(point.y, point[1]) * width / 100;
+        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternaryPlotSpacing * 2, isCartesian = chartOptions.ternaryProjection === 'cartesian', projectionHeightRatio = isCartesian ? 1 : Math.sqrt(3) / 2, baseWidth = Math.min(chart.plotWidth, chart.plotHeight / projectionHeightRatio), width = Math.max(baseWidth - spacing, 5), x = pick(point.x, point[0]) * width / 100, y = pick(point.y, point[1]) * width / 100, centerX = (chart.containerBox.width - width) / 2, centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
+        // TODO: consider chart.plotLeft and chart.plotTop
         return [
-            x + y / 2 + (chart.containerBox.width - width) / 2,
-            chart.plotHeight - y - spacing * 0.7
+            x + y / 2 + centerX,
+            chart.plotHeight - y * projectionHeightRatio - centerY
         ];
     };
     // Define the new ternaryscatter series type

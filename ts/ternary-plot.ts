@@ -156,7 +156,7 @@ export default function TernaryPlotPlugin(H: any): void {
         return labels;
     };
 
-    // Set ternarySpacing when initializing the chart
+    // Set ternaryPlotSpacing when initializing the chart
     addEvent(Chart, 'init', function (this: any, e: any) {
         const userOptions = e.args[0],
             chartOptions = userOptions.chart;
@@ -165,7 +165,7 @@ export default function TernaryPlotPlugin(H: any): void {
             return;
         }
 
-        chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 35);
+        chartOptions.ternaryPlotSpacing = pick(chartOptions.ternaryPlotSpacing, 35);
     });
 
     // Fix for NaN clip box width issue before v12.1.0
@@ -209,7 +209,7 @@ export default function TernaryPlotPlugin(H: any): void {
 
         if (!chartOptions.ternary) return;
 
-        chart.ternarySpacing = chartOptions.ternarySpacing;
+        chart.ternaryPlotSpacing = chartOptions.ternaryPlotSpacing;
 
         chart.ternaryAxis = AXES.map(({
             axisCenter,
@@ -309,26 +309,33 @@ export default function TernaryPlotPlugin(H: any): void {
         });
     });
 
-    // Convert ternary x,y (0-100) to perspective plotX,plotY
+    // chart: {
+    //     ternaryProjection: 'cartesian' | 'equilateral'
+    // }
+    // Convert ternary (x, y) to perspective (plotX, plotY)
     Chart.prototype.toPerspective = function (
         this: any,
         point: any
     ): [number, number] {
         const chart = this,
-            spacing = chart.ternarySpacing * 2,
+            chartOptions = chart.options.chart,
+            spacing = chart.ternaryPlotSpacing * 2,
+            isCartesian = chartOptions.ternaryProjection === 'cartesian',
+            projectionHeightRatio = isCartesian ? 1 : Math.sqrt(3) / 2,
             baseWidth = Math.min(
-                chart.plotHeight,
-                chart.plotWidth - 90 < chart.plotHeight ?
-                    chart.containerBox.width :
-                    chart.plotHeight
+                chart.plotWidth,
+                chart.plotHeight / projectionHeightRatio
             ),
             width = Math.max(baseWidth - spacing, 5),
             x = pick(point.x, point[0]) * width / 100,
-            y = pick(point.y, point[1]) * width / 100;
+            y = pick(point.y, point[1]) * width / 100,
+            centerX = (chart.containerBox.width - width) / 2,
+            centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
 
+        // TODO: consider chart.plotLeft and chart.plotTop
         return [
-            x + y / 2 + (chart.containerBox.width - width) / 2,
-            chart.plotHeight - y - spacing * 0.7
+            x + y / 2 + centerX,
+            chart.plotHeight - y * projectionHeightRatio - centerY
         ];
     };
 

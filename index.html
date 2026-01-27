@@ -134,97 +134,105 @@ Highcharts.chart('container', {
     </div>
 
     <script>
-        const URLS = {
-            renewables: "https://ourworldindata.org/grapher/share-electricity-renewables.csv",
-            fossil: "https://ourworldindata.org/grapher/share-electricity-fossil-fuels.csv",
-            nuclear: "https://ourworldindata.org/grapher/share-electricity-nuclear.csv",
-        };
+        // const URLS = {
+        //     renewables: "https://ourworldindata.org/grapher/share-electricity-renewables.csv",
+        //     fossil: "https://ourworldindata.org/grapher/share-electricity-fossil-fuels.csv",
+        //     nuclear: "https://ourworldindata.org/grapher/share-electricity-nuclear.csv",
+        // };
  
-        const TARGETS = new Set([
-            "World",
-            "United States",
-            "Europe (EI)",
-            "China",
-            "India",
-        ]);
+        // const TARGETS = new Set([
+        //     "World",
+        //     "United States",
+        //     "Europe (EI)",
+        //     "China",
+        //     "India",
+        // ]);
 
-        function parseCSV(text) {
-            const [header, ...rows] = text.trim().split("\n");
-            const cols = header.split(",");
-            return rows.map(r => {
-                const vals = r.split(",");
-                return Object.fromEntries(cols.map((c, i) => [c, vals[i]]));
-            });
-        }
+        // function parseCSV(text) {
+        //     const [header, ...rows] = text.trim().split("\n");
+        //     const cols = header.split(",");
+        //     return rows.map(r => {
+        //         const vals = r.split(",");
+        //         return Object.fromEntries(cols.map((c, i) => [c, vals[i]]));
+        //     });
+        // }
 
-        async function loadSeries(url, valueKey) {
-            const res = await fetch(url);
-            const csv = await res.text();
-            const rows = parseCSV(csv);
+        // async function loadSeries(url, valueKey) {
+        //     const res = await fetch(url);
+        //     const csv = await res.text();
+        //     const rows = parseCSV(csv);
 
-            const valueCol = Object.keys(rows[0]).find(
-                k => !["Entity", "Code", "Year"].includes(k)
-            );
+        //     const valueCol = Object.keys(rows[0]).find(
+        //         k => !["Entity", "Code", "Year"].includes(k)
+        //     );
 
-            return rows.map(r => ({
-                entity: r.Entity,
-                year: Number(r.Year),
-                [valueKey]: Number(r[valueCol]),
-            }));
-        }
+        //     return rows.map(r => ({
+        //         entity: r.Entity,
+        //         year: Number(r.Year),
+        //         [valueKey]: Number(r[valueCol]),
+        //     }));
+        // }
 
         async function getData() {
-            const ren = await loadSeries(URLS.renewables, "renewables");
-            const fos = await loadSeries(URLS.fossil, "fossil");
-            const nuc = await loadSeries(URLS.nuclear, "nuclear");
+            // const ren = await loadSeries(URLS.renewables, "renewables");
+            // const fos = await loadSeries(URLS.fossil, "fossil");
+            // const nuc = await loadSeries(URLS.nuclear, "nuclear");
 
-            const map = new Map();
-            for (const r of [...ren, ...fos, ...nuc]) {
-                if (!TARGETS.has(r.entity)) continue;
-                const key = `${r.entity}-${r.year}`;
-                map.set(key, { ...(map.get(key) || {}), ...r });
-            }
+            // const map = new Map();
+            // for (const r of [...ren, ...fos, ...nuc]) {
+            //     if (!TARGETS.has(r.entity)) continue;
+            //     const key = `${r.entity}-${r.year}`;
+            //     map.set(key, { ...(map.get(key) || {}), ...r });
+            // }
 
-            let data = [...map.values()]
-                .filter(d => d.renewables != null && d.fossil != null && d.nuclear != null)
-                .sort((a, b) => a.entity.localeCompare(b.entity) || a.year - b.year);
+            // let data = [...map.values()]
+            //     .filter(d => d.renewables != null && d.fossil != null && d.nuclear != null)
+            //     .sort((a, b) => a.entity.localeCompare(b.entity) || a.year - b.year);
 
-            // Last 10 years per entity
-            data = Object.values(
-                data.reduce((acc, d) => {
-                    acc[d.entity] ??= [];
-                    acc[d.entity].push(d);
-                    return acc;
-                }, {})
-            ).flatMap(arr => arr.slice(-10));
+            // // Last 10 years per entity
+            // data = Object.values(
+            //     data.reduce((acc, d) => {
+            //         acc[d.entity] ??= [];
+            //         acc[d.entity].push(d);
+            //         return acc;
+            //     }, {})
+            // ).flatMap(arr => arr.slice(-10));
 
-            // Round and sanity check (≈100%)
-            data = data.map(d => ({
-                entity: d.entity,
-                year: d.year,
-                renewables: +d.renewables.toFixed(2),
-                fossil: +d.fossil.toFixed(2),
-                nuclear: +d.nuclear.toFixed(2),
-                sum: +(d.renewables + d.fossil + d.nuclear).toFixed(2),
-            }));
+            // // Round and sanity check (≈100%)
+            // data = data.map(d => ({
+            //     entity: d.entity,
+            //     year: d.year,
+            //     renewables: +d.renewables.toFixed(2),
+            //     fossil: +d.fossil.toFixed(2),
+            //     nuclear: +d.nuclear.toFixed(2),
+            //     sum: +(d.renewables + d.fossil + d.nuclear).toFixed(2),
+            // }));
 
-            return data;
+            return;
         }
 
         async function init() {
             const rawData = await getData();
 
-            const grouped = rawData.reduce((acc, d) => {
-                (acc[d.entity] ??= []).push(d);
-                return acc;
-            }, {});
+            // const grouped = rawData.reduce((acc, d) => {
+            //     (acc[d.entity] ??= []).push(d);
+            //     return acc;
+            // }, {});
 
+            const labelsEnabled = true;
             Highcharts.chart('chart', {
 
                 chart: {
                     ternary: true,
-                    ternarySpacing: 35,
-                    height: 600
+                    ternaryPlotSpacing: 35,
+                    //ternaryProjection: 'equilateral',
+                    // 'cartesian'
+                    height: 600,
+                    spacingLeft: 10,
+                    plotBorderWidth: 1,
+                    plotBorderColor: 'red',
+                    borderWidth: 3,
+                    borderColor: 'black'
                 },
 
                 credits: {
@@ -254,21 +262,28 @@ Highcharts.chart('container', {
                 ternaryAxis: [{
                     tickInterval: 10,
                     title: {
+                        stickToCorner: true,
                         useHTML: true,
-                        text: 'Higher renewables share (%)',
+                        //text: 'Higher renewables share (%)',
+                        text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaaaaaaa renewables share (%)',
+                        //rotation: 0,
                         style: {
                             fontWeight: '500',
+                            fontSize: '35px'
                         }
                     },
                     labels: {
                         style: {
                             color: '#9c9c9c'
-                        }
+                        },
+                        enabled: labelsEnabled
                     }
                 }, {
                     tickInterval: 10,
                     title: {
-                        text: 'Higher ossil share (%)',
+                        //text: 'Higher ossil share (%)',
+                        text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaa fossil share (%)',
+                        //rotation: 0,
                         style: {
                             fontWeight: '500',
                         }
@@ -276,12 +291,15 @@ Highcharts.chart('container', {
                     labels: {
                         style: {
                             color: '#9c9c9c'
-                        }
+                        },
+                        enabled: labelsEnabled
                     }
                 }, {
                     tickInterval: 10,
                     title: {
-                        text: 'Higher nuclear share (%)',
+                        //text: 'Higher nuclear share (%)',
+                        text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaa nuclear share (%)',
+                        //rotation: 0,
                         style: {
                             fontWeight: '500',
                         }
@@ -289,38 +307,74 @@ Highcharts.chart('container', {
                     labels: {
                         style: {
                             color: '#9c9c9c'
-                        }
+                        },
+                        enabled: labelsEnabled
                     }
                 }],
 
-                series: [...TARGETS]
-                    .filter(entity => grouped[entity])
-                    .map(entity => ({
-                        type: 'ternaryscatter',
-                        name: entity,
-                        keys: ['x', 'y', 'z', 'entity', 'year', 'marker'],
-                        data: grouped[entity].map(d => ([
-                            d.renewables,
-                            d.fossil,
-                            d.nuclear,
-                            d.entity,
-                            d.year,
-                            d.year === 2024 ? { radius: 6 } : undefined
-                        ])),
-                        tooltip: {
-                            pointFormat: '<b>{point.entity} ({point.year}):</b><br/>' +
-                                'Renewables share: {point.x}%<br/>' +
-                                'Ossil: {point.y}%<br/>' +
-                                'Nuclear: {point.z}%'
-                        },
-                        marker: {
-                            radius: 3,
-                            symbol: 'circle',
-                            lineWidth: 0.5
-                        },
-                        lineWidth: 0.5
-                    }))
+                // series: [...TARGETS]
+                //     .filter(entity => grouped[entity])
+                //     .map(entity => ({
+                //         type: 'ternaryscatter',
+                //         name: entity,
+                //         keys: ['x', 'y', 'z', 'entity', 'year', 'marker'],
+                //         data: grouped[entity].map(d => ([
+                //             d.renewables,
+                //             d.fossil,
+                //             d.nuclear,
+                //             d.entity,
+                //             d.year,
+                //             d.year === 2024 ? { radius: 6 } : undefined
+                //         ])),
+                //         tooltip: {
+                //             pointFormat: '<b>{point.entity} ({point.year}):</b><br/>' +
+                //                 'Renewables share: {point.x}%<br/>' +
+                //                 'Ossil: {point.y}%<br/>' +
+                //                 'Nuclear: {point.z}%'
+                //         },
+                //         marker: {
+                //             radius: 3,
+                //             symbol: 'circle',
+                //             lineWidth: 0.5
+                //         },
+                //         lineWidth: 0.5
+                //     }))
 
+                series: [{
+                    type: 'ternaryscatter',
+                    keys: ['x', 'y', 'z', 'color'],
+                    data: [
+                        [100, 0, 0, 'red'],
+                        [0, 100, 0, 'green'],
+                        [0, 0, 100, 'blue'],
+                        [50, 25, 25, 'orange'],
+                        [25, 50, 25, 'purple'],
+                        [25, 25, 50, 'cyan'],
+                        [0, 50],
+                        [20, 0],
+                        [10, 20, 70, 'red']
+                    ],
+                    dataLabels: {
+                        enabled: true,
+                        crop: false,
+                        format: 'aaa',
+                        allowOverlap: true,
+                        overflow: 'allow'
+                    },
+                    marker: {
+                        radius: 6,
+                        symbol: 'circle',
+                        lineWidth: 0.5
+                    }
+                }]
+
+            }, chart => {
+                chart.renderer.rect(0, 100, 400, 2)
+                    .attr({
+                        fill: 'red',
+                        zIndex: 5
+                    })
+                    .add();
             });
         }
 

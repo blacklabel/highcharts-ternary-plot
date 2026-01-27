@@ -86,7 +86,14 @@ Highcharts.chart('container', {
 | `chart.ternary`        | `Boolean` | Whether to enable ternary chart mode.    |
 | `chart.ternarySpacing` | `Number`  | The spacing around the ternary plot.     |
 | `ternaryAxis`          | `Array`   | An array of ternary axis configurations. |
+<!-- add default value -->
+<!-- In 1.0.0(++) development 25 changed to 35 -->
 
+<!-- changelog
+added
+chart: {
+  ternaryProjection: 'cartesian' | 'equilateral'
+} -->
 ## Development Setup
 
 If you want to work on this plugin locally:

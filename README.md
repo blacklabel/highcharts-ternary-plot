@@ -94,6 +94,16 @@ added
 chart: {
   ternaryProjection: 'cartesian' | 'equilateral'
 } -->
+
+
+
+<!-- TODO
+1. lines perpendicular to the axis
+2. plotLeft/plotTop positioning
+3. TS
+4. demo
+5. third value handling and summing to a constant different than 100
+ -->
 ## Development Setup
 
 If you want to work on this plugin locally:

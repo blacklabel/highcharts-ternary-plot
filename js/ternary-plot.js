@@ -46,11 +46,11 @@ function TernaryPlotPlugin(H) {
     };
     const AXES = [
         // horizontal
-        { axisCenter: [50, 0], rotDefault: 0, titleDirection: [0, 1] },
+        { axisCenter: [50, 0], rotDefault: [0, 0], titleDirection: [0, 1] },
         // vertical right
-        { axisCenter: [50, 50], rotDefault: 63, titleDirection: [-1, 0] },
+        { axisCenter: [50, 50], rotDefault: [63.43, 60], titleDirection: [-1, 0] },
         // vertical left
-        { axisCenter: [0, 50], rotDefault: -63, titleDirection: [1, 0] }
+        { axisCenter: [0, 50], rotDefault: [-63.43, -60], titleDirection: [1, 0] }
     ];
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGrids = function (index, width, interval, stroke) {
@@ -125,13 +125,13 @@ function TernaryPlotPlugin(H) {
         }
         return labels;
     };
-    // Set ternaryPlotSpacing when initializing the chart
+    // Set ternarySpacing when initializing the chart
     addEvent(Chart, 'init', function (e) {
         const userOptions = e.args[0], chartOptions = userOptions.chart;
         if (!chartOptions.ternary) {
             return;
         }
-        chartOptions.ternaryPlotSpacing = pick(chartOptions.ternaryPlotSpacing, 35);
+        chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 35);
     });
     // Fix for NaN clip box width issue before v12.1.0
     if (Series.prototype.getClipBox) {
@@ -155,12 +155,12 @@ function TernaryPlotPlugin(H) {
         const chart = this, { chart: chartOptions, ternaryAxis: userAxes = [] } = chart.options;
         if (!chartOptions.ternary)
             return;
-        chart.ternaryPlotSpacing = chartOptions.ternaryPlotSpacing;
+        chart.ternarySpacing = chartOptions.ternarySpacing;
         chart.ternaryAxis = AXES.map(({ axisCenter, rotDefault, titleDirection }, i) => {
             var _a, _b, _c;
-            const axis = merge(defaultTernary, (_a = userAxes[i]) !== null && _a !== void 0 ? _a : {});
+            const axis = merge(defaultTernary, (_a = userAxes[i]) !== null && _a !== void 0 ? _a : {}), isCartesian = chartOptions.ternaryProjection === 'cartesian';
             axis.axisCenter = axisCenter;
-            axis.title.style.rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotDefault);
+            axis.title.style.rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotDefault[isCartesian ? 0 : 1]);
             axis.title.titleDirection = titleDirection;
             axis.gridlineTicks = {};
             axis.gridlineMinorTicks = {};
@@ -218,13 +218,56 @@ function TernaryPlotPlugin(H) {
     // }
     // Convert ternary (x, y) to perspective (plotX, plotY)
     Chart.prototype.toPerspective = function (point) {
-        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternaryPlotSpacing * 2, isCartesian = chartOptions.ternaryProjection === 'cartesian', projectionHeightRatio = isCartesian ? 1 : Math.sqrt(3) / 2, baseWidth = Math.min(chart.plotWidth, chart.plotHeight / projectionHeightRatio), width = Math.max(baseWidth - spacing, 5), x = pick(point.x, point[0]) * width / 100, y = pick(point.y, point[1]) * width / 100, centerX = (chart.containerBox.width - width) / 2, centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
-        // TODO: consider chart.plotLeft and chart.plotTop
+        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternarySpacing * 2, isCartesian = chartOptions.ternaryProjection === 'cartesian', 
+        // Either equilateral or cartesian projection
+        projectionHeightRatio = isCartesian ? 1 : Math.sqrt(3) / 2, 
+        // Determine the length of the triangle's
+        // base based on the available space
+        baseWidth = Math.min(chart.plotWidth, chart.plotHeight / projectionHeightRatio), 
+        // Then shrink by spacing to get the final width
+        width = Math.max(baseWidth - spacing, 5), 
+        // TODO: consider summing to a constant value different than 100
+        x = pick(point.x, point[0]) * width / 100, y = pick(point.y, point[1]) * width / 100, 
+        // Center within plot area
+        centerX = (chart.plotWidth - width) / 2 + chart.plotLeft, centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
         return [
             x + y / 2 + centerX,
             chart.plotHeight - y * projectionHeightRatio - centerY
         ];
     };
+    // Only [x, y] is needed in projection.
+    // pH - plotHeight
+    //
+    // For the equilateral projection:
+    // (doesn't look like equilateral here but it is)
+    //
+    //                                   (50, 100·√3/2)
+    //                                         / \
+    //                                        /   \
+    //                                       /     \
+    //                                      /       \
+    //                                     /         \
+    //                                    /           \
+    //                                   /             \
+    //                                  /               \
+    //                                 /                 \
+    //                                /                   \
+    //                               /                     \
+    //                              /                       \
+    //                             /                         \
+    //                            /                           \
+    //                           /                             \
+    //                          /     P(x+y/2, pH-√3/2*y)       \
+    //                         /             ○                   \---
+    //                        /             /|                    \
+    //                       /             / |                     \
+    //                      /             /  |                      \ 
+    //                     /           y /   | √3/2*y                \ y
+    //                    /             /    |                        \      
+    //                   /             /     |                         \     
+    //                  /60°          /60°   |                       60°\
+    //                 /_____________/_______|___________________________\--- 
+    //         (0, 0)  |      x      |  y/2  |                             (100, 0)
     // Define the new ternaryscatter series type
     seriesType('ternaryscatter', 'scatter', {
         tooltip: {

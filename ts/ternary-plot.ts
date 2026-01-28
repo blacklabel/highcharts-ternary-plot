@@ -43,11 +43,11 @@ export default function TernaryPlotPlugin(H: any): void {
 
     const AXES = [
         // horizontal
-        { axisCenter: [50, 0], rotDefault: 0, titleDirection: [0, 1] },
+        { axisCenter: [50, 0], rotDefault: [0, 0], titleDirection: [0, 1] },
         // vertical right
-        { axisCenter: [50, 50], rotDefault: 63, titleDirection: [-1, 0] },
+        { axisCenter: [50, 50], rotDefault: [63.43, 60], titleDirection: [-1, 0] },
         // vertical left
-        { axisCenter: [0, 50], rotDefault: -63, titleDirection: [1, 0] }
+        { axisCenter: [0, 50], rotDefault: [-63.43, -60], titleDirection: [1, 0] }
     ] as const;
 
     // Render ternary axis gridlines. Keep it on chart for easy access
@@ -156,7 +156,7 @@ export default function TernaryPlotPlugin(H: any): void {
         return labels;
     };
 
-    // Set ternaryPlotSpacing when initializing the chart
+    // Set ternarySpacing when initializing the chart
     addEvent(Chart, 'init', function (this: any, e: any) {
         const userOptions = e.args[0],
             chartOptions = userOptions.chart;
@@ -165,7 +165,7 @@ export default function TernaryPlotPlugin(H: any): void {
             return;
         }
 
-        chartOptions.ternaryPlotSpacing = pick(chartOptions.ternaryPlotSpacing, 35);
+        chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 35);
     });
 
     // Fix for NaN clip box width issue before v12.1.0
@@ -209,19 +209,20 @@ export default function TernaryPlotPlugin(H: any): void {
 
         if (!chartOptions.ternary) return;
 
-        chart.ternaryPlotSpacing = chartOptions.ternaryPlotSpacing;
+        chart.ternarySpacing = chartOptions.ternarySpacing;
 
         chart.ternaryAxis = AXES.map(({
             axisCenter,
             rotDefault,
             titleDirection
         }, i) => {
-            const axis = merge(defaultTernary, userAxes[i] ?? {});
+            const axis = merge(defaultTernary, userAxes[i] ?? {}),
+                isCartesian = chartOptions.ternaryProjection === 'cartesian';
 
             axis.axisCenter = axisCenter;
             axis.title.style.rotation = pick(
                 userAxes[i]?.title?.rotation,
-                rotDefault
+                rotDefault[isCartesian ? 0 : 1]
             );
             axis.title.titleDirection = titleDirection;
 
@@ -319,25 +320,64 @@ export default function TernaryPlotPlugin(H: any): void {
     ): [number, number] {
         const chart = this,
             chartOptions = chart.options.chart,
-            spacing = chart.ternaryPlotSpacing * 2,
+            spacing = chart.ternarySpacing * 2,
             isCartesian = chartOptions.ternaryProjection === 'cartesian',
+            // Either equilateral or cartesian projection
             projectionHeightRatio = isCartesian ? 1 : Math.sqrt(3) / 2,
+            // Determine the length of the triangle's
+            // base based on the available space
             baseWidth = Math.min(
                 chart.plotWidth,
                 chart.plotHeight / projectionHeightRatio
             ),
+            // Then shrink by spacing to get the final width
             width = Math.max(baseWidth - spacing, 5),
+            // TODO: consider summing to a constant value different than 100
             x = pick(point.x, point[0]) * width / 100,
             y = pick(point.y, point[1]) * width / 100,
-            centerX = (chart.containerBox.width - width) / 2,
+            // Center within plot area
+            centerX = (chart.plotWidth - width) / 2 + chart.plotLeft,
             centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
 
-        // TODO: consider chart.plotLeft and chart.plotTop
         return [
             x + y / 2 + centerX,
             chart.plotHeight - y * projectionHeightRatio - centerY
         ];
     };
+// Only [x, y] is needed in projection.
+// pH - plotHeight
+//
+// For the equilateral projection:
+// (doesn't look like equilateral here but it is)
+//
+//                                   (50, 100·√3/2)
+//                                         / \
+//                                        /   \
+//                                       /     \
+//                                      /       \
+//                                     /         \
+//                                    /           \
+//                                   /             \
+//                                  /               \
+//                                 /                 \
+//                                /                   \
+//                               /                     \
+//                              /                       \
+//                             /                         \
+//                            /                           \
+//                           /                             \
+//                          /     P(x+y/2, pH-√3/2*y)       \
+//                         /             ○                   \---
+//                        /             /|                    \
+//                       /             / |                     \
+//                      /             /  |                      \ 
+//                     /           y /   | √3/2*y                \ y
+//                    /             /    |                        \      
+//                   /             /     |                         \     
+//                  /60°          /60°   |                       60°\
+//                 /_____________/_______|___________________________\--- 
+//         (0, 0)  |      x      |  y/2  |                             (100, 0)
+
 
     // Define the new ternaryscatter series type
     seriesType(

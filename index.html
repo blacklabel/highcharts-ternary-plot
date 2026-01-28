@@ -224,11 +224,10 @@ Highcharts.chart('container', {
 
                 chart: {
                     ternary: true,
-                    ternaryPlotSpacing: 35,
+                    //ternarySpacing: 50,
                     //ternaryProjection: 'equilateral',
                     // 'cartesian'
                     height: 600,
-                    spacingLeft: 10,
                     plotBorderWidth: 1,
                     plotBorderColor: 'red',
                     borderWidth: 3,
@@ -352,7 +351,8 @@ Highcharts.chart('container', {
                         [25, 25, 50, 'cyan'],
                         [0, 50],
                         [20, 0],
-                        [10, 20, 70, 'red']
+                        [10, 20, 70, 'red'],
+                        [60, 30, 10]
                     ],
                     dataLabels: {
                         enabled: true,
@@ -369,7 +369,20 @@ Highcharts.chart('container', {
                 }]
 
             }, chart => {
-                chart.renderer.rect(0, 100, 400, 2)
+                chart.renderer
+                    .rect(0, 100, 400, 2)
+                    .attr({
+                        fill: 'red',
+                        zIndex: 5
+                    })
+                    .add();
+
+                chart.renderer
+                    .circle(
+                        chart.plotLeft + chart.plotWidth / 2,
+                        chart.plotTop + chart.plotHeight / 2,
+                        2
+                    )
                     .attr({
                         fill: 'red',
                         zIndex: 5

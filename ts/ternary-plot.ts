@@ -1,7 +1,5 @@
 export default function TernaryPlotPlugin(H: any): void {
-    if (H.ternaryPlotPluginLoaded) {
-        return;
-    }
+    if (H.ternaryPlotPluginLoaded) return;
     H.ternaryPlotPluginLoaded = true;
 
     const {
@@ -58,35 +56,36 @@ export default function TernaryPlotPlugin(H: any): void {
         interval: number,
         stroke: string
     ) {
+        const  ticks: Record<string, any> = {};
+
+        if (!interval || interval <= 0) return ticks;
+
         const chart = this,
-            { plotTop } = chart,
-            ticks: Record<string, any> = {};
+            sumTo = chart.options.chart.sumTo;
 
-        if (!interval || interval <= 0) {
-            return ticks;
-        }
-
-        for (let cursor = 0; cursor <= 100; cursor += interval) {
+        for (let cursor = 0; cursor <= sumTo; cursor += interval) {
             let pos: any,
                 posEnd: any,
                 tick: [number, number];
 
             switch (index) {
                 case 1:
-                    pos = chart.toPerspective([0, cursor]);
-                    posEnd = chart.toPerspective([100 - cursor, cursor]);
+                    pos = chart.toPerspective([0, cursor], true);
+                    posEnd = chart.toPerspective([sumTo - cursor, cursor], true);
                     tick = [posEnd[0] + 4, posEnd[1]];
                     break;
                 case 2:
-                    pos = chart.toPerspective([cursor, 0]);
-                    posEnd = chart.toPerspective([0, cursor]);
+                    pos = chart.toPerspective([cursor, 0], true);
+                    posEnd = chart.toPerspective([0, cursor], true);
                     tick = [posEnd[0] - 2, posEnd[1] - 4];
                     break;
                 default:
-                    pos = chart.toPerspective([cursor, 100 - cursor]);
-                    posEnd = chart.toPerspective([cursor, 0]);
+                    pos = chart.toPerspective([cursor, sumTo - cursor], true);
+                    posEnd = chart.toPerspective([cursor, 0], true);
                     tick = [posEnd[0] - 2, posEnd[1] + 4];
             }
+
+            const plotTop = chart.plotTop;
 
             ticks[cursor] = chart.renderer
                 .path()
@@ -113,38 +112,38 @@ export default function TernaryPlotPlugin(H: any): void {
         index: number,
         interval: number
     ) {
+        const labels: Record<string, any> = {};
+
+        if (!interval || interval <= 0) return labels;
+
         const chart = this,
-            { plotTop } = chart,
-            labels: Record<string, any> = {},
-            distance = 20;
+            sumTo = chart.options.chart.sumTo;
 
-        if (!interval || interval <= 0) {
-            return labels;
-        }
-
-        const { align, zIndex, style } = axis.labels;
-
-        for (let tick = 0; tick <= 100; tick += interval) {
+        for (let tick = 0; tick <= sumTo; tick += interval) {
+            const distance = 20;
             let pos: any,
                 offsetX = 0,
                 offsetY = 0;
 
             switch (index) {
                 case 0: // horizontal
-                    pos = chart.toPerspective([tick, 0]);
+                    pos = chart.toPerspective([tick, 0], true);
                     offsetY = distance + 3;
                     offsetX = 0;
                     break;
                 case 1: // vertical right
-                    pos = chart.toPerspective([100 - tick, tick]);
+                    pos = chart.toPerspective([sumTo - tick, tick], true);
                     offsetY = 3;
                     offsetX = distance;
                     break;
                 default: // vertical left
-                    pos = chart.toPerspective([0, 100 - tick]);
+                    pos = chart.toPerspective([0, sumTo - tick], true);
                     offsetY = 3;
                     offsetX = -distance;
             }
+
+            const plotTop = chart.plotTop,
+                { align, zIndex, style } = axis.labels;
 
             labels[tick] = chart.renderer
                 .text(tick, pos[0] + offsetX, pos[1] + plotTop + offsetY)
@@ -161,11 +160,10 @@ export default function TernaryPlotPlugin(H: any): void {
         const userOptions = e.args[0],
             chartOptions = userOptions.chart;
 
-        if (!chartOptions.ternary) {
-            return;
-        }
+        if (!chartOptions.ternary) return;
 
         chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 35);
+        chartOptions.sumTo = pick(chartOptions.sumTo, 100);
     });
 
     // Fix for NaN clip box width issue before v12.1.0
@@ -202,10 +200,7 @@ export default function TernaryPlotPlugin(H: any): void {
     // Initialize ternary axes before rendering the chart
     addEvent(Chart, 'beforeRender', function (this: any) {
         const chart = this,
-            {
-                chart: chartOptions,
-                ternaryAxis: userAxes = []
-            } = chart.options;
+            chartOptions = chart.options.chart;
 
         if (!chartOptions.ternary) return;
 
@@ -216,14 +211,18 @@ export default function TernaryPlotPlugin(H: any): void {
             rotDefault,
             titleDirection
         }, i) => {
-            const axis = merge(defaultTernary, userAxes[i] ?? {}),
-                isCartesian = chartOptions.ternaryProjection === 'cartesian';
+            const userAxes = chart.options.ternaryAxis || [],
+                axis = merge(defaultTernary, userAxes[i] ?? {});
 
             axis.axisCenter = axisCenter;
+
+            const isCartesian = chartOptions.ternaryProjection === 'cartesian';
+
             axis.title.style.rotation = pick(
                 userAxes[i]?.title?.rotation,
                 rotDefault[isCartesian ? 0 : 1]
             );
+
             axis.title.titleDirection = titleDirection;
 
             axis.gridlineTicks = {};
@@ -239,14 +238,10 @@ export default function TernaryPlotPlugin(H: any): void {
         const chart = this, 
             { options } = chart;
 
-        if (!options.chart.ternary || !chart.ternaryAxis) {
-            return;
-        }
+        if (!options.chart.ternary || !chart.ternaryAxis) return;
 
         const destroyCollection = (coll: Record<string, any> | undefined) => {
-            if (!coll) {
-                return;
-            }
+            if (!coll) return;
 
             for (const k in coll) {
                 coll[k] = coll[k].destroy();
@@ -316,7 +311,8 @@ export default function TernaryPlotPlugin(H: any): void {
     // Convert ternary (x, y) to perspective (plotX, plotY)
     Chart.prototype.toPerspective = function (
         this: any,
-        point: any
+        point: any,
+        useSumTo?: boolean
     ): [number, number] {
         const chart = this,
             chartOptions = chart.options.chart,
@@ -333,8 +329,9 @@ export default function TernaryPlotPlugin(H: any): void {
             // Then shrink by spacing to get the final width
             width = Math.max(baseWidth - spacing, 5),
             // TODO: consider summing to a constant value different than 100
-            x = pick(point.x, point[0]) * width / 100,
-            y = pick(point.y, point[1]) * width / 100,
+            sumTo = useSumTo ? chartOptions.sumTo : 100,
+            x = pick(point.x, point[0]) * width / sumTo,
+            y = pick(point.y, point[1]) * width / sumTo,
             // Center within plot area
             centerX = (chart.plotWidth - width) / 2 + chart.plotLeft,
             centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
@@ -428,7 +425,7 @@ export default function TernaryPlotPlugin(H: any): void {
 
                     point.yBottom = void 0;
 
-                    const perspectivePoint = chart.toPerspective(point);
+                    const perspectivePoint = chart.toPerspective(point, true);
 
                     plotX = perspectivePoint[0] - chart.plotLeft;
                     point.plotX = plotX;

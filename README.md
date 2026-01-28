@@ -78,6 +78,8 @@ Highcharts.chart('container', {
   }]
 
 });
+
+// TODO: add info that data can be 2dim (the 3rd always sums up to chart.sumTo)
 ```
 
 ## Available Options
@@ -86,6 +88,7 @@ Highcharts.chart('container', {
 | `chart.ternary`        | `Boolean` | Whether to enable ternary chart mode.    |
 | `chart.ternarySpacing` | `Number`  | The spacing around the ternary plot.     |
 | `ternaryAxis`          | `Array`   | An array of ternary axis configurations. |
+<!-- | `chart.sumTo`          | `number`  | .... |, default 100 -->
 <!-- add default value -->
 <!-- In 1.0.0(++) development 25 changed to 35 -->
 

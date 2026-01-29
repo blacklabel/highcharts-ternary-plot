@@ -18,6 +18,7 @@ function TernaryPlotPlugin(H) {
     if (H.ternaryPlotPluginLoaded)
         return;
     H.ternaryPlotPluginLoaded = true;
+    const SQRT3_OVER_2 = Math.sqrt(3) / 2;
     const { addEvent, merge, pick, correctFloat, fireEvent, seriesType, wrap, Chart, Series } = H;
     const defaultTernary = {
         tickInterval: 50,
@@ -43,14 +44,6 @@ function TernaryPlotPlugin(H) {
             }
         }
     };
-    const AXES = [
-        // horizontal
-        { axisCenter: [50, 0], rotDefault: [0, 0], titleDirection: [0, 1] },
-        // vertical right
-        { axisCenter: [50, 50], rotDefault: [63.43, 60], titleDirection: [-1, 0] },
-        // vertical left
-        { axisCenter: [0, 50], rotDefault: [-63.43, -60], titleDirection: [1, 0] }
-    ];
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGrids = function (index, width, interval, stroke) {
         const ticks = {};
@@ -104,6 +97,7 @@ function TernaryPlotPlugin(H) {
             switch (index) {
                 case 0: // horizontal
                     pos = chart.toPerspective([tick, 0], true);
+                    // TODO: parameterize 3
                     offsetY = distance + 3;
                     offsetX = 0;
                     break;
@@ -157,13 +151,31 @@ function TernaryPlotPlugin(H) {
         if (!chartOptions.ternary)
             return;
         chart.ternarySpacing = chartOptions.ternarySpacing;
-        chart.ternaryAxis = AXES.map(({ axisCenter, rotDefault, titleDirection }, i) => {
+        const axes = [{
+                // Horizontal
+                axisCenter: [50, 0],
+                rotDefault: [0, 0],
+                // Two options: perpendicular to the axis line, or purely horizontal
+                titleDirections: [[0, 1], [0, 1]]
+            }, {
+                // Vertical right
+                axisCenter: [50, 50],
+                rotDefault: [63.43, 60],
+                titleDirections: [[-SQRT3_OVER_2, -1 / 2], [-1, 0]]
+            }, {
+                // Vertical left
+                axisCenter: [0, 50],
+                rotDefault: [-63.43, -60],
+                titleDirections: [[SQRT3_OVER_2, -1 / 2], [1, 0]]
+            }];
+        chart.ternaryAxis = axes.map(({ axisCenter, rotDefault, titleDirections }, i) => {
             var _a, _b, _c;
             const userAxes = chart.options.ternaryAxis || [], axis = merge(defaultTernary, (_a = userAxes[i]) !== null && _a !== void 0 ? _a : {});
             axis.axisCenter = axisCenter;
             const isCartesian = chartOptions.ternaryProjection === 'cartesian';
             axis.title.style.rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotDefault[isCartesian ? 0 : 1]);
-            axis.title.titleDirection = titleDirection;
+            axis.title.titleDirection =
+                titleDirections[axis.title.marginXOnly ? 1 : 0];
             axis.gridlineTicks = {};
             axis.gridlineMinorTicks = {};
             return axis;
@@ -193,9 +205,11 @@ function TernaryPlotPlugin(H) {
                         .add();
                 }
                 const [x0, y0] = chart.toPerspective(axis.axisCenter), [dirX, dirY] = title.titleDirection;
-                // 50 is thte distance from axis to title in px
-                // TODO: add title.distance or title.margin option
-                axis.titleElem.translate(x0 + (-50 * dirX), y0 + 50 * dirY + chart.plotTop);
+                // The pixel distance between the axis line and the title.
+                const titleMargin = pick(title.margin, 50);
+                // TODO: Add option for direction alignment
+                // TODO: Consider moving AXES values into methods
+                axis.titleElem.translate(x0 + (-titleMargin * dirX), y0 + (titleMargin * dirY) + chart.plotTop);
             }
             // Axis grid lines and labels: destroy previous
             destroyCollection(axis.gridlineTicks);
@@ -220,7 +234,7 @@ function TernaryPlotPlugin(H) {
     Chart.prototype.toPerspective = function (point, useSumTo) {
         const chart = this, chartOptions = chart.options.chart, spacing = chart.ternarySpacing * 2, isCartesian = chartOptions.ternaryProjection === 'cartesian', 
         // Either equilateral or cartesian projection
-        projectionHeightRatio = isCartesian ? 1 : Math.sqrt(3) / 2, 
+        projectionHeightRatio = isCartesian ? 1 : SQRT3_OVER_2, 
         // Determine the length of the triangle's
         // base based on the available space
         baseWidth = Math.min(chart.plotWidth, chart.plotHeight / projectionHeightRatio), 
@@ -241,33 +255,33 @@ function TernaryPlotPlugin(H) {
     // For the equilateral projection:
     // (doesn't look like equilateral here but it is)
     //
-    //                                   (50, 100·√3/2)
-    //                                         / \
-    //                                        /   \
-    //                                       /     \
-    //                                      /       \
-    //                                     /         \
-    //                                    /           \
-    //                                   /             \
-    //                                  /               \
-    //                                 /                 \
-    //                                /                   \
-    //                               /                     \
-    //                              /                       \
-    //                             /                         \
-    //                            /                           \
-    //                           /                             \
-    //                          /     P(x+y/2, pH-√3/2*y)       \
-    //                         /             ○                   \---
-    //                        /             /|                    \
-    //                       /             / |                     \
-    //                      /             /  |                      \ 
-    //                     /           y /   | √3/2*y                \ y
-    //                    /             /    |                        \      
-    //                   /             /     |                         \     
-    //                  /60°          /60°   |                       60°\
-    //                 /_____________/_______|___________________________\--- 
-    //         (0, 0)  |      x      |  y/2  |                             (100, 0)
+    //                               (50, 100·√3/2)
+    //                                     / \
+    //                                    /   \
+    //                                   /     \
+    //                                  /       \
+    //                                 /         \
+    //                                /           \
+    //                               /             \
+    //                              /               \
+    //                             /                 \
+    //                            /                   \
+    //                           /                     \
+    //                          /                       \
+    //                         /                         \
+    //                        /                           \
+    //                       /                             \
+    //                      /     P(x+y/2, pH-√3/2*y)       \
+    //                     /             ○                   \---
+    //                    /             /|                    \
+    //                   /             / |                     \
+    //                  /             /  |                      \ 
+    //                 /           y /   | √3/2*y                \ y
+    //                /             /    |                        \      
+    //               /             /     |                         \     
+    //              /60°          /60°   |                       60°\
+    //             /_____________/_______|___________________________\--- 
+    //     (0, 0)  |      x      |  y/2  |                             (100, 0)
     // Define the new ternaryscatter series type
     seriesType('ternaryscatter', 'scatter', {
         tooltip: {

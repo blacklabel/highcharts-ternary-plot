@@ -89,9 +89,10 @@ Highcharts.chart('container', {
 | `chart.ternarySpacing` | `Number`  | The spacing around the ternary plot.     |
 | `ternaryAxis`          | `Array`   | An array of ternary axis configurations. |
 <!-- | `chart.sumTo`          | `number`  | .... |, default 100 -->
+<!-- change sumTo to ternarySumTo or consider moving it from chart to series -->
 <!-- add default value -->
 <!-- In 1.0.0(++) development 25 changed to 35 -->
-
+<!-- title.moveXOnly -->
 <!-- changelog
 added
 chart: {

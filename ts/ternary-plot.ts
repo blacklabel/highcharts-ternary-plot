@@ -78,7 +78,7 @@ export default function TernaryPlotPlugin(H: any): void {
                     tick = [posEnd[0] - 2, posEnd[1] + 4];
             }
 
-            const plotTop = chart.plotTop;
+            const { plotLeft, plotTop } = chart;
 
             ticks[cursor] = chart.renderer
                 .path()
@@ -87,9 +87,9 @@ export default function TernaryPlotPlugin(H: any): void {
                     stroke,
                     zIndex: 2,
                     d: [
-                        'M', pos[0],    pos[1] + plotTop,
-                        'L', posEnd[0], posEnd[1] + plotTop,
-                        'L', tick[0],   tick[1] + plotTop
+                        'M', plotLeft + pos[0],    plotTop + pos[1],
+                        'L', plotLeft + posEnd[0], plotTop + posEnd[1],
+                        'L', plotLeft + tick[0],   plotTop + tick[1]
                     ]
                 })
                 .add();
@@ -136,11 +136,15 @@ export default function TernaryPlotPlugin(H: any): void {
                     offsetX = -distance;
             }
 
-            const plotTop = chart.plotTop,
+            const { plotLeft, plotTop } = chart,
                 { align, zIndex, style } = axis.labels;
 
             labels[tick] = chart.renderer
-                .text(tick, pos[0] + offsetX, pos[1] + plotTop + offsetY)
+                .text(
+                    tick,
+                    plotLeft + pos[0] + offsetX,
+                    plotTop + pos[1] + offsetY
+                )
                 .attr({ align, zIndex })
                 .css(style)
                 .add();
@@ -200,43 +204,68 @@ export default function TernaryPlotPlugin(H: any): void {
 
         chart.ternarySpacing = chartOptions.ternarySpacing;
 
-        const axes = [{
+        type Vec2 = [number, number];
+
+        type AxisDef = {
+            axisCenters: [Vec2, Vec2];
+            rotDefaults: [number, number, number];
+            titleDirections: [Vec2, Vec2, Vec2];
+        };
+
+        // przerzucić to do const zmiennych w if-ie zależnym od opcji
+        const axes: AxisDef[] = [{
             // Horizontal
-            axisCenter: [50, 0],
-            rotDefault: [0, 0],
-            // Two options: perpendicular to the axis line, or purely horizontal
-            titleDirections: [[0, 1], [0, 1]]
+            axisCenters: [[50, 0], [100, 0]],
+            rotDefaults: [0, 0, 0],
+            // Two different positions (margin directions):
+            // perpendicular to the axis line, or purely horizontal
+            titleDirections: [[0, 1], [0, 1], [0, 1]]
         }, {
-            // Vertical right
-            axisCenter: [50, 50],
-            rotDefault: [63.43, 60],
-            titleDirections: [[-SQRT3_OVER_2, -1/2], [ -1, 0 ]]
+            // Vertical right 
+            axisCenters: [[50, 50], [0, 100]],
+            rotDefaults: [63.43, 60, 0],
+            titleDirections: [[-SQRT3_OVER_2, -1/2], [-1, 0], [0, -1]]
         }, {
             // Vertical left
-            axisCenter: [0, 50],
-            rotDefault: [-63.43, -60],
-            titleDirections: [[SQRT3_OVER_2, -1/2], [1, 0]]
-        }] as const;
+            axisCenters: [[0, 50], [0, 0]],
+            rotDefaults: [-63.43, -60, 0],
+            titleDirections: [[SQRT3_OVER_2, -1/2], [1, 0], [0, 1]]
+        }];
 
         chart.ternaryAxis = axes.map(({
-            axisCenter,
-            rotDefault,
+            axisCenters,
+            rotDefaults,
             titleDirections
         }, i) => {
             const userAxes = chart.options.ternaryAxis || [],
                 axis = merge(defaultTernary, userAxes[i] ?? {});
+            let rotation: number,
+                axisCenter: [number, number];
+                
+            if (axis.title.stickToCorner) {
+                //axis.title.marginXOnly = false;
+                axisCenter = axisCenters[1];
+                rotation = rotDefaults[2];
+            } else {
+                axisCenter = axisCenters[0];
+
+                const isCartesian =
+                    chartOptions.ternaryProjection === 'cartesian';
+
+                rotation = pick(
+                    userAxes[i]?.title?.rotation,
+                    rotDefaults[isCartesian ? 0 : 1]
+                )
+            }
 
             axis.axisCenter = axisCenter;
 
-            const isCartesian = chartOptions.ternaryProjection === 'cartesian';
-
-            axis.title.style.rotation = pick(
-                userAxes[i]?.title?.rotation,
-                rotDefault[isCartesian ? 0 : 1]
-            );
+            axis.title.style.rotation = rotation;
 
             axis.title.titleDirection =
-                titleDirections[axis.title.marginXOnly ? 1 : 0];
+                titleDirections[axis.title.stickToCorner ?
+                    2 :
+                    (axis.title.marginXOnly ? 1 : 0)];
 
             axis.gridlineTicks = {};
             axis.gridlineMinorTicks = {};
@@ -274,16 +303,24 @@ export default function TernaryPlotPlugin(H: any): void {
                 }
 
                 const [x0, y0] = chart.toPerspective(axis.axisCenter),
-                    [dirX, dirY] = title.titleDirection;
+                    [dirX, dirY] = title.titleDirection,
+                    bbox = axis.titleElem.getBBox();
 
                 // The pixel distance between the axis line and the title.
                 const titleMargin = pick(title.margin, 50);
 
+                // Move 2 bottom titles down to avoid overlapping
+                // with gridLines
+                let offsetY = 0;
+                if (i !== 1) {
+                    offsetY = bbox.height;
+                }
+
                 // TODO: Add option for direction alignment
                 // TODO: Consider moving AXES values into methods
                 axis.titleElem.translate(
-                    x0 + (-titleMargin * dirX),
-                    y0 + (titleMargin * dirY) + chart.plotTop
+                    x0 + (-titleMargin * dirX) + chart.plotLeft,
+                    y0 + (titleMargin * dirY) + chart.plotTop + offsetY
                 );
             }
 
@@ -349,7 +386,7 @@ export default function TernaryPlotPlugin(H: any): void {
             x = pick(point.x, point[0]) * width / sumTo,
             y = pick(point.y, point[1]) * width / sumTo,
             // Center within plot area
-            centerX = (chart.plotWidth - width) / 2 + chart.plotLeft,
+            centerX = (chart.plotWidth - width) / 2,
             centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
 
         return [
@@ -442,13 +479,12 @@ export default function TernaryPlotPlugin(H: any): void {
 
                     const perspectivePoint = chart.toPerspective(point, true);
 
-                    plotX = perspectivePoint[0] - chart.plotLeft;
-                    point.plotX = plotX;
+                    point.plotX = perspectivePoint[0];
                     point.plotY = perspectivePoint[1];
 
                     point.shapeArgs = {
-                        x: point.plotX - chart.plotLeft,
-                        y: point.plotY - chart.plotTop
+                        x: point.plotX,
+                        y: point.plotY
                     };
 
                     // Do we need it? Perhaps for the future

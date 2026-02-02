@@ -219,13 +219,15 @@ Highcharts.chart('container', {
             //     return acc;
             // }, {});
 
-            const labelsEnabled = true;
+            const labelsEnabled = false;
+            const margin = 10;
             Highcharts.chart('chart', {
 
                 chart: {
                     ternary: true,
+                    //spacingLeft: 180,
                     //sumTo: 100,
-                    //ternarySpacing: 50,
+                    ternarySpacing: 70,
                     //ternaryProjection: 'equilateral',
                     // 'cartesian'
                     height: 600,
@@ -263,13 +265,15 @@ Highcharts.chart('container', {
                     tickInterval: 10,
                     title: {
                         stickToCorner: true,
+                        margin: margin,
                         useHTML: true,
                         //text: 'Higher renewables share (%)',
-                        text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaaaaaaa renewables share (%)',
+                        //text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaaaaaaa renewables share (%)',
+                        text: 'right Snow',
                         //rotation: 0,
                         style: {
                             fontWeight: '500',
-                            fontSize: '35px'
+                            //fontSize: '35px'
                         }
                     },
                     labels: {
@@ -282,10 +286,12 @@ Highcharts.chart('container', {
                     tickInterval: 10,
                     title: {
                         //marginXOnly: true,
-                        //text: 'Higher ossil share (%)',
-                        text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaa fossil share (%)',
+                        //text: 'Higher fossil share (%)',
+                        //text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaa fossil share (%)',
+                        text: 'middle Daenerys',
+                        stickToCorner: true,
                         //rotation: 0,
-                        //margin: 50,
+                        margin: margin,
                         style: {
                             fontWeight: '500'
                         }
@@ -300,8 +306,11 @@ Highcharts.chart('container', {
                     tickInterval: 10,
                     title: {
                         //text: 'Higher nuclear share (%)',
-                        text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaa nuclear share (%)',
+                        //text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaa nuclear share (%)',
+                        text: 'left Cersei',
+                        stickToCorner: true,
                         //rotation: 0,
+                        margin: margin,
                         style: {
                             fontWeight: '500',
                         }
@@ -331,7 +340,7 @@ Highcharts.chart('container', {
                 //         tooltip: {
                 //             pointFormat: '<b>{point.entity} ({point.year}):</b><br/>' +
                 //                 'Renewables share: {point.x}%<br/>' +
-                //                 'Ossil: {point.y}%<br/>' +
+                //                 'Fossil: {point.y}%<br/>' +
                 //                 'Nuclear: {point.z}%'
                 //         },
                 //         marker: {
@@ -346,9 +355,9 @@ Highcharts.chart('container', {
                     type: 'ternaryscatter',
                     keys: ['x', 'y', 'z', 'color'],
                     data: [
-                        [100, 0, 0, 'red'],
-                        [0, 100, 0, 'green'],
-                        [0, 0, 100, 'blue'],
+                        // [100, 0, 0, 'red'],
+                        // [0, 100, 0, 'green'],
+                        // [0, 0, 100, 'blue'],
                         [50, 25, 25, 'orange'],
                         [25, 50, 25, 'purple'],
                         [25, 25, 50, 'cyan'],

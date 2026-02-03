@@ -42,60 +42,95 @@ export default function TernaryPlotPlugin(H: any): void {
     } as const;
 
     // Render ternary axis gridlines. Keep it on chart for easy access
-    Chart.prototype.getGrids = function (
+    Chart.prototype.getGridLines = function (
         this: any,
         index: number,
         width: number,
         interval: number,
-        stroke: string
+        stroke: string,
+        axis?: any
     ) {
-        const  ticks: Record<string, any> = {};
+        const gridLines: Record<string, any> = {};
 
-        if (!interval || interval <= 0) return ticks;
+        if (!interval || interval <= 0) return gridLines;
 
         const chart = this,
             sumTo = chart.options.chart.sumTo;
 
-        for (let cursor = 0; cursor <= sumTo; cursor += interval) {
-            let pos: any,
-                posEnd: any,
-                tick: [number, number];
+        let p1: [number, number],
+            p2: [number, number];
 
-            switch (index) {
-                case 1:
-                    pos = chart.toPerspective([0, cursor], true);
-                    posEnd = chart.toPerspective([sumTo - cursor, cursor], true);
-                    tick = [posEnd[0] + 4, posEnd[1]];
-                    break;
-                case 2:
-                    pos = chart.toPerspective([cursor, 0], true);
-                    posEnd = chart.toPerspective([0, cursor], true);
-                    tick = [posEnd[0] - 2, posEnd[1] - 4];
-                    break;
-                default:
-                    pos = chart.toPerspective([cursor, sumTo - cursor], true);
-                    posEnd = chart.toPerspective([cursor, 0], true);
-                    tick = [posEnd[0] - 2, posEnd[1] + 4];
+        if (axis.drawMedian) {
+            const mediansAndSides = [
+                // Medians: vertex -> midpoint of opposite side
+                [[100, 0], [0, 50]],
+                [[0, 100], [50, 0]],
+                [[0, 0,], [50, 50]],
+                // Sides
+                [[0, 100], [0, 0]],
+                [[0, 0], [100, 0]],
+                [[100, 0], [0, 100]]
+            ];
+
+            for (let i = 0; i < 2; i++) {
+                let [from, to] = mediansAndSides[index + i * 3];
+
+                p1 = chart.toPerspective(from);
+                p2 = chart.toPerspective(to);
+
+                gridLines[i] = chart.renderer
+                    .path([
+                        'M', chart.plotLeft + p1[0], p1[1] + chart.plotTop,
+                        'L', chart.plotLeft + p2[0], p2[1] + chart.plotTop
+                    ])
+                    .attr({
+                        'stroke-width': width,
+                        stroke,
+                        zIndex: 2
+                    })
+                    .add();
             }
+        } else {
+            for (let cursor = 0; cursor <= sumTo; cursor += interval) {
+                let tick: [number, number];
 
-            const { plotLeft, plotTop } = chart;
+                // TODO: parameterize tick length
+                switch (index) {
+                    case 1:
+                        p1 = chart.toPerspective([0, cursor], true);
+                        p2 = chart.toPerspective([sumTo - cursor, cursor], true);
+                        tick = [p2[0] + 4, p2[1]];
+                        break;
+                    case 2:
+                        p1 = chart.toPerspective([cursor, 0], true);
+                        p2 = chart.toPerspective([0, cursor], true);
+                        tick = [p2[0] - 2, p2[1] - 4];
+                        break;
+                    default:
+                        p1 = chart.toPerspective([cursor, sumTo - cursor], true);
+                        p2 = chart.toPerspective([cursor, 0], true);
+                        tick = [p2[0] - 2, p2[1] + 4];
+                }
 
-            ticks[cursor] = chart.renderer
-                .path()
-                .attr({
-                    'stroke-width': width,
-                    stroke,
-                    zIndex: 2,
-                    d: [
-                        'M', plotLeft + pos[0],    plotTop + pos[1],
-                        'L', plotLeft + posEnd[0], plotTop + posEnd[1],
-                        'L', plotLeft + tick[0],   plotTop + tick[1]
-                    ]
-                })
-                .add();
+                const { plotLeft, plotTop } = chart;
+
+                gridLines[cursor] = chart.renderer
+                    .path()
+                    .attr({
+                        'stroke-width': width,
+                        stroke,
+                        zIndex: 2,
+                        d: [
+                            'M', plotLeft + p1[0],    plotTop + p1[1],
+                            'L', plotLeft + p2[0], plotTop + p2[1],
+                            'L', plotLeft + tick[0],   plotTop + tick[1]
+                        ]
+                    })
+                    .add();
+            }
         }
 
-        return ticks;
+        return gridLines;
     };
 
     // Render ternary axis labels. Keep it on chart for easy access
@@ -331,16 +366,19 @@ export default function TernaryPlotPlugin(H: any): void {
 
             // Recreate
             if (axis.gridLineWidth >= 1) {
-                axis.gridlineTicks = chart.getGrids(
+                // TODO: simplify getGridLines parameters
+                axis.gridlineTicks = chart.getGridLines(
                     i,
                     axis.gridLineWidth,
                     axis.tickInterval,
-                    axis.gridLineColor
+                    axis.gridLineColor,
+                    axis
                 );
             }
 
+            // TODO: test minor gridlines with drawMedian
             if (axis.minorGridLineWidth >= 1) {
-                axis.minorGridlineTicks = chart.getGrids(
+                axis.minorGridlineTicks = chart.getGridLines(
                     i,
                     axis.minorGridLineWidth,
                     axis.minorTickInterval,

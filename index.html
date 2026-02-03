@@ -263,6 +263,7 @@ Highcharts.chart('container', {
 
                 ternaryAxis: [{
                     tickInterval: 10,
+                    drawMedian: true,
                     title: {
                         stickToCorner: true,
                         margin: margin,
@@ -284,6 +285,7 @@ Highcharts.chart('container', {
                     }
                 }, {
                     tickInterval: 10,
+                    drawMedian: true,
                     title: {
                         //marginXOnly: true,
                         //text: 'Higher fossil share (%)',
@@ -304,6 +306,7 @@ Highcharts.chart('container', {
                     }
                 }, {
                     tickInterval: 10,
+                    drawMedian: true,
                     title: {
                         //text: 'Higher nuclear share (%)',
                         //text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaa nuclear share (%)',
@@ -355,9 +358,9 @@ Highcharts.chart('container', {
                     type: 'ternaryscatter',
                     keys: ['x', 'y', 'z', 'color'],
                     data: [
-                        // [100, 0, 0, 'red'],
-                        // [0, 100, 0, 'green'],
-                        // [0, 0, 100, 'blue'],
+                        [100, 0, 0, 'red'],
+                        [0, 100, 0, 'green'],
+                        [0, 0, 100, 'blue'],
                         [50, 25, 25, 'orange'],
                         [25, 50, 25, 'purple'],
                         [25, 25, 50, 'cyan'],

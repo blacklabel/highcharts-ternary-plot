@@ -427,6 +427,7 @@ export default function TernaryPlotPlugin(H: any): void {
             centerX = (chart.plotWidth - width) / 2,
             centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
 
+        // TODO: consider parameterizing the triangle's height (from options)
         return [
             x + y / 2 + centerX,
             chart.plotHeight - y * projectionHeightRatio - centerY
@@ -465,6 +466,53 @@ export default function TernaryPlotPlugin(H: any): void {
     //              /60°          /60°   |                       60°\
     //             /_____________/_______|___________________________\--- 
     //     (0, 0)  |      x      |  y/2  |                             (100, 0)
+
+
+    H.addEvent(Chart, 'afterIsInsidePlot', function (this: any, e: any) {
+        const chart = this;
+
+        if (!chart.options.chart.ternary) {
+            return;
+        }
+
+        // Barycentric technique to determine if point is inside triangle
+        function pointInTriangle(
+            px: number, py: number,
+            ax: number, ay: number,
+            bx: number, by: number,
+            cx: number, cy: number
+        ): boolean {
+            const v0x = cx - ax, v0y = cy - ay,
+                v1x = bx - ax, v1y = by - ay,
+                v2x = px - ax, v2y = py - ay,
+                dot00 = v0x * v0x + v0y * v0y,
+                dot01 = v0x * v1x + v0y * v1y,
+                dot02 = v0x * v2x + v0y * v2y,
+                dot11 = v1x * v1x + v1y * v1y,
+                dot12 = v1x * v2x + v1y * v2y,
+                invDenom = 1 / (dot00 * dot11 - dot01 * dot01),
+                u = (dot11 * dot02 - dot01 * dot12) * invDenom,
+                v = (dot00 * dot12 - dot01 * dot02) * invDenom,
+                // Allow points very close to the edge
+                // (floating point precision)
+                eps = 1e-3;
+
+            return u >= -eps && v >= -eps && u + v <= 1 + eps;
+        }
+
+        const [Ax, Ay] = chart.toPerspective([0, 0, 100]),
+            [Bx, By] = chart.toPerspective([100, 0, 0]),
+            [Cx, Cy] = chart.toPerspective([0, 100, 0]),
+            px = e.x,
+            py = e.y;
+
+        e.isInsidePlot = pointInTriangle(
+            px, py,
+            Ax, Ay,
+            Bx, By,
+            Cx, Cy
+        );
+    });
 
     // Define the new ternaryscatter series type
     seriesType(

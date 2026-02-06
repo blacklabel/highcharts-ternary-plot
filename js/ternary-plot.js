@@ -353,6 +353,50 @@ function TernaryPlotPlugin(H) {
         const [Ax, Ay] = chart.toPerspective([0, 0, 100]), [Bx, By] = chart.toPerspective([100, 0, 0]), [Cx, Cy] = chart.toPerspective([0, 100, 0]), px = e.x, py = e.y;
         e.isInsidePlot = pointInTriangle(px, py, Ax, Ay, Bx, By, Cx, Cy);
     });
+    // Translate data points from ternary x,y to plotX,plotY
+    function translate() {
+        this.generatePoints();
+        this.xAxis = {
+            isRadial: false,
+            options: {
+                type: 'linear'
+            }
+        };
+        const series = this, chart = series.chart, xAxis = series.xAxis, points = series.points, dataLength = points.length, pointPlacement = series.pointPlacementToXValue(), // #7860
+        dynamicallyPlaced = Boolean(pointPlacement);
+        let i, plotX, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
+        // Translate each point
+        for (i = 0; i < dataLength; i++) {
+            const point = points[i], xValue = point.x;
+            point.yBottom = void 0;
+            const perspectivePoint = chart.toPerspective(point, true);
+            point.plotX = perspectivePoint[0];
+            point.plotY = perspectivePoint[1];
+            point.shapeArgs = {
+                x: point.plotX,
+                y: point.plotY
+            };
+            // Do we need it? Perhaps for the future
+            //point.isInside = this.isPointInside(point);
+            point.isInside = true;
+            point.tooltipPos = [point.plotX, point.plotY];
+            // Set client related positions for mouse tracking
+            point.clientX = dynamicallyPlaced ?
+                correctFloat(xAxis.translate(xValue, false, false, false, true, pointPlacement)) :
+                plotX; // #1514, #5383, #5518
+            // Determine auto enabling of markers (#3635, #5099)
+            if (!point.isNull && point.visible !== false) {
+                if (typeof lastPlotX !== 'undefined') {
+                    closestPointRangePx = Math.min(closestPointRangePx, Math.abs(plotX - lastPlotX));
+                }
+                lastPlotX = plotX;
+            }
+            // Zones disabled for now
+            point.zone = void 0;
+        }
+        series.closestPointRangePx = closestPointRangePx;
+        fireEvent(this, 'afterTranslate');
+    }
     function getTernaryColor(x, y, z, alpha = 0.35) {
         // Parse color input → { r, g, b }
         function parseColor(color) {
@@ -412,6 +456,25 @@ function TernaryPlotPlugin(H) {
         attr.stroke = this.getTernaryColor(x, y, z, 1);
         return attr;
     }
+    // Return the plot box of the ternary plot area
+    function getPlotBox(name) {
+        const { plotLeft, plotTop } = this.chart, params = {
+            name,
+            scale: 1,
+            translateX: plotLeft,
+            translateY: plotTop
+        };
+        fireEvent(this, 'getPlotBox', params);
+        return {
+            translateX: plotLeft,
+            translateY: plotTop,
+            rotation: 0,
+            rotationOriginX: 0,
+            rotationOriginY: 0,
+            scaleX: 1,
+            scaleY: 1
+        };
+    }
     // Define the new ternaryscatter series type
     seriesType('ternaryscatter', 'scatter', {
         tooltip: {
@@ -426,72 +489,9 @@ function TernaryPlotPlugin(H) {
         zoneAxis: '',
         pointArrayMap: ['y', 'z'],
         parallelArrays: ['x', 'y', 'z'],
-        // Ovverride Series prorotype methods
-        //translate: translate,
-        // Translate data points from ternary x,y to plotX,plotY
-        translate() {
-            this.generatePoints();
-            this.xAxis = {
-                isRadial: false,
-                options: {
-                    type: 'linear'
-                }
-            };
-            const series = this, chart = series.chart, xAxis = series.xAxis, points = series.points, dataLength = points.length, pointPlacement = series.pointPlacementToXValue(), // #7860
-            dynamicallyPlaced = Boolean(pointPlacement);
-            let i, plotX, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
-            // Translate each point
-            for (i = 0; i < dataLength; i++) {
-                const point = points[i], xValue = point.x;
-                point.yBottom = void 0;
-                const perspectivePoint = chart.toPerspective(point, true);
-                point.plotX = perspectivePoint[0];
-                point.plotY = perspectivePoint[1];
-                point.shapeArgs = {
-                    x: point.plotX,
-                    y: point.plotY
-                };
-                // Do we need it? Perhaps for the future
-                //point.isInside = this.isPointInside(point);
-                point.isInside = true;
-                point.tooltipPos = [point.plotX, point.plotY];
-                // Set client related positions for mouse tracking
-                point.clientX = dynamicallyPlaced ?
-                    correctFloat(xAxis.translate(xValue, false, false, false, true, pointPlacement)) :
-                    plotX; // #1514, #5383, #5518
-                // Determine auto enabling of markers (#3635, #5099)
-                if (!point.isNull && point.visible !== false) {
-                    if (typeof lastPlotX !== 'undefined') {
-                        closestPointRangePx = Math.min(closestPointRangePx, Math.abs(plotX - lastPlotX));
-                    }
-                    lastPlotX = plotX;
-                }
-                // Zones disabled for now
-                point.zone = void 0;
-            }
-            series.closestPointRangePx = closestPointRangePx;
-            fireEvent(this, 'afterTranslate');
-        },
-        //getPlotBox: getPlotBox,
-        // Return the plot box of the ternary plot area
-        getPlotBox(name) {
-            const { plotLeft, plotTop } = this.chart, params = {
-                name,
-                scale: 1,
-                translateX: plotLeft,
-                translateY: plotTop
-            };
-            fireEvent(this, 'getPlotBox', params);
-            return {
-                translateX: plotLeft,
-                translateY: plotTop,
-                rotation: 0,
-                rotationOriginX: 0,
-                rotationOriginY: 0,
-                scaleX: 1,
-                scaleY: 1
-            };
-        },
+        // Override Series prorotype methods
+        translate: translate,
+        getPlotBox: getPlotBox,
         getTernaryColor: getTernaryColor,
         pointAttribs: pointAttribs
     });

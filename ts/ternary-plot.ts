@@ -10,6 +10,8 @@ export default function TernaryPlotPlugin(H: any): void {
         pick,
         correctFloat,
         fireEvent,
+        isArray,
+        isNumber,
         seriesType,
         wrap,
         Chart,
@@ -495,7 +497,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 v = (dot00 * dot12 - dot01 * dot02) * invDenom,
                 // Allow points very close to the edge
                 // (floating point precision)
-                eps = 1e-3;
+                eps = 0.01;
 
             return u >= -eps && v >= -eps && u + v <= 1 + eps;
         }
@@ -513,6 +515,104 @@ export default function TernaryPlotPlugin(H: any): void {
             Cx, Cy
         );
     });
+
+    function getTernaryColor(
+        this: any,
+        x: number,
+        y: number,
+        z: number,
+        alpha = 0.35
+    ): string {
+        // Parse color input → { r, g, b }
+        function parseColor(color: string) {
+            // HEX
+            if (color[0] === '#') {
+                const hex = color.replace('#', '');
+                const bigint = parseInt(hex.length === 3
+                    ? hex.split('').map(c => c + c).join('')
+                    : hex, 16);
+
+                return {
+                    r: (bigint >> 16) & 255,
+                    g: (bigint >> 8) & 255,
+                    b: bigint & 255
+                };
+            }
+
+            // rgb / rgba
+            const m = color.match(
+                /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/
+            );
+            if (m) {
+                if (m[4] !== undefined) {
+                    alpha = Number(m[4]);
+                }
+                return {
+                    r: Number(m[1]),
+                    g: Number(m[2]),
+                    b: Number(m[3])
+                };
+            }
+
+            return null;
+        }
+
+        const colors = this.options.ternaryColors;
+
+        // Resolve base colors: [{ r, g, b }, ...]
+        const baseColors = [0, 1, 2].map(i => {
+            if (isArray(colors) && colors[i]) {
+                return parseColor(colors[i]);
+            }
+        });
+
+        // Alpha from 4th element if provided
+        if (isArray(colors) && isNumber(colors[3])) {
+            alpha = colors[3];
+        }
+
+        const sum = 100,
+            wa = x / sum,
+            wb = y / sum,
+            wc = z / sum,
+            r = Math.round(
+                baseColors[0].r * wa +
+                baseColors[1].r * wb +
+                baseColors[2].r * wc
+            ),
+            g = Math.round(
+                baseColors[0].g * wa +
+                baseColors[1].g * wb +
+                baseColors[2].g * wc
+            ),
+            b = Math.round(
+                baseColors[0].b * wa +
+                baseColors[1].b * wb +
+                baseColors[2].b * wc
+            );
+
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function pointAttribs(this: any, point: any, state: any) {
+        const attr = Series.prototype.pointAttribs.call(
+            this,
+            point,
+            state
+        );
+
+        if (point.isNull || !this.options.ternaryColors) {
+            return attr;
+        }
+
+        const [x, y, z] = [point.x, point.y, point.z];
+
+        attr.fill = this.getTernaryColor(x, y, z);
+
+        attr.stroke = this.getTernaryColor(x, y, z, 1);
+
+        return attr;
+    }
 
     // Define the new ternaryscatter series type
     seriesType(
@@ -532,8 +632,10 @@ export default function TernaryPlotPlugin(H: any): void {
             zoneAxis: '',
             pointArrayMap: ['y', 'z'],
             parallelArrays: ['x', 'y', 'z'],
+            // Ovverride Series prorotype methods
+            //translate: translate,
             // Translate data points from ternary x,y to plotX,plotY
-            translate() {
+            translate(this: any) {
                 this.generatePoints();
 
                 this.xAxis = {
@@ -596,10 +698,10 @@ export default function TernaryPlotPlugin(H: any): void {
                     // Determine auto enabling of markers (#3635, #5099)
                     if (!point.isNull && point.visible !== false) {
                         if (typeof lastPlotX !== 'undefined') {
-                        closestPointRangePx = Math.min(
-                            closestPointRangePx, 
-                            Math.abs(plotX - lastPlotX)
-                        );
+                            closestPointRangePx = Math.min(
+                                closestPointRangePx, 
+                                Math.abs(plotX - lastPlotX)
+                            );
                         }
 
                         lastPlotX = plotX;
@@ -613,16 +715,16 @@ export default function TernaryPlotPlugin(H: any): void {
 
                 fireEvent(this, 'afterTranslate');
             },
-            // Override to return the plot box of the ternary plot area
+            //getPlotBox: getPlotBox,
+            // Return the plot box of the ternary plot area
             getPlotBox(this: any, name: any) {
-                const { plotLeft, plotTop } = this.chart;
-
-                const params = {
-                    name,
-                    scale: 1,
-                    translateX: plotLeft,
-                    translateY: plotTop
-                };
+                const { plotLeft, plotTop } = this.chart,
+                    params = {
+                        name,
+                        scale: 1,
+                        translateX: plotLeft,
+                        translateY: plotTop
+                    };
 
                 fireEvent(this, 'getPlotBox', params);
 
@@ -635,7 +737,9 @@ export default function TernaryPlotPlugin(H: any): void {
                     scaleX: 1,
                     scaleY: 1
                 };
-            }
+            },
+            getTernaryColor: getTernaryColor,
+            pointAttribs: pointAttribs
         }
     );
 }

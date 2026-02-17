@@ -45,38 +45,47 @@ function TernaryPlotPlugin(H) {
         }
     };
     // Render ternary axis gridlines. Keep it on chart for easy access
-    Chart.prototype.getGridLines = function (index, width, interval, stroke, axis) {
+    Chart.prototype.getGridLines = function (axis, index) {
         const gridLines = {};
+        const interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return gridLines;
         const chart = this, sumTo = chart.options.chart.sumTo;
         let p1, p2;
+        function renderLine(path, isMedian) {
+            // TODO: take from options
+            const medianColor = axis.medianColor, width = axis.gridLineWidth, stroke = axis.gridLineColor;
+            return chart.renderer
+                .path(path)
+                .attr({
+                'stroke-width': width,
+                // TODO: for medians add dashStyle, width etc. from options
+                stroke: isMedian ? medianColor : stroke,
+                zIndex: 2
+            })
+                .add();
+        }
         if (axis.drawMedian) {
-            const mediansAndSides = [
-                // Medians: vertex -> midpoint of opposite side
-                [[100, 0], [0, 50]],
-                [[0, 100], [50, 0]],
-                [[0, 0,], [50, 50]],
+            const sidesAndMedians = [
                 // Sides
                 [[0, 100], [0, 0]],
                 [[0, 0], [100, 0]],
-                [[100, 0], [0, 100]]
+                [[100, 0], [0, 100]],
+                // Medians: vertex -> midpoint of opposite side
+                [[100, 0], [0, 50]],
+                [[0, 100], [50, 0]],
+                [[0, 0,], [50, 50]]
             ];
             for (let i = 0; i < 2; i++) {
-                let [from, to] = mediansAndSides[index + i * 3];
+                let [from, to] = sidesAndMedians[index + i * 3];
                 p1 = chart.toPerspective(from);
                 p2 = chart.toPerspective(to);
-                gridLines[i] = chart.renderer
-                    .path([
+                const path = [
                     'M', chart.plotLeft + p1[0], p1[1] + chart.plotTop,
                     'L', chart.plotLeft + p2[0], p2[1] + chart.plotTop
-                ])
-                    .attr({
-                    'stroke-width': width,
-                    stroke,
-                    zIndex: 2
-                })
-                    .add();
+                ];
+                const isMedian = i % 2 === 1;
+                gridLines[i] = renderLine(path, isMedian);
             }
         }
         else {
@@ -99,27 +108,19 @@ function TernaryPlotPlugin(H) {
                         p2 = chart.toPerspective([cursor, 0], true);
                         tick = [p2[0] - 2, p2[1] + 4];
                 }
-                const { plotLeft, plotTop } = chart;
-                gridLines[cursor] = chart.renderer
-                    .path()
-                    .attr({
-                    'stroke-width': width,
-                    stroke,
-                    zIndex: 2,
-                    d: [
-                        'M', plotLeft + p1[0], plotTop + p1[1],
-                        'L', plotLeft + p2[0], plotTop + p2[1],
-                        'L', plotLeft + tick[0], plotTop + tick[1]
-                    ]
-                })
-                    .add();
+                const { plotLeft, plotTop } = chart, path = [
+                    'M', plotLeft + p1[0], plotTop + p1[1],
+                    'L', plotLeft + p2[0], plotTop + p2[1],
+                    'L', plotLeft + tick[0], plotTop + tick[1]
+                ];
+                gridLines[cursor] = renderLine(path);
             }
         }
         return gridLines;
     };
     // Render ternary axis labels. Keep it on chart for easy access
-    Chart.prototype.getLabels = function (axis, index, interval) {
-        const labels = {};
+    Chart.prototype.getLabels = function (axis, index) {
+        const labels = {}, interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return labels;
         const chart = this, sumTo = chart.options.chart.sumTo;
@@ -183,7 +184,6 @@ function TernaryPlotPlugin(H) {
         if (!chartOptions.ternary)
             return;
         chart.ternarySpacing = chartOptions.ternarySpacing;
-        // przerzucić to do const zmiennych w if-ie zależnym od opcji
         const axes = [{
                 // Horizontal
                 axisCenters: [[50, 0], [100, 0]],
@@ -213,8 +213,8 @@ function TernaryPlotPlugin(H) {
             }
             else {
                 axisCenter = axisCenters[0];
-                const isCartesian = chartOptions.ternaryProjection === 'cartesian';
-                rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotDefaults[isCartesian ? 0 : 1]);
+                const isLinear = chartOptions.ternaryProjection === 'linear';
+                rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotDefaults[isLinear ? 0 : 1]);
             }
             axis.axisCenter = axisCenter;
             axis.title.style.rotation = rotation;
@@ -250,14 +250,17 @@ function TernaryPlotPlugin(H) {
                         .attr(title.style)
                         .add();
                 }
-                const [x0, y0] = chart.toPerspective(axis.axisCenter), [dirX, dirY] = title.titleDirection, bbox = axis.titleElem.getBBox();
+                const [x0, y0] = chart.toPerspective(axis.axisCenter), [dirX, dirY] = title.titleDirection, 
                 // The pixel distance between the axis line and the title.
-                const titleMargin = pick(title.margin, 50);
-                // Move 2 bottom titles down to avoid overlapping
+                titleMargin = pick(title.margin, 50);
+                // Move one or two bottom titles down to avoid overlapping
                 // with gridLines
                 let offsetY = 0;
-                if (i !== 1) {
-                    offsetY = bbox.height;
+                if (i !== 1 && (title.stickToCorner || i === 0)) {
+                    // Font metrics baseline is better than bbox.height
+                    // for better baseline alignment
+                    const fm = chart.renderer.fontMetrics(axis.titleElem);
+                    offsetY = fm.b - 5;
                 }
                 // TODO: Add option for direction alignment
                 // TODO: Consider moving AXES values into methods
@@ -269,26 +272,23 @@ function TernaryPlotPlugin(H) {
             destroyCollection(axis.minorGridlineTicks);
             // Recreate
             if (axis.gridLineWidth >= 1) {
-                // TODO: simplify getGridLines parameters
-                axis.gridlineTicks = chart.getGridLines(i, axis.gridLineWidth, axis.tickInterval, axis.gridLineColor, axis);
+                // TODO: consider having the getGridLines method on axis class
+                axis.gridlineTicks = chart.getGridLines(axis, i);
             }
             // TODO: test minor gridlines with drawMedian
             if (axis.minorGridLineWidth >= 1) {
-                axis.minorGridlineTicks = chart.getGridLines(i, axis.minorGridLineWidth, axis.minorTickInterval, axis.minorGridLineColor);
+                axis.minorGridlineTicks = chart.getGridLines(axis, i);
             }
             if (axis.labels.enabled !== false) {
-                axis.gridlineLabels = chart.getLabels(axis, i, axis.tickInterval);
+                axis.gridlineLabels = chart.getLabels(axis, i);
             }
         });
     });
-    // chart: {
-    //     ternaryProjection: 'cartesian' | 'equilateral'
-    // }
     // Convert ternary (x, y) to perspective (plotX, plotY)
     Chart.prototype.toPerspective = function (point, useSumTo) {
-        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternarySpacing * 2, isCartesian = chartOptions.ternaryProjection === 'cartesian', 
-        // Either equilateral or cartesian projection
-        projectionHeightRatio = isCartesian ? 1 : SQRT3_OVER_2, 
+        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternarySpacing * 2, isLinear = chartOptions.ternaryProjection === 'linear', 
+        // Either equilateral or linear projection
+        projectionHeightRatio = isLinear ? 1 : SQRT3_OVER_2, 
         // Determine the length of the triangle's
         // base based on the available space
         baseWidth = Math.min(chart.plotWidth, chart.plotHeight / projectionHeightRatio), 
@@ -397,7 +397,7 @@ function TernaryPlotPlugin(H) {
         series.closestPointRangePx = closestPointRangePx;
         fireEvent(this, 'afterTranslate');
     }
-    function getTernaryColor(x, y, z, alpha = 0.35) {
+    function getTernaryColor(x, y, z, alpha) {
         // Parse color input → { r, g, b }
         function parseColor(color) {
             // HEX
@@ -415,7 +415,7 @@ function TernaryPlotPlugin(H) {
             // rgb / rgba
             const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
             if (m) {
-                if (m[4] !== undefined) {
+                if (!alpha && m[4] !== undefined) {
                     alpha = Number(m[4]);
                 }
                 return {
@@ -434,7 +434,7 @@ function TernaryPlotPlugin(H) {
             }
         });
         // Alpha from 4th element if provided
-        if (isArray(colors) && isNumber(colors[3])) {
+        if (!alpha && isArray(colors) && isNumber(colors[3])) {
             alpha = colors[3];
         }
         const sum = 100, wa = x / sum, wb = y / sum, wc = z / sum, r = Math.round(baseColors[0].r * wa +
@@ -444,7 +444,7 @@ function TernaryPlotPlugin(H) {
             baseColors[2].g * wc), b = Math.round(baseColors[0].b * wa +
             baseColors[1].b * wb +
             baseColors[2].b * wc);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        return `rgba(${r}, ${g}, ${b}, ${alpha || 1})`;
     }
     function pointAttribs(point, state) {
         const attr = Series.prototype.pointAttribs.call(this, point, state);
@@ -453,7 +453,7 @@ function TernaryPlotPlugin(H) {
         }
         const [x, y, z] = [point.x, point.y, point.z];
         attr.fill = this.getTernaryColor(x, y, z);
-        attr.stroke = this.getTernaryColor(x, y, z, 1);
+        attr.stroke = point.ternaryColor = this.getTernaryColor(x, y, z, 1);
         return attr;
     }
     // Return the plot box of the ternary plot area

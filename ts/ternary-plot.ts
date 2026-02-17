@@ -578,6 +578,14 @@ export default function TernaryPlotPlugin(H: any): void {
 
             // Zones disabled for now
             point.zone = void 0;
+
+            if (
+                !point.marker.radius &&
+                series.options.minR &&
+                series.options.maxR
+            ) {
+                point.marker.radius = point.getRadius();
+            }
         }
 
         series.closestPointRangePx = closestPointRangePx;
@@ -678,7 +686,9 @@ export default function TernaryPlotPlugin(H: any): void {
 
         attr.fill = this.getTernaryColor(x, y, z);
 
-        attr.stroke = point.ternaryColor = this.getTernaryColor(x, y, z, 1);
+        point.ternaryColor = this.getTernaryColor(x, y, z, 1);
+
+        attr.stroke = point.marker.lineColor || point.ternaryColor;
 
         return attr;
     }
@@ -706,16 +716,37 @@ export default function TernaryPlotPlugin(H: any): void {
         };
     }
 
+    function getRadius(this: any) {
+        const series = this.series,
+            minR = series.options.minR,
+            maxR = series.options.maxR;
+
+        const allValues = series.points.map(p => p.total),
+            minValue = Math.min(...allValues),
+            maxValue = Math.max(...allValues);
+
+        if (maxValue === minValue) return (minR + maxR) / 2;
+
+        const t = (this.total - minValue) / (maxValue - minValue),
+            minA = Math.PI * minR * minR,
+            maxA = Math.PI * maxR * maxR,
+            A = minA + t * (maxA - minA);
+
+        return Math.sqrt(A / Math.PI);
+    }
+
     // Define the new ternaryscatter series type
     seriesType(
         'ternaryscatter',
         'scatter',
+        // Default series options
         {
             tooltip: {
                 headerFormat: '{point.name}<br/>',
                 pointFormat: '{point.x}, {point.y}, {point.z}'
             }
         },
+        // Series proto
         {
             directTouch: true,
             isCartesian: false,
@@ -729,6 +760,10 @@ export default function TernaryPlotPlugin(H: any): void {
             getPlotBox: getPlotBox,
             getTernaryColor: getTernaryColor,
             pointAttribs: pointAttribs
+        },
+        // Point proto
+        {
+            getRadius: getRadius
         }
     );
 }

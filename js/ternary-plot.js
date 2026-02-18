@@ -18,7 +18,7 @@ function TernaryPlotPlugin(H) {
     if (H.ternaryPlotPluginLoaded)
         return;
     H.ternaryPlotPluginLoaded = true;
-    const { addEvent, Chart, correctFloat, defined, fireEvent, isArray, isNumber, merge, pick, Series, seriesType, wrap, } = H;
+    const { addEvent, Chart, clamp, correctFloat, defined, fireEvent, isArray, isNumber, merge, pick, Series, seriesType, wrap, } = H;
     const defaultTernary = {
         tickInterval: 50,
         gridLineWidth: 1,
@@ -89,7 +89,8 @@ function TernaryPlotPlugin(H) {
         else {
             for (let cursor = 0; cursor <= sumTo; cursor += interval) {
                 // TODO: use axis.tickLength instead and other tick options (color, width)
-                const additionalTickLength = axis.additionalTickLength || 0, alpha = chartOptions.ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
+                const additionalTickLength = axis.additionalTickLength || 0, alpha = clamp(chartOptions.ternaryAngle, 1, 89)
+                    * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
                 switch (index) {
                     // First grid (bottom axis)
                     case 0:
@@ -125,7 +126,7 @@ function TernaryPlotPlugin(H) {
         const labels = {}, interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return labels;
-        const chart = this, chartOptions = chart.options.chart, sumTo = chart.options.chart.sumTo, { plotLeft, plotTop } = chart, { align, zIndex, style } = axis.labels, additionalTickLength = axis.additionalTickLength || 0, labelMargin = axis.labels.margin || 0, distance = additionalTickLength + labelMargin, alpha = chartOptions.ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
+        const chart = this, chartOptions = chart.options.chart, sumTo = chart.options.chart.sumTo, { plotLeft, plotTop } = chart, { align, zIndex, style } = axis.labels, additionalTickLength = axis.additionalTickLength || 0, labelMargin = axis.labels.margin || 0, distance = additionalTickLength + labelMargin, alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
         for (let tick = 0; tick <= sumTo; tick += interval) {
             const label = labels[tick] = chart.renderer
                 .text(tick, 0, 0)
@@ -185,7 +186,7 @@ function TernaryPlotPlugin(H) {
         if (!chartOptions.ternary)
             return;
         chart.ternarySpacing = chartOptions.ternarySpacing;
-        const alpha = chartOptions.ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, axes = [{
+        const ternaryAngle = clamp(chartOptions.ternaryAngle, 1, 89), alpha = ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, axes = [{
                 // Horizontal
                 axisCenters: [[50, 0], [100, 0]],
                 rotationSign: 0,
@@ -213,7 +214,7 @@ function TernaryPlotPlugin(H) {
             }
             else {
                 axisCenter = axisCenters[0];
-                rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotationSign * chartOptions.ternaryAngle);
+                rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotationSign * ternaryAngle);
             }
             axis.axisCenter = axisCenter;
             axis.title.style.rotation = rotation;
@@ -283,9 +284,13 @@ function TernaryPlotPlugin(H) {
             }
         });
     });
-    // Convert ternary (x, y) to perspective (plotX, plotY)
+    // Convert ternary (x, y) to plot coordinates
+    // using 2D barycentric projection
     Chart.prototype.toPerspective = function (point, useSumTo) {
-        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternarySpacing * 2, alpha = chartOptions.ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, 
+        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternarySpacing * 2, 
+        // α - angle between the triangle side and the base
+        // (0° < α < 90°)
+        alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, 
         // Determine the length of the triangle's
         // base based on the available space
         baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio), 
@@ -300,40 +305,40 @@ function TernaryPlotPlugin(H) {
             chart.plotHeight - y * heightRatio - centerY
         ];
     };
-    // TODO: change the drawing (ternaryAngle)
-    // Only [x, y] is needed in projection.
+    // 2D barycentric projection
+    //
+    // Only [x, y] is needed for calculations (x + y + z = sumTo)
+    //
     // pH - plotHeight
     //
-    // For the equilateral projection:
-    // (doesn't look like equilateral here but it is)
-    //
-    //                               (50, 100·√3/2)
-    //                                     / \
-    //                                    /   \
-    //                                   /     \
-    //                                  /       \
-    //                                 /         \
-    //                                /           \
-    //                               /             \
-    //                              /               \
-    //                             /                 \
-    //                            /                   \
-    //                           /                     \
-    //                          /                       \
-    //                         /                         \
-    //                        /                           \
-    //                       /                             \
-    //                      /     P(x+y/2, pH-√3/2*y)       \
-    //                     /             ○                   \---
-    //                    /             /|                    \
-    //                   /             / |                     \
-    //                  /             /  |                      \ 
-    //                 /           y /   | √3/2*y                \ y
-    //                /             /    |                        \      
-    //               /             /     |                         \     
-    //              /60°          /60°   |                       60°\
-    //             /_____________/_______|___________________________\--- 
-    //     (0, 0)  |      x      |  y/2  |                             (100, 0)
+    // For any 0 < α < 90
+    //                            (50, 100·tan(α)/2)
+    //                                   / \
+    //                                  /   \
+    //                                 /     \
+    //                                /       \
+    //                               /         \
+    //                              /           \
+    //                             /             \
+    //                            /               \
+    //                           /                 \
+    //                          /                   \
+    //                         /                     \
+    //                        /                       \
+    //                       /                         \
+    //                      /                           \
+    //                     /                             \
+    //                    /     P(x+y/2, pH-(tan(α)/2)*y) \___
+    //                   /             ○                   \
+    //                  /             /|                    \
+    //                 /             / |                     \
+    //                /             /  |                      \ 
+    //               /           y /   | (tan(α)/2)*y          \ y
+    //              /             /    |                        \      
+    //             /             /     |                         \     
+    //            /α            / α    |                       α  \
+    //           /_____________/_______|___________________________\___
+    //   (0, 0)  |      x      |  y/2  |                             (100, 0)
     H.addEvent(Chart, 'afterIsInsidePlot', function (e) {
         const chart = this;
         if (!chart.options.chart.ternary) {

@@ -2,8 +2,6 @@ export default function TernaryPlotPlugin(H: any): void {
     if (H.ternaryPlotPluginLoaded) return;
     H.ternaryPlotPluginLoaded = true;
 
-    const SQRT3_OVER_2 = Math.sqrt(3) / 2;
-
     const {
         addEvent,
         merge,
@@ -35,13 +33,14 @@ export default function TernaryPlotPlugin(H: any): void {
             }
         },
         labels: {
-            align: 'center',
             zIndex: 2,
             style: {
                 fontSize: '0.8em'
             }
         }
     } as const;
+
+    const SQRT3_OVER_2 = Math.sqrt(3) / 2;
 
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (
@@ -105,31 +104,39 @@ export default function TernaryPlotPlugin(H: any): void {
             }
         } else {
             for (let cursor = 0; cursor <= sumTo; cursor += interval) {
-                let tick: [number, number];
+                // TODO: use axis.tickLength instead and other tick options (color, width)
+                const additionalTickLength = axis.additionalTickLength || 0;
 
-                // TODO: parameterize tick length
                 switch (index) {
+                    // First grid (bottom axis)
+                    case 0:
+                        p1 = chart.toPerspective(
+                            [cursor, sumTo - cursor], true
+                        );
+                        p2 = chart.toPerspective([cursor, 0], true);
+                        p2[0] = p2[0] - additionalTickLength / 2;
+                        p2[1] = p2[1] + SQRT3_OVER_2 * additionalTickLength;
+                        break;
+                    // Second grid (right axis)
                     case 1:
                         p1 = chart.toPerspective([0, cursor], true);
-                        p2 = chart.toPerspective([sumTo - cursor, cursor], true);
-                        tick = [p2[0] + 4, p2[1]];
+                        p2 = chart.toPerspective(
+                            [sumTo - cursor, cursor], true
+                        );
+                        p2[0] = p2[0] + additionalTickLength;
                         break;
-                    case 2:
+                    // Third grid (left axis)
+                    default:
                         p1 = chart.toPerspective([cursor, 0], true);
                         p2 = chart.toPerspective([0, cursor], true);
-                        tick = [p2[0] - 2, p2[1] - 4];
-                        break;
-                    default:
-                        p1 = chart.toPerspective([cursor, sumTo - cursor], true);
-                        p2 = chart.toPerspective([cursor, 0], true);
-                        tick = [p2[0] - 2, p2[1] + 4];
+                        p2[0] = p2[0] - additionalTickLength / 2;
+                        p2[1] = p2[1] - SQRT3_OVER_2 * additionalTickLength;
                 }
 
                 const { plotLeft, plotTop } = chart,
                     path = [
-                    'M', plotLeft + p1[0],    plotTop + p1[1],
-                    'L', plotLeft + p2[0], plotTop + p2[1],
-                    'L', plotLeft + tick[0],   plotTop + tick[1]
+                    'M', plotLeft + p1[0], plotTop + p1[1],
+                    'L', plotLeft + p2[0], plotTop + p2[1]
                 ];
 
                 gridLines[cursor] = renderLine(path);
@@ -154,7 +161,20 @@ export default function TernaryPlotPlugin(H: any): void {
             sumTo = chart.options.chart.sumTo;
 
         for (let tick = 0; tick <= sumTo; tick += interval) {
-            const distance = 20;
+            const { plotLeft, plotTop } = chart,
+                { align, zIndex, style } = axis.labels,
+                additionalTickLength = axis.additionalTickLength || 0,
+                labelMargin = axis.labels.margin || 0,
+                distance = additionalTickLength + labelMargin;
+
+            const label = labels[tick] = chart.renderer
+                .text(tick, 0, 0)
+                .attr({ align, zIndex })
+                .css(style)
+                .add();
+
+            const fm = chart.renderer.fontMetrics(label);
+
             let pos: any,
                 offsetX = 0,
                 offsetY = 0;
@@ -162,33 +182,24 @@ export default function TernaryPlotPlugin(H: any): void {
             switch (index) {
                 case 0: // horizontal
                     pos = chart.toPerspective([tick, 0], true);
-                    // TODO: parameterize 3
-                    offsetY = distance + 3;
-                    offsetX = 0;
+                    offsetX = - distance / 2;
+                    offsetY = SQRT3_OVER_2 * distance + fm.b;
                     break;
                 case 1: // vertical right
                     pos = chart.toPerspective([sumTo - tick, tick], true);
-                    offsetY = 3;
+                    offsetY = -4;
                     offsetX = distance;
                     break;
                 default: // vertical left
                     pos = chart.toPerspective([0, sumTo - tick], true);
-                    offsetY = 3;
-                    offsetX = -distance;
+                    offsetX = - distance / 2;
+                    offsetY = - SQRT3_OVER_2 * distance - 4;
             }
 
-            const { plotLeft, plotTop } = chart,
-                { align, zIndex, style } = axis.labels;
-
-            labels[tick] = chart.renderer
-                .text(
-                    tick,
-                    plotLeft + pos[0] + offsetX,
-                    plotTop + pos[1] + offsetY
-                )
-                .attr({ align, zIndex })
-                .css(style)
-                .add();
+            label.translate(
+                plotLeft + pos[0] + offsetX,
+                plotTop + pos[1] + offsetY
+            );
         }
 
         return labels;
@@ -416,7 +427,7 @@ export default function TernaryPlotPlugin(H: any): void {
             centerX = (chart.plotWidth - width) / 2,
             centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
 
-        // TODO: consider parameterizing the triangle's height (from options)
+        // TODO: consider parameterizing the triangle's angle (from options)
         return [
             x + y / 2 + centerX,
             chart.plotHeight - y * projectionHeightRatio - centerY

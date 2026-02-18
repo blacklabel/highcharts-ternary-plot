@@ -92,8 +92,8 @@ export default function TernaryPlotPlugin(H: any): void {
             for (let i = 0; i < 2; i++) {
                 let [from, to] = sidesAndMedians[index + i * 3];
 
-                p1 = chart.toPerspective(from);
-                p2 = chart.toPerspective(to);
+                p1 = chart.ternaryToPlot(from);
+                p2 = chart.ternaryToPlot(to);
 
                 const path = [
                     'M', chart.plotLeft + p1[0], p1[1] + chart.plotTop,
@@ -115,25 +115,25 @@ export default function TernaryPlotPlugin(H: any): void {
                 switch (index) {
                     // First grid (bottom axis)
                     case 0:
-                        p1 = chart.toPerspective(
+                        p1 = chart.ternaryToPlot(
                             [cursor, sumTo - cursor], true
                         );
-                        p2 = chart.toPerspective([cursor, 0], true);
+                        p2 = chart.ternaryToPlot([cursor, 0], true);
                         p2[0] = p2[0] - additionalTickLength / 2;
                         p2[1] = p2[1] + heightRatio * additionalTickLength;
                         break;
                     // Second grid (right axis)
                     case 1:
-                        p1 = chart.toPerspective([0, cursor], true);
-                        p2 = chart.toPerspective(
+                        p1 = chart.ternaryToPlot([0, cursor], true);
+                        p2 = chart.ternaryToPlot(
                             [sumTo - cursor, cursor], true
                         );
                         p2[0] = p2[0] + additionalTickLength;
                         break;
                     // Third grid (left axis)
                     default:
-                        p1 = chart.toPerspective([cursor, 0], true);
-                        p2 = chart.toPerspective([0, cursor], true);
+                        p1 = chart.ternaryToPlot([cursor, 0], true);
+                        p2 = chart.ternaryToPlot([0, cursor], true);
                         p2[0] = p2[0] - additionalTickLength / 2;
                         p2[1] = p2[1] - heightRatio * additionalTickLength;
                 }
@@ -188,17 +188,17 @@ export default function TernaryPlotPlugin(H: any): void {
 
             switch (index) {
                 case 0: // horizontal
-                    pos = chart.toPerspective([tick, 0], true);
+                    pos = chart.ternaryToPlot([tick, 0], true);
                     offsetX = - distance / 2;
                     offsetY = heightRatio * distance + fm.b;
                     break;
                 case 1: // vertical right
-                    pos = chart.toPerspective([sumTo - tick, tick], true);
+                    pos = chart.ternaryToPlot([sumTo - tick, tick], true);
                     offsetY = -4;
                     offsetX = distance;
                     break;
                 default: // vertical left
-                    pos = chart.toPerspective([0, sumTo - tick], true);
+                    pos = chart.ternaryToPlot([0, sumTo - tick], true);
                     offsetX = - distance / 2;
                     offsetY = - heightRatio * distance - 4;
             }
@@ -360,7 +360,7 @@ export default function TernaryPlotPlugin(H: any): void {
                         .add();
                 }
 
-                const [x0, y0] = chart.toPerspective(axis.axisCenter),
+                const [x0, y0] = chart.ternaryToPlot(axis.axisCenter),
                     [dirX, dirY] = title.titleDirection,
                     // The pixel distance between the axis line and the title.
                     titleMargin = pick(title.margin, 50);
@@ -408,7 +408,7 @@ export default function TernaryPlotPlugin(H: any): void {
 
     // Convert ternary (x, y) to plot coordinates
     // using 2D barycentric projection
-    Chart.prototype.toPerspective = function (
+    Chart.prototype.ternaryToPlot = function (
         this: any,
         point: any,
         useSumTo?: boolean
@@ -508,9 +508,9 @@ export default function TernaryPlotPlugin(H: any): void {
             return u >= -eps && v >= -eps && u + v <= 1 + eps;
         }
 
-        const [Ax, Ay] = chart.toPerspective([0, 0, 100]),
-            [Bx, By] = chart.toPerspective([100, 0, 0]),
-            [Cx, Cy] = chart.toPerspective([0, 100, 0]),
+        const [Ax, Ay] = chart.ternaryToPlot([0, 0]),
+            [Bx, By] = chart.ternaryToPlot([100, 0]),
+            [Cx, Cy] = chart.ternaryToPlot([0, 100]),
             px = e.x,
             py = e.y;
 
@@ -553,7 +553,7 @@ export default function TernaryPlotPlugin(H: any): void {
 
             point.yBottom = void 0;
 
-            const perspectivePoint = chart.toPerspective(point, true);
+            const perspectivePoint = chart.ternaryToPlot(point, true);
 
             point.plotX = perspectivePoint[0];
             point.plotY = perspectivePoint[1];

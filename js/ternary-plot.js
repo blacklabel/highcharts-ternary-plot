@@ -18,7 +18,7 @@ function TernaryPlotPlugin(H) {
     if (H.ternaryPlotPluginLoaded)
         return;
     H.ternaryPlotPluginLoaded = true;
-    const { addEvent, merge, pick, correctFloat, fireEvent, isArray, isNumber, seriesType, wrap, Chart, Series } = H;
+    const { addEvent, Chart, correctFloat, defined, fireEvent, isArray, isNumber, merge, pick, Series, seriesType, wrap, } = H;
     const defaultTernary = {
         tickInterval: 50,
         gridLineWidth: 1,
@@ -42,14 +42,13 @@ function TernaryPlotPlugin(H) {
             }
         }
     };
-    const SQRT3_OVER_2 = Math.sqrt(3) / 2;
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (axis, index) {
         const gridLines = {};
         const interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return gridLines;
-        const chart = this, sumTo = chart.options.chart.sumTo;
+        const chart = this, chartOptions = chart.options.chart, sumTo = chartOptions.sumTo;
         let p1, p2;
         function renderLine(path, isMedian) {
             // TODO: take from options
@@ -90,14 +89,14 @@ function TernaryPlotPlugin(H) {
         else {
             for (let cursor = 0; cursor <= sumTo; cursor += interval) {
                 // TODO: use axis.tickLength instead and other tick options (color, width)
-                const additionalTickLength = axis.additionalTickLength || 0;
+                const additionalTickLength = axis.additionalTickLength || 0, alpha = chartOptions.ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
                 switch (index) {
                     // First grid (bottom axis)
                     case 0:
                         p1 = chart.toPerspective([cursor, sumTo - cursor], true);
                         p2 = chart.toPerspective([cursor, 0], true);
                         p2[0] = p2[0] - additionalTickLength / 2;
-                        p2[1] = p2[1] + SQRT3_OVER_2 * additionalTickLength;
+                        p2[1] = p2[1] + heightRatio * additionalTickLength;
                         break;
                     // Second grid (right axis)
                     case 1:
@@ -110,7 +109,7 @@ function TernaryPlotPlugin(H) {
                         p1 = chart.toPerspective([cursor, 0], true);
                         p2 = chart.toPerspective([0, cursor], true);
                         p2[0] = p2[0] - additionalTickLength / 2;
-                        p2[1] = p2[1] - SQRT3_OVER_2 * additionalTickLength;
+                        p2[1] = p2[1] - heightRatio * additionalTickLength;
                 }
                 const { plotLeft, plotTop } = chart, path = [
                     'M', plotLeft + p1[0], plotTop + p1[1],
@@ -126,9 +125,8 @@ function TernaryPlotPlugin(H) {
         const labels = {}, interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return labels;
-        const chart = this, sumTo = chart.options.chart.sumTo;
+        const chart = this, chartOptions = chart.options.chart, sumTo = chart.options.chart.sumTo, { plotLeft, plotTop } = chart, { align, zIndex, style } = axis.labels, additionalTickLength = axis.additionalTickLength || 0, labelMargin = axis.labels.margin || 0, distance = additionalTickLength + labelMargin, alpha = chartOptions.ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
         for (let tick = 0; tick <= sumTo; tick += interval) {
-            const { plotLeft, plotTop } = chart, { align, zIndex, style } = axis.labels, additionalTickLength = axis.additionalTickLength || 0, labelMargin = axis.labels.margin || 0, distance = additionalTickLength + labelMargin;
             const label = labels[tick] = chart.renderer
                 .text(tick, 0, 0)
                 .attr({ align, zIndex })
@@ -140,7 +138,7 @@ function TernaryPlotPlugin(H) {
                 case 0: // horizontal
                     pos = chart.toPerspective([tick, 0], true);
                     offsetX = -distance / 2;
-                    offsetY = SQRT3_OVER_2 * distance + fm.b;
+                    offsetY = heightRatio * distance + fm.b;
                     break;
                 case 1: // vertical right
                     pos = chart.toPerspective([sumTo - tick, tick], true);
@@ -150,7 +148,7 @@ function TernaryPlotPlugin(H) {
                 default: // vertical left
                     pos = chart.toPerspective([0, sumTo - tick], true);
                     offsetX = -distance / 2;
-                    offsetY = -SQRT3_OVER_2 * distance - 4;
+                    offsetY = -heightRatio * distance - 4;
             }
             label.translate(plotLeft + pos[0] + offsetX, plotTop + pos[1] + offsetY);
         }
@@ -187,37 +185,35 @@ function TernaryPlotPlugin(H) {
         if (!chartOptions.ternary)
             return;
         chart.ternarySpacing = chartOptions.ternarySpacing;
-        const axes = [{
+        const alpha = chartOptions.ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, axes = [{
                 // Horizontal
                 axisCenters: [[50, 0], [100, 0]],
-                rotDefaults: [0, 0, 0],
+                rotationSign: 0,
                 // Two different positions (margin directions):
                 // perpendicular to the axis line, or purely horizontal
                 titleDirections: [[0, 1], [0, 1], [0, 1]]
             }, {
                 // Vertical right 
                 axisCenters: [[50, 50], [0, 100]],
-                rotDefaults: [63.43, 60, 0],
-                titleDirections: [[-SQRT3_OVER_2, -1 / 2], [-1, 0], [0, -1]]
+                rotationSign: 1,
+                titleDirections: [[-heightRatio, -1 / 2], [-1, 0], [0, -1]]
             }, {
                 // Vertical left
                 axisCenters: [[0, 50], [0, 0]],
-                rotDefaults: [-63.43, -60, 0],
-                titleDirections: [[SQRT3_OVER_2, -1 / 2], [1, 0], [0, 1]]
+                rotationSign: -1,
+                titleDirections: [[heightRatio, -1 / 2], [1, 0], [0, 1]]
             }];
-        chart.ternaryAxis = axes.map(({ axisCenters, rotDefaults, titleDirections }, i) => {
+        chart.ternaryAxis = axes.map(({ axisCenters, rotationSign, titleDirections }, i) => {
             var _a, _b, _c;
             const userAxes = chart.options.ternaryAxis || [], axis = merge(defaultTernary, (_a = userAxes[i]) !== null && _a !== void 0 ? _a : {});
-            let rotation, axisCenter;
+            let rotation = 0, axisCenter;
             if (axis.title.stickToCorner) {
                 //axis.title.marginXOnly = false;
                 axisCenter = axisCenters[1];
-                rotation = rotDefaults[2];
             }
             else {
                 axisCenter = axisCenters[0];
-                const isLinear = chartOptions.ternaryProjection === 'linear';
-                rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotDefaults[isLinear ? 0 : 1]);
+                rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotationSign * chartOptions.ternaryAngle);
             }
             axis.axisCenter = axisCenter;
             axis.title.style.rotation = rotation;
@@ -289,24 +285,22 @@ function TernaryPlotPlugin(H) {
     });
     // Convert ternary (x, y) to perspective (plotX, plotY)
     Chart.prototype.toPerspective = function (point, useSumTo) {
-        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternarySpacing * 2, isLinear = chartOptions.ternaryProjection === 'linear', 
-        // Either equilateral or linear projection
-        projectionHeightRatio = isLinear ? 1 : SQRT3_OVER_2, 
+        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternarySpacing * 2, alpha = chartOptions.ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, 
         // Determine the length of the triangle's
         // base based on the available space
-        baseWidth = Math.min(chart.plotWidth, chart.plotHeight / projectionHeightRatio), 
+        baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio), 
         // Then shrink by spacing to get the final width
         width = Math.max(baseWidth - spacing, 5), 
         // TODO: consider summing to a constant value different than 100
         sumTo = useSumTo ? chartOptions.sumTo : 100, x = pick(point.x, point[0]) * width / sumTo, y = pick(point.y, point[1]) * width / sumTo, 
         // Center within plot area
-        centerX = (chart.plotWidth - width) / 2, centerY = (chart.plotHeight - width * projectionHeightRatio) / 2;
-        // TODO: consider parameterizing the triangle's angle (from options)
+        centerX = (chart.plotWidth - width) / 2, centerY = (chart.plotHeight - width * heightRatio) / 2;
         return [
             x + y / 2 + centerX,
-            chart.plotHeight - y * projectionHeightRatio - centerY
+            chart.plotHeight - y * heightRatio - centerY
         ];
     };
+    // TODO: change the drawing (ternaryAngle)
     // Only [x, y] is needed in projection.
     // pH - plotHeight
     //
@@ -396,7 +390,7 @@ function TernaryPlotPlugin(H) {
             }
             // Zones disabled for now
             point.zone = void 0;
-            if (!point.marker.radius &&
+            if (!defined(point.marker.radius) &&
                 series.options.minR &&
                 series.options.maxR) {
                 point.marker.radius = point.getRadius();

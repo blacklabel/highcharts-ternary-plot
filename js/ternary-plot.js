@@ -49,6 +49,13 @@ function TernaryPlotPlugin(H) {
             }
         }
     };
+    const defaultChartOpts = {
+        ternaryAngle: 60,
+        ternarySpacing: 35,
+        sumTo: 100
+    };
+    H.defaultOptions.chart = merge(H.defaultOptions.chart, defaultChartOpts);
+    H.defaultOptions.defaultTernary = defaultTernary;
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (axis, index) {
         const gridLines = {};
@@ -171,14 +178,6 @@ function TernaryPlotPlugin(H) {
         }
         return labels;
     };
-    // Set ternarySpacing when initializing the chart
-    addEvent(Chart, 'init', function (e) {
-        const userOptions = e.args[0], chartOptions = userOptions.chart;
-        if (!chartOptions.ternary)
-            return;
-        chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 35);
-        chartOptions.sumTo = pick(chartOptions.sumTo, 100);
-    });
     // Fix for NaN clip box width issue before v12.1.0
     if (Series.prototype.getClipBox) {
         wrap(H.Series.prototype, 'getClipBox', function (p) {
@@ -278,7 +277,6 @@ function TernaryPlotPlugin(H) {
                     const fm = chart.renderer.fontMetrics(axis.titleElem);
                     offsetY = fm.b - 5;
                 }
-                // TODO: Add option for direction alignment x and y
                 axis.titleElem.translate(x0 + (-titleMargin * dirX) + chart.plotLeft, y0 + (titleMargin * dirY) + chart.plotTop + offsetY);
             }
             // Axis grid lines and labels: destroy previous

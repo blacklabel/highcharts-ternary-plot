@@ -156,9 +156,9 @@ export default function TernaryPlotPlugin(H: any): void {
 
                 const { plotLeft, plotTop } = chart,
                     path = [
-                    'M', plotLeft + p1[0], plotTop + p1[1],
-                    'L', plotLeft + p2[0], plotTop + p2[1]
-                ];
+                        'M', plotLeft + p1[0], plotTop + p1[1],
+                        'L', plotLeft + p2[0], plotTop + p2[1]
+                    ];
 
                 gridLines[cursor] = renderLine(path);
             }
@@ -245,7 +245,7 @@ export default function TernaryPlotPlugin(H: any): void {
             const ret = p.call(this);
 
             ret.width = this.chart.xAxis[0].len;
-        
+
             return ret;
         });
     }
@@ -262,7 +262,7 @@ export default function TernaryPlotPlugin(H: any): void {
             const ret = p.call(this, series, chartCoords);
 
             ret.width = this.xAxis[0].len;
-        
+
             return ret;
         });
     }
@@ -298,12 +298,12 @@ export default function TernaryPlotPlugin(H: any): void {
                 // Vertical right 
                 axisCenters: [[50, 50], [0, 100]],
                 rotationSign: 1,
-                titleDirections: [[-heightRatio, -1/2], [-1, 0], [0, -1]]
+                titleDirections: [[-heightRatio, -1 / 2], [-1, 0], [0, -1]]
             }, {
                 // Vertical left
                 axisCenters: [[0, 50], [0, 0]],
                 rotationSign: -1,
-                titleDirections: [[heightRatio, -1/2], [1, 0], [0, 1]]
+                titleDirections: [[heightRatio, -1 / 2], [1, 0], [0, 1]]
             }];
 
         chart.ternaryAxis = axes.map(({
@@ -316,7 +316,7 @@ export default function TernaryPlotPlugin(H: any): void {
 
             let rotation = 0,
                 axisCenter: [number, number];
-                
+
             if (axis.title.stickToCorner) {
                 //axis.title.marginXOnly = false;
                 axisCenter = axisCenters[1];
@@ -348,7 +348,7 @@ export default function TernaryPlotPlugin(H: any): void {
     // Position ternary axis titles and render gridlines/labels after
     // setting chart size
     addEvent(Chart, 'afterSetChartSize', function (this: any) {
-        const chart = this, 
+        const chart = this,
             { options } = chart;
 
         if (!options.chart.ternary || !chart.ternaryAxis) return;
@@ -537,7 +537,7 @@ export default function TernaryPlotPlugin(H: any): void {
         this.generatePoints();
 
         this.xAxis = {
-        isRadial: false,
+            isRadial: false,
             options: {
                 type: 'linear'
             }
@@ -552,7 +552,7 @@ export default function TernaryPlotPlugin(H: any): void {
             dynamicallyPlaced = Boolean(pointPlacement);
 
         let i: number,
-            plotX : number,
+            plotX: number,
             lastPlotX: number,
             closestPointRangePx = Number.MAX_VALUE;
 
@@ -597,7 +597,7 @@ export default function TernaryPlotPlugin(H: any): void {
             if (!point.isNull && point.visible !== false) {
                 if (typeof lastPlotX !== 'undefined') {
                     closestPointRangePx = Math.min(
-                        closestPointRangePx, 
+                        closestPointRangePx,
                         Math.abs(plotX - lastPlotX)
                     );
                 }

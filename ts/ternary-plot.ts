@@ -27,6 +27,7 @@ export default function TernaryPlotPlugin(H: any): void {
         minorGridLineColor: '#d6d6d6',
         title: {
             text: 'Axis',
+            margin: 30,
             style: {
                 align: 'center',
                 zIndex: 2,
@@ -37,7 +38,7 @@ export default function TernaryPlotPlugin(H: any): void {
         labels: {
             zIndex: 2,
             align: 'center',
-            margin: 15,
+            margin: 6,
             style: {
                 fontSize: '0.8em'
             }
@@ -373,7 +374,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 const [x0, y0] = chart.ternaryToPlot(axis.axisCenter),
                     [dirX, dirY] = title.titleDirection,
                     // The pixel distance between the axis line and the title.
-                    titleMargin = pick(title.margin, 36);
+                    titleMargin = title.margin;
 
                 // Move one or two bottom titles down to avoid overlapping
                 // with gridLines
@@ -607,7 +608,7 @@ export default function TernaryPlotPlugin(H: any): void {
             point.zone = void 0;
 
             if (
-                !defined(point.marker.radius) &&
+                !defined(point.marker?.radius) &&
                 series.options.minR &&
                 series.options.maxR
             ) {
@@ -705,7 +706,7 @@ export default function TernaryPlotPlugin(H: any): void {
             state
         );
 
-        if (point.isNull || !this.options.ternaryColors) {
+        if (point?.isNull || !this.options.ternaryColors) {
             return attr;
         }
 

@@ -28,6 +28,7 @@ function TernaryPlotPlugin(H) {
         minorGridLineColor: '#d6d6d6',
         title: {
             text: 'Axis',
+            margin: 30,
             style: {
                 align: 'center',
                 zIndex: 2,
@@ -38,7 +39,7 @@ function TernaryPlotPlugin(H) {
         labels: {
             zIndex: 2,
             align: 'center',
-            margin: 15,
+            margin: 6,
             style: {
                 fontSize: '0.8em'
             }
@@ -263,7 +264,7 @@ function TernaryPlotPlugin(H) {
                 }
                 const [x0, y0] = chart.ternaryToPlot(axis.axisCenter), [dirX, dirY] = title.titleDirection, 
                 // The pixel distance between the axis line and the title.
-                titleMargin = pick(title.margin, 36);
+                titleMargin = title.margin;
                 // Move one or two bottom titles down to avoid overlapping
                 // with gridLines
                 let offsetY = 0;
@@ -365,6 +366,7 @@ function TernaryPlotPlugin(H) {
     });
     // Translate data points from ternary x,y to plotX,plotY
     function translate() {
+        var _a;
         this.generatePoints();
         this.xAxis = {
             isRadial: false,
@@ -403,7 +405,7 @@ function TernaryPlotPlugin(H) {
             }
             // Zones disabled for now
             point.zone = void 0;
-            if (!defined(point.marker.radius) &&
+            if (!defined((_a = point.marker) === null || _a === void 0 ? void 0 : _a.radius) &&
                 series.options.minR &&
                 series.options.maxR) {
                 point.marker.radius = point.getRadius();
@@ -463,7 +465,7 @@ function TernaryPlotPlugin(H) {
     }
     function pointAttribs(point, state) {
         const attr = Series.prototype.pointAttribs.call(this, point, state);
-        if (point.isNull || !this.options.ternaryColors) {
+        if ((point === null || point === void 0 ? void 0 : point.isNull) || !this.options.ternaryColors) {
             return attr;
         }
         const [x, y, z] = [point.x, point.y, point.z];

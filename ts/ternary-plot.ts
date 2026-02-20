@@ -28,6 +28,8 @@ export default function TernaryPlotPlugin(H: any): void {
         title: {
             text: 'Axis',
             margin: 30,
+            x: 0,
+            y: 0,
             style: {
                 align: 'center',
                 zIndex: 2,
@@ -39,6 +41,8 @@ export default function TernaryPlotPlugin(H: any): void {
             zIndex: 2,
             align: 'center',
             margin: 6,
+            x: 0,
+            y: 0,
             style: {
                 fontSize: '0.8em'
             }
@@ -169,7 +173,7 @@ export default function TernaryPlotPlugin(H: any): void {
             chartOptions = chart.options.chart,
             sumTo = chart.options.chart.sumTo,
             { plotLeft, plotTop } = chart,
-            { align, zIndex, style } = axis.labels,
+            { align, zIndex, style, x, y } = axis.labels,
             additionalTickLength = axis.additionalTickLength || 0,
             labelMargin = axis.labels.margin || 0,
             distance = additionalTickLength + labelMargin,
@@ -178,7 +182,7 @@ export default function TernaryPlotPlugin(H: any): void {
 
         for (let tick = 0; tick <= sumTo; tick += interval) {
             const label = labels[tick] = chart.renderer
-                .text(tick, 0, 0)
+                .text(tick, x, y)
                 .attr({ align, zIndex })
                 .css(style)
                 .add();
@@ -365,7 +369,7 @@ export default function TernaryPlotPlugin(H: any): void {
             if (title?.text) {
                 if (!axis.titleElem) {
                     axis.titleElem = chart.renderer
-                        .text(title.text, 0, 0)
+                        .text(title.text, title.x, title.y)
                         .css(title.style)
                         .attr(title.style)
                         .add();

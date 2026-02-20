@@ -29,6 +29,8 @@ function TernaryPlotPlugin(H) {
         title: {
             text: 'Axis',
             margin: 30,
+            x: 0,
+            y: 0,
             style: {
                 align: 'center',
                 zIndex: 2,
@@ -40,6 +42,8 @@ function TernaryPlotPlugin(H) {
             zIndex: 2,
             align: 'center',
             margin: 6,
+            x: 0,
+            y: 0,
             style: {
                 fontSize: '0.8em'
             }
@@ -129,10 +133,10 @@ function TernaryPlotPlugin(H) {
         const labels = {}, interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return labels;
-        const chart = this, chartOptions = chart.options.chart, sumTo = chart.options.chart.sumTo, { plotLeft, plotTop } = chart, { align, zIndex, style } = axis.labels, additionalTickLength = axis.additionalTickLength || 0, labelMargin = axis.labels.margin || 0, distance = additionalTickLength + labelMargin, alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
+        const chart = this, chartOptions = chart.options.chart, sumTo = chart.options.chart.sumTo, { plotLeft, plotTop } = chart, { align, zIndex, style, x, y } = axis.labels, additionalTickLength = axis.additionalTickLength || 0, labelMargin = axis.labels.margin || 0, distance = additionalTickLength + labelMargin, alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
         for (let tick = 0; tick <= sumTo; tick += interval) {
             const label = labels[tick] = chart.renderer
-                .text(tick, 0, 0)
+                .text(tick, x, y)
                 .attr({ align, zIndex })
                 .css(style)
                 .add();
@@ -257,7 +261,7 @@ function TernaryPlotPlugin(H) {
             if (title === null || title === void 0 ? void 0 : title.text) {
                 if (!axis.titleElem) {
                     axis.titleElem = chart.renderer
-                        .text(title.text, 0, 0)
+                        .text(title.text, title.x, title.y)
                         .css(title.style)
                         .attr(title.style)
                         .add();

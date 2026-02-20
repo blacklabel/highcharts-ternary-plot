@@ -36,6 +36,8 @@ export default function TernaryPlotPlugin(H: any): void {
         },
         labels: {
             zIndex: 2,
+            align: 'center',
+            margin: 15,
             style: {
                 fontSize: '0.8em'
             }
@@ -180,7 +182,8 @@ export default function TernaryPlotPlugin(H: any): void {
                 .css(style)
                 .add();
 
-            const fm = chart.renderer.fontMetrics(label);
+            const fm = chart.renderer.fontMetrics(label),
+                bb = label.getBBox();
 
             let pos: any,
                 offsetX = 0,
@@ -189,18 +192,25 @@ export default function TernaryPlotPlugin(H: any): void {
             switch (index) {
                 case 0: // horizontal
                     pos = chart.ternaryToPlot([tick, 0], true);
-                    offsetX = - distance / 2;
-                    offsetY = heightRatio * distance + fm.b;
+                    if (additionalTickLength) {
+                        offsetX = - distance / 2;
+                        offsetY = heightRatio * distance + fm.b;
+                    } else {
+                        offsetY = distance + fm.b;
+                    }
                     break;
                 case 1: // vertical right
                     pos = chart.ternaryToPlot([sumTo - tick, tick], true);
-                    offsetY = -4;
-                    offsetX = distance;
+                    offsetX = distance + bb.width / 2;
                     break;
                 default: // vertical left
                     pos = chart.ternaryToPlot([0, sumTo - tick], true);
-                    offsetX = - distance / 2;
-                    offsetY = - heightRatio * distance - 4;
+                    if (additionalTickLength) {
+                        offsetX = - distance / 2;
+                        offsetY = - heightRatio * distance;
+                    } else {
+                        offsetX = - distance - bb.width / 2;
+                    }
             }
 
             label.translate(
@@ -363,7 +373,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 const [x0, y0] = chart.ternaryToPlot(axis.axisCenter),
                     [dirX, dirY] = title.titleDirection,
                     // The pixel distance between the axis line and the title.
-                    titleMargin = pick(title.margin, 50);
+                    titleMargin = pick(title.margin, 36);
 
                 // Move one or two bottom titles down to avoid overlapping
                 // with gridLines
@@ -376,8 +386,7 @@ export default function TernaryPlotPlugin(H: any): void {
                     offsetY = fm.b - 5;
                 }
 
-                // TODO: Add option for direction alignment
-                // TODO: Consider moving AXES values into methods
+                // TODO: Add option for direction alignment x and y
                 axis.titleElem.translate(
                     x0 + (-titleMargin * dirX) + chart.plotLeft,
                     y0 + (titleMargin * dirY) + chart.plotTop + offsetY
@@ -428,7 +437,6 @@ export default function TernaryPlotPlugin(H: any): void {
             ),
             // Then shrink by spacing to get the final width
             width = Math.max(baseWidth - spacing, 5),
-            // TODO: consider summing to a constant value different than 100
             sumTo = useSumTo ? chartOptions.sumTo : 100,
             x = pick(point.x, point[0]) * width / sumTo,
             y = pick(point.y, point[1]) * width / sumTo,

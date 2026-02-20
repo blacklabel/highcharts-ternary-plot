@@ -609,11 +609,16 @@ export default function TernaryPlotPlugin(H: any): void {
             point.zone = void 0;
 
             if (
-                !defined(point.marker?.radius) &&
+                (
+                    !point.marker ||
+                    !defined(point.marker.radius)
+                ) &&
                 series.options.minR &&
                 series.options.maxR
             ) {
-                point.marker.radius = point.getRadius();
+                point.marker = {
+                    radius: point.getRadius()
+                };
             }
         }
 
@@ -717,7 +722,7 @@ export default function TernaryPlotPlugin(H: any): void {
 
         point.ternaryColor = this.getTernaryColor(x, y, z, 1);
 
-        attr.stroke = point.marker.lineColor || point.ternaryColor;
+        attr.stroke = point.marker?.lineColor || point.ternaryColor;
 
         return attr;
     }

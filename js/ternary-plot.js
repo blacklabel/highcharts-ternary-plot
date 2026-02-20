@@ -368,7 +368,6 @@ function TernaryPlotPlugin(H) {
     });
     // Translate data points from ternary x,y to plotX,plotY
     function translate() {
-        var _a;
         this.generatePoints();
         this.xAxis = {
             isRadial: false,
@@ -407,10 +406,13 @@ function TernaryPlotPlugin(H) {
             }
             // Zones disabled for now
             point.zone = void 0;
-            if (!defined((_a = point.marker) === null || _a === void 0 ? void 0 : _a.radius) &&
+            if ((!point.marker ||
+                !defined(point.marker.radius)) &&
                 series.options.minR &&
                 series.options.maxR) {
-                point.marker.radius = point.getRadius();
+                point.marker = {
+                    radius: point.getRadius()
+                };
             }
         }
         series.closestPointRangePx = closestPointRangePx;
@@ -466,6 +468,7 @@ function TernaryPlotPlugin(H) {
         return `rgba(${r}, ${g}, ${b}, ${alpha || 1})`;
     }
     function pointAttribs(point, state) {
+        var _a;
         const attr = Series.prototype.pointAttribs.call(this, point, state);
         if ((point === null || point === void 0 ? void 0 : point.isNull) || !this.options.ternaryColors) {
             return attr;
@@ -473,7 +476,7 @@ function TernaryPlotPlugin(H) {
         const [x, y, z] = [point.x, point.y, point.z];
         attr.fill = this.getTernaryColor(x, y, z);
         point.ternaryColor = this.getTernaryColor(x, y, z, 1);
-        attr.stroke = point.marker.lineColor || point.ternaryColor;
+        attr.stroke = ((_a = point.marker) === null || _a === void 0 ? void 0 : _a.lineColor) || point.ternaryColor;
         return attr;
     }
     // Return the plot box of the ternary plot area

@@ -532,6 +532,21 @@ export default function TernaryPlotPlugin(H: any): void {
         );
     });
 
+    H.addEvent(Series, 'afterDrawDataLabels', function (this: any) {
+        if (!(this.options.minR && this.options.maxR)) {
+            return;
+        }
+
+        this.points.forEach(point => {
+            const dataLabel = point.dataLabel;
+
+            dataLabel[dataLabel.placed ? 'animate' : 'attr']({
+                //y: dataLabel.y - point.marker.radius + 5
+                //y: dataLabel.y + dataLabel.height / 2
+            });
+        });
+    });
+
     // Translate data points from ternary x,y to plotX,plotY
     function translate(this: any) {
         this.generatePoints();

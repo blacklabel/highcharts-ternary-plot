@@ -366,6 +366,18 @@ function TernaryPlotPlugin(H) {
         const [Ax, Ay] = chart.ternaryToPlot([0, 0]), [Bx, By] = chart.ternaryToPlot([100, 0]), [Cx, Cy] = chart.ternaryToPlot([0, 100]), px = e.x, py = e.y;
         e.isInsidePlot = pointInTriangle(px, py, Ax, Ay, Bx, By, Cx, Cy);
     });
+    H.addEvent(Series, 'afterDrawDataLabels', function () {
+        if (!(this.options.minR && this.options.maxR)) {
+            return;
+        }
+        this.points.forEach(point => {
+            const dataLabel = point.dataLabel;
+            dataLabel[dataLabel.placed ? 'animate' : 'attr']({
+            //y: dataLabel.y - point.marker.radius + 5
+            //y: dataLabel.y + dataLabel.height / 2
+            });
+        });
+    });
     // Translate data points from ternary x,y to plotX,plotY
     function translate() {
         this.generatePoints();

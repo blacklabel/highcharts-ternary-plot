@@ -15,7 +15,7 @@ export default function TernaryPlotPlugin(H: any): void {
         pick,
         Series,
         seriesType,
-        wrap,
+        wrap
     } = H;
 
     const defaultTernary = {
@@ -40,7 +40,7 @@ export default function TernaryPlotPlugin(H: any): void {
         labels: {
             zIndex: 2,
             align: 'center',
-            margin: 6,
+            distance: 6,
             x: 0,
             y: 0,
             style: {
@@ -52,7 +52,7 @@ export default function TernaryPlotPlugin(H: any): void {
     const defaultChartOpts = {
         ternaryAngle: 60,
         ternarySpacing: 35,
-        sumTo: 100
+        ternarySumTo: 100
     }
 
     H.defaultOptions.chart = merge(H.defaultOptions.chart, defaultChartOpts);
@@ -71,7 +71,7 @@ export default function TernaryPlotPlugin(H: any): void {
 
         const chart = this,
             chartOptions = chart.options.chart,
-            sumTo = chartOptions.sumTo;
+            sumTo = chartOptions.ternarySumTo;
 
         let p1: [number, number],
             p2: [number, number];
@@ -93,7 +93,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 .add();
         }
 
-        if (axis.drawMedian) {
+        if (axis.medianGrid) {
             const sidesAndMedians = [
                 // Sides
                 [[0, 100], [0, 0]],
@@ -122,7 +122,7 @@ export default function TernaryPlotPlugin(H: any): void {
         } else {
             for (let cursor = 0; cursor <= sumTo; cursor += interval) {
                 // TODO: use axis.tickLength instead and other tick options (color, width)
-                const additionalTickLength = axis.additionalTickLength || 0,
+                const gridLineExtension = axis.gridLineExtension || 0,
                     alpha =
                         clamp(chartOptions.ternaryAngle, 1, 89)
                         * Math.PI / 180,
@@ -135,8 +135,8 @@ export default function TernaryPlotPlugin(H: any): void {
                             [cursor, sumTo - cursor], true
                         );
                         p2 = chart.ternaryToPlot([cursor, 0], true);
-                        p2[0] = p2[0] - additionalTickLength / 2;
-                        p2[1] = p2[1] + heightRatio * additionalTickLength;
+                        p2[0] = p2[0] - gridLineExtension / 2;
+                        p2[1] = p2[1] + heightRatio * gridLineExtension;
                         break;
                     // Second grid (right axis)
                     case 1:
@@ -144,14 +144,14 @@ export default function TernaryPlotPlugin(H: any): void {
                         p2 = chart.ternaryToPlot(
                             [sumTo - cursor, cursor], true
                         );
-                        p2[0] = p2[0] + additionalTickLength;
+                        p2[0] = p2[0] + gridLineExtension;
                         break;
                     // Third grid (left axis)
                     default:
                         p1 = chart.ternaryToPlot([cursor, 0], true);
                         p2 = chart.ternaryToPlot([0, cursor], true);
-                        p2[0] = p2[0] - additionalTickLength / 2;
-                        p2[1] = p2[1] - heightRatio * additionalTickLength;
+                        p2[0] = p2[0] - gridLineExtension / 2;
+                        p2[1] = p2[1] - heightRatio * gridLineExtension;
                 }
 
                 const { plotLeft, plotTop } = chart,
@@ -180,12 +180,12 @@ export default function TernaryPlotPlugin(H: any): void {
 
         const chart = this,
             chartOptions = chart.options.chart,
-            sumTo = chart.options.chart.sumTo,
+            sumTo = chart.options.chart.ternarySumTo,
             { plotLeft, plotTop } = chart,
             { align, zIndex, style, x, y } = axis.labels,
-            additionalTickLength = axis.additionalTickLength || 0,
-            labelMargin = axis.labels.margin || 0,
-            distance = additionalTickLength + labelMargin,
+            gridLineExtension = axis.gridLineExtension || 0,
+            labelMargin = axis.labels.distance || 0,
+            distance = gridLineExtension + labelMargin,
             alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180,
             heightRatio = Math.tan(alpha) / 2;
 
@@ -206,7 +206,7 @@ export default function TernaryPlotPlugin(H: any): void {
             switch (index) {
                 case 0: // horizontal
                     pos = chart.ternaryToPlot([tick, 0], true);
-                    if (additionalTickLength) {
+                    if (gridLineExtension) {
                         offsetX = - distance / 2;
                         offsetY = heightRatio * distance + fm.b;
                     } else {
@@ -219,7 +219,7 @@ export default function TernaryPlotPlugin(H: any): void {
                     break;
                 default: // vertical left
                     pos = chart.ternaryToPlot([0, sumTo - tick], true);
-                    if (additionalTickLength) {
+                    if (gridLineExtension) {
                         offsetX = - distance / 2;
                         offsetY = - heightRatio * distance;
                     } else {
@@ -406,7 +406,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 axis.gridlineTicks = chart.getGridLines(axis, i);
             }
 
-            // TODO: test minor gridlines with drawMedian
+            // TODO: test minor gridlines with medianGrid
             if (axis.minorGridLineWidth >= 1) {
                 axis.minorGridlineTicks = chart.getGridLines(axis, i);
             }
@@ -439,7 +439,7 @@ export default function TernaryPlotPlugin(H: any): void {
             ),
             // Then shrink by spacing to get the final width
             width = Math.max(baseWidth - spacing, 5),
-            sumTo = useSumTo ? chartOptions.sumTo : 100,
+            sumTo = useSumTo ? chartOptions.ternarySumTo : 100,
             x = pick(point.x, point[0]) * width / sumTo,
             y = pick(point.y, point[1]) * width / sumTo,
             // Center within plot area

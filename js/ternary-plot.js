@@ -18,7 +18,7 @@ function TernaryPlotPlugin(H) {
     if (H.ternaryPlotPluginLoaded)
         return;
     H.ternaryPlotPluginLoaded = true;
-    const { addEvent, Chart, clamp, correctFloat, defined, fireEvent, isArray, isNumber, merge, pick, Series, seriesType, wrap, } = H;
+    const { addEvent, Chart, clamp, correctFloat, defined, fireEvent, isArray, isNumber, merge, pick, Series, seriesType, wrap } = H;
     const defaultTernary = {
         tickInterval: 50,
         gridLineWidth: 1,
@@ -41,7 +41,7 @@ function TernaryPlotPlugin(H) {
         labels: {
             zIndex: 2,
             align: 'center',
-            margin: 6,
+            distance: 6,
             x: 0,
             y: 0,
             style: {
@@ -52,7 +52,7 @@ function TernaryPlotPlugin(H) {
     const defaultChartOpts = {
         ternaryAngle: 60,
         ternarySpacing: 35,
-        sumTo: 100
+        ternarySumTo: 100
     };
     H.defaultOptions.chart = merge(H.defaultOptions.chart, defaultChartOpts);
     H.defaultOptions.defaultTernary = defaultTernary;
@@ -62,7 +62,7 @@ function TernaryPlotPlugin(H) {
         const interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return gridLines;
-        const chart = this, chartOptions = chart.options.chart, sumTo = chartOptions.sumTo;
+        const chart = this, chartOptions = chart.options.chart, sumTo = chartOptions.ternarySumTo;
         let p1, p2;
         function renderLine(path, isMedian) {
             // TODO: take from options
@@ -77,7 +77,7 @@ function TernaryPlotPlugin(H) {
             })
                 .add();
         }
-        if (axis.drawMedian) {
+        if (axis.medianGrid) {
             const sidesAndMedians = [
                 // Sides
                 [[0, 100], [0, 0]],
@@ -103,28 +103,28 @@ function TernaryPlotPlugin(H) {
         else {
             for (let cursor = 0; cursor <= sumTo; cursor += interval) {
                 // TODO: use axis.tickLength instead and other tick options (color, width)
-                const additionalTickLength = axis.additionalTickLength || 0, alpha = clamp(chartOptions.ternaryAngle, 1, 89)
+                const gridLineExtension = axis.gridLineExtension || 0, alpha = clamp(chartOptions.ternaryAngle, 1, 89)
                     * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
                 switch (index) {
                     // First grid (bottom axis)
                     case 0:
                         p1 = chart.ternaryToPlot([cursor, sumTo - cursor], true);
                         p2 = chart.ternaryToPlot([cursor, 0], true);
-                        p2[0] = p2[0] - additionalTickLength / 2;
-                        p2[1] = p2[1] + heightRatio * additionalTickLength;
+                        p2[0] = p2[0] - gridLineExtension / 2;
+                        p2[1] = p2[1] + heightRatio * gridLineExtension;
                         break;
                     // Second grid (right axis)
                     case 1:
                         p1 = chart.ternaryToPlot([0, cursor], true);
                         p2 = chart.ternaryToPlot([sumTo - cursor, cursor], true);
-                        p2[0] = p2[0] + additionalTickLength;
+                        p2[0] = p2[0] + gridLineExtension;
                         break;
                     // Third grid (left axis)
                     default:
                         p1 = chart.ternaryToPlot([cursor, 0], true);
                         p2 = chart.ternaryToPlot([0, cursor], true);
-                        p2[0] = p2[0] - additionalTickLength / 2;
-                        p2[1] = p2[1] - heightRatio * additionalTickLength;
+                        p2[0] = p2[0] - gridLineExtension / 2;
+                        p2[1] = p2[1] - heightRatio * gridLineExtension;
                 }
                 const { plotLeft, plotTop } = chart, path = [
                     'M', plotLeft + p1[0], plotTop + p1[1],
@@ -140,7 +140,7 @@ function TernaryPlotPlugin(H) {
         const labels = {}, interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return labels;
-        const chart = this, chartOptions = chart.options.chart, sumTo = chart.options.chart.sumTo, { plotLeft, plotTop } = chart, { align, zIndex, style, x, y } = axis.labels, additionalTickLength = axis.additionalTickLength || 0, labelMargin = axis.labels.margin || 0, distance = additionalTickLength + labelMargin, alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
+        const chart = this, chartOptions = chart.options.chart, sumTo = chart.options.chart.ternarySumTo, { plotLeft, plotTop } = chart, { align, zIndex, style, x, y } = axis.labels, gridLineExtension = axis.gridLineExtension || 0, labelMargin = axis.labels.distance || 0, distance = gridLineExtension + labelMargin, alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
         for (let tick = 0; tick <= sumTo; tick += interval) {
             const label = labels[tick] = chart.renderer
                 .text(tick, x, y)
@@ -152,7 +152,7 @@ function TernaryPlotPlugin(H) {
             switch (index) {
                 case 0: // horizontal
                     pos = chart.ternaryToPlot([tick, 0], true);
-                    if (additionalTickLength) {
+                    if (gridLineExtension) {
                         offsetX = -distance / 2;
                         offsetY = heightRatio * distance + fm.b;
                     }
@@ -166,7 +166,7 @@ function TernaryPlotPlugin(H) {
                     break;
                 default: // vertical left
                     pos = chart.ternaryToPlot([0, sumTo - tick], true);
-                    if (additionalTickLength) {
+                    if (gridLineExtension) {
                         offsetX = -distance / 2;
                         offsetY = -heightRatio * distance;
                     }
@@ -288,7 +288,7 @@ function TernaryPlotPlugin(H) {
                 // TODO: consider having the getGridLines method on axis class
                 axis.gridlineTicks = chart.getGridLines(axis, i);
             }
-            // TODO: test minor gridlines with drawMedian
+            // TODO: test minor gridlines with medianGrid
             if (axis.minorGridLineWidth >= 1) {
                 axis.minorGridlineTicks = chart.getGridLines(axis, i);
             }
@@ -308,7 +308,7 @@ function TernaryPlotPlugin(H) {
         // base based on the available space
         baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio), 
         // Then shrink by spacing to get the final width
-        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? chartOptions.sumTo : 100, x = pick(point.x, point[0]) * width / sumTo, y = pick(point.y, point[1]) * width / sumTo, 
+        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? chartOptions.ternarySumTo : 100, x = pick(point.x, point[0]) * width / sumTo, y = pick(point.y, point[1]) * width / sumTo, 
         // Center within plot area
         centerX = (chart.plotWidth - width) / 2, centerY = (chart.plotHeight - width * heightRatio) / 2;
         return [

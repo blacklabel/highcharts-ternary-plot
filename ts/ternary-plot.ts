@@ -2,6 +2,8 @@ export default function TernaryPlotPlugin(H: any): void {
     if (H.ternaryPlotPluginLoaded) return;
     H.ternaryPlotPluginLoaded = true;
 
+    // -------------------------------- Utils --------------------------------
+
     const {
         addEvent,
         Chart,
@@ -17,6 +19,8 @@ export default function TernaryPlotPlugin(H: any): void {
         seriesType,
         wrap
     } = H;
+
+    // ------------------------------- Defaults -------------------------------
 
     const defaultTernary = {
         tickInterval: 50,
@@ -57,6 +61,8 @@ export default function TernaryPlotPlugin(H: any): void {
 
     H.defaultOptions.chart = merge(H.defaultOptions.chart, defaultChartOpts);
     H.defaultOptions.defaultTernary = defaultTernary;
+
+    // ----------------------- Chart prototype methods -----------------------
 
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (
@@ -236,187 +242,6 @@ export default function TernaryPlotPlugin(H: any): void {
         return labels;
     };
 
-    // Fix for NaN clip box width issue before v12.1.0
-    if (Series.prototype.getClipBox) {
-        wrap(H.Series.prototype, 'getClipBox', function (
-            this: any,
-            p: any
-        ) {
-            const ret = p.call(this);
-
-            ret.width = this.chart.xAxis[0].len;
-
-            return ret;
-        });
-    }
-
-    // Fix for NaN clip box width issue after v12.1.0
-    // (getClipBox moved to Chart prototype)
-    if (Chart.prototype.getClipBox) {
-        wrap(Chart.prototype, 'getClipBox', function (
-            this: any,
-            p: any,
-            series: any,
-            chartCoords: any
-        ) {
-            const ret = p.call(this, series, chartCoords);
-
-            ret.width = this.xAxis[0].len;
-
-            return ret;
-        });
-    }
-
-    // Initialize ternary axes before rendering the chart
-    addEvent(Chart, 'beforeRender', function (this: any) {
-        const chart = this,
-            chartOptions = chart.options.chart;
-
-        if (!chartOptions.ternary) return;
-
-        chart.ternarySpacing = chartOptions.ternarySpacing;
-
-        type Vec2 = [number, number];
-
-        type AxisDef = {
-            axisCenters: [Vec2, Vec2];
-            rotationSign: number;
-            titleDirections: [Vec2, Vec2, Vec2];
-        };
-
-        const ternaryAngle = clamp(chartOptions.ternaryAngle, 1, 89),
-            alpha = ternaryAngle * Math.PI / 180,
-            heightRatio = Math.tan(alpha) / 2,
-            axes: AxisDef[] = [{
-                // Horizontal
-                axisCenters: [[50, 0], [100, 0]],
-                rotationSign: 0,
-                // Two different positions (margin directions):
-                // perpendicular to the axis line, or purely horizontal
-                titleDirections: [[0, 1], [0, 1], [0, 1]]
-            }, {
-                // Vertical right 
-                axisCenters: [[50, 50], [0, 100]],
-                rotationSign: 1,
-                titleDirections: [[-heightRatio, -1 / 2], [-1, 0], [0, -1]]
-            }, {
-                // Vertical left
-                axisCenters: [[0, 50], [0, 0]],
-                rotationSign: -1,
-                titleDirections: [[heightRatio, -1 / 2], [1, 0], [0, 1]]
-            }];
-
-        chart.ternaryAxis = axes.map(({
-            axisCenters,
-            rotationSign,
-            titleDirections
-        }, i) => {
-            const userAxes = chart.options.ternaryAxis || [],
-                axis = merge(defaultTernary, userAxes[i] ?? {});
-
-            let rotation = 0,
-                axisCenter: [number, number];
-
-            if (axis.title.stickToCorner) {
-                //axis.title.marginXOnly = false;
-                axisCenter = axisCenters[1];
-            } else {
-                axisCenter = axisCenters[0];
-
-                rotation = pick(
-                    userAxes[i]?.title?.rotation,
-                    rotationSign * ternaryAngle
-                )
-            }
-
-            axis.axisCenter = axisCenter;
-
-            axis.title.style.rotation = rotation;
-
-            axis.title.titleDirection =
-                titleDirections[axis.title.stickToCorner ?
-                    2 :
-                    (axis.title.marginXOnly ? 1 : 0)];
-
-            axis.gridlineTicks = {};
-            axis.gridlineMinorTicks = {};
-
-            return axis;
-        });
-    });
-
-    // Position ternary axis titles and render gridlines/labels after
-    // setting chart size
-    addEvent(Chart, 'afterSetChartSize', function (this: any) {
-        const chart = this,
-            { options } = chart;
-
-        if (!options.chart.ternary || !chart.ternaryAxis) return;
-
-        const destroyCollection = (coll: Record<string, any> | undefined) => {
-            if (!coll) return;
-
-            for (const k in coll) {
-                coll[k] = coll[k].destroy();
-            }
-        };
-
-        chart.ternaryAxis.forEach((axis: any, i: number) => {
-            const title = axis.title;
-
-            if (title?.text) {
-                if (!axis.titleElem) {
-                    axis.titleElem = chart.renderer
-                        .text(title.text, title.x, title.y)
-                        .css(title.style)
-                        .attr(title.style)
-                        .add();
-                }
-
-                const [x0, y0] = chart.ternaryToPlot(axis.axisCenter),
-                    [dirX, dirY] = title.titleDirection,
-                    // The pixel distance between the axis line and the title.
-                    titleMargin = title.margin;
-
-                // Move one or two bottom titles down to avoid overlapping
-                // with gridLines
-                let offsetY = 0;
-                if (i !== 1 && (title.stickToCorner || i === 0)) {
-                    // Font metrics baseline is better than bbox.height
-                    // for better baseline alignment
-                    const fm = chart.renderer.fontMetrics(axis.titleElem);
-
-                    offsetY = fm.b - 5;
-                }
-
-                axis.titleElem.translate(
-                    x0 + (-titleMargin * dirX) + chart.plotLeft,
-                    y0 + (titleMargin * dirY) + chart.plotTop + offsetY
-                );
-            }
-
-            // Axis grid lines and labels: destroy previous
-            destroyCollection(axis.gridlineTicks);
-            destroyCollection(axis.gridlineLabels);
-            destroyCollection(axis.minorGridlineTicks);
-
-            // Recreate
-            if (axis.gridLineWidth >= 1) {
-                // TODO: consider having the getGridLines method on axis class
-                axis.gridlineTicks = chart.getGridLines(axis, i);
-            }
-
-            // TODO: test minor gridlines with medianGrid
-            if (axis.minorGridLineWidth >= 1) {
-                axis.minorGridlineTicks = chart.getGridLines(axis, i);
-            }
-
-            if (axis.labels.enabled !== false) {
-                axis.gridlineLabels = chart.getLabels(axis, i);
-            }
-        });
-    });
-
     // Convert ternary (x, y) to plot coordinates
     // using 2D barycentric projection
     Chart.prototype.ternaryToPlot = function (
@@ -486,66 +311,25 @@ export default function TernaryPlotPlugin(H: any): void {
     //           /_____________/_______|___________________________\___
     //   (0, 0)  |      x      |  y/2  |                             (100, 0)
 
-    H.addEvent(Chart, 'afterIsInsidePlot', function (this: any, e: any) {
-        const chart = this;
 
-        if (!chart.options.chart.ternary) {
-            return;
-        }
+    // Fix for NaN clip box width issue after v12.1.0
+    // (getClipBox moved to Chart prototype)
+    if (Chart.prototype.getClipBox) {
+        wrap(Chart.prototype, 'getClipBox', function (
+            this: any,
+            p: any,
+            series: any,
+            chartCoords: any
+        ) {
+            const ret = p.call(this, series, chartCoords);
 
-        // Barycentric technique to determine if point is inside triangle
-        function pointInTriangle(
-            px: number, py: number,
-            ax: number, ay: number,
-            bx: number, by: number,
-            cx: number, cy: number
-        ): boolean {
-            const v0x = cx - ax, v0y = cy - ay,
-                v1x = bx - ax, v1y = by - ay,
-                v2x = px - ax, v2y = py - ay,
-                dot00 = v0x * v0x + v0y * v0y,
-                dot01 = v0x * v1x + v0y * v1y,
-                dot02 = v0x * v2x + v0y * v2y,
-                dot11 = v1x * v1x + v1y * v1y,
-                dot12 = v1x * v2x + v1y * v2y,
-                invDenom = 1 / (dot00 * dot11 - dot01 * dot01),
-                u = (dot11 * dot02 - dot01 * dot12) * invDenom,
-                v = (dot00 * dot12 - dot01 * dot02) * invDenom,
-                // Allow points very close to the edge
-                // (floating point precision)
-                eps = 0.01;
+            ret.width = this.xAxis[0].len;
 
-            return u >= -eps && v >= -eps && u + v <= 1 + eps;
-        }
-
-        const [Ax, Ay] = chart.ternaryToPlot([0, 0]),
-            [Bx, By] = chart.ternaryToPlot([100, 0]),
-            [Cx, Cy] = chart.ternaryToPlot([0, 100]),
-            px = e.x,
-            py = e.y;
-
-        e.isInsidePlot = pointInTriangle(
-            px, py,
-            Ax, Ay,
-            Bx, By,
-            Cx, Cy
-        );
-    });
-
-    H.addEvent(Series, 'afterDrawDataLabels', function (this: any) {
-        if (!(this.options.minR && this.options.maxR)) {
-            return;
-        }
-
-        this.points.forEach(point => {
-            const dataLabel = point.dataLabel;
-
-            dataLabel[dataLabel.placed ? 'animate' : 'attr']({
-                //y: dataLabel.y - point.marker.radius + 5
-                //y: dataLabel.y + dataLabel.height / 2
-            });
+            return ret;
         });
-    });
+    }
+
+    // ----------------------- Series prototype methods -----------------------
 
     // Translate data points from ternary x,y to plotX,plotY
     function translate(this: any) {
@@ -783,6 +567,221 @@ export default function TernaryPlotPlugin(H: any): void {
 
         return Math.sqrt(A / Math.PI);
     }
+
+    // -------------------------------- Events --------------------------------
+
+    // Initialize ternary axes before rendering the chart
+    addEvent(Chart, 'beforeRender', function (this: any) {
+        const chart = this,
+            chartOptions = chart.options.chart;
+
+        if (!chartOptions.ternary) return;
+
+        chart.ternarySpacing = chartOptions.ternarySpacing;
+
+        type Vec2 = [number, number];
+
+        type AxisDef = {
+            axisCenters: [Vec2, Vec2];
+            rotationSign: number;
+            titleDirections: [Vec2, Vec2, Vec2];
+        };
+
+        const ternaryAngle = clamp(chartOptions.ternaryAngle, 1, 89),
+            alpha = ternaryAngle * Math.PI / 180,
+            heightRatio = Math.tan(alpha) / 2,
+            axes: AxisDef[] = [{
+                // Horizontal
+                axisCenters: [[50, 0], [100, 0]],
+                rotationSign: 0,
+                // Two different positions (margin directions):
+                // perpendicular to the axis line, or purely horizontal
+                titleDirections: [[0, 1], [0, 1], [0, 1]]
+            }, {
+                // Vertical right 
+                axisCenters: [[50, 50], [0, 100]],
+                rotationSign: 1,
+                titleDirections: [[-heightRatio, -1 / 2], [-1, 0], [0, -1]]
+            }, {
+                // Vertical left
+                axisCenters: [[0, 50], [0, 0]],
+                rotationSign: -1,
+                titleDirections: [[heightRatio, -1 / 2], [1, 0], [0, 1]]
+            }];
+
+        chart.ternaryAxis = axes.map(({
+            axisCenters,
+            rotationSign,
+            titleDirections
+        }, i) => {
+            const userAxes = chart.options.ternaryAxis || [],
+                axis = merge(defaultTernary, userAxes[i] ?? {});
+
+            let rotation = 0,
+                axisCenter: [number, number];
+
+            if (axis.title.stickToCorner) {
+                //axis.title.marginXOnly = false;
+                axisCenter = axisCenters[1];
+            } else {
+                axisCenter = axisCenters[0];
+
+                rotation = pick(
+                    userAxes[i]?.title?.rotation,
+                    rotationSign * ternaryAngle
+                )
+            }
+
+            axis.axisCenter = axisCenter;
+
+            axis.title.style.rotation = rotation;
+
+            axis.title.titleDirection =
+                titleDirections[axis.title.stickToCorner ?
+                    2 :
+                    (axis.title.marginXOnly ? 1 : 0)];
+
+            axis.gridlineTicks = {};
+            axis.gridlineMinorTicks = {};
+
+            return axis;
+        });
+    });
+
+    // Position ternary axis titles and render gridlines/labels after
+    // setting chart size
+    addEvent(Chart, 'afterSetChartSize', function (this: any) {
+        const chart = this,
+            { options } = chart;
+
+        if (!options.chart.ternary || !chart.ternaryAxis) return;
+
+        const destroyCollection = (coll: Record<string, any> | undefined) => {
+            if (!coll) return;
+
+            for (const k in coll) {
+                coll[k] = coll[k].destroy();
+            }
+        };
+
+        chart.ternaryAxis.forEach((axis: any, i: number) => {
+            const title = axis.title;
+
+            if (title?.text) {
+                if (!axis.titleElem) {
+                    axis.titleElem = chart.renderer
+                        .text(title.text, title.x, title.y)
+                        .css(title.style)
+                        .attr(title.style)
+                        .add();
+                }
+
+                const [x0, y0] = chart.ternaryToPlot(axis.axisCenter),
+                    [dirX, dirY] = title.titleDirection,
+                    // The pixel distance between the axis line and the title.
+                    titleMargin = title.margin;
+
+                // Move one or two bottom titles down to avoid overlapping
+                // with gridLines
+                let offsetY = 0;
+                if (i !== 1 && (title.stickToCorner || i === 0)) {
+                    // Font metrics baseline is better than bbox.height
+                    // for better baseline alignment
+                    const fm = chart.renderer.fontMetrics(axis.titleElem);
+
+                    offsetY = fm.b - 5;
+                }
+
+                axis.titleElem.translate(
+                    x0 + (-titleMargin * dirX) + chart.plotLeft,
+                    y0 + (titleMargin * dirY) + chart.plotTop + offsetY
+                );
+            }
+
+            // Axis grid lines and labels: destroy previous
+            destroyCollection(axis.gridlineTicks);
+            destroyCollection(axis.gridlineLabels);
+            destroyCollection(axis.minorGridlineTicks);
+
+            // Recreate
+            if (axis.gridLineWidth >= 1) {
+                // TODO: consider having the getGridLines method on axis class
+                axis.gridlineTicks = chart.getGridLines(axis, i);
+            }
+
+            // TODO: test minor gridlines with medianGrid
+            if (axis.minorGridLineWidth >= 1) {
+                axis.minorGridlineTicks = chart.getGridLines(axis, i);
+            }
+
+            if (axis.labels.enabled !== false) {
+                axis.gridlineLabels = chart.getLabels(axis, i);
+            }
+        });
+    });
+
+    H.addEvent(Chart, 'afterIsInsidePlot', function (this: any, e: any) {
+        const chart = this;
+
+        if (!chart.options.chart.ternary) {
+            return;
+        }
+
+        // Barycentric technique to determine if point is inside triangle
+        function pointInTriangle(
+            px: number, py: number,
+            ax: number, ay: number,
+            bx: number, by: number,
+            cx: number, cy: number
+        ): boolean {
+            const v0x = cx - ax, v0y = cy - ay,
+                v1x = bx - ax, v1y = by - ay,
+                v2x = px - ax, v2y = py - ay,
+                dot00 = v0x * v0x + v0y * v0y,
+                dot01 = v0x * v1x + v0y * v1y,
+                dot02 = v0x * v2x + v0y * v2y,
+                dot11 = v1x * v1x + v1y * v1y,
+                dot12 = v1x * v2x + v1y * v2y,
+                invDenom = 1 / (dot00 * dot11 - dot01 * dot01),
+                u = (dot11 * dot02 - dot01 * dot12) * invDenom,
+                v = (dot00 * dot12 - dot01 * dot02) * invDenom,
+                // Allow points very close to the edge
+                // (floating point precision)
+                eps = 0.01;
+
+            return u >= -eps && v >= -eps && u + v <= 1 + eps;
+        }
+
+        const [Ax, Ay] = chart.ternaryToPlot([0, 0]),
+            [Bx, By] = chart.ternaryToPlot([100, 0]),
+            [Cx, Cy] = chart.ternaryToPlot([0, 100]),
+            px = e.x,
+            py = e.y;
+
+        e.isInsidePlot = pointInTriangle(
+            px, py,
+            Ax, Ay,
+            Bx, By,
+            Cx, Cy
+        );
+    });
+
+    H.addEvent(Series, 'afterDrawDataLabels', function (this: any) {
+        if (!(this.options.minR && this.options.maxR)) {
+            return;
+        }
+
+        this.points.forEach(point => {
+            const dataLabel = point.dataLabel;
+
+            dataLabel[dataLabel.placed ? 'animate' : 'attr']({
+                //y: dataLabel.y - point.marker.radius + 5
+                //y: dataLabel.y + dataLabel.height / 2
+            });
+        });
+    });
+
+    // ------------------------------ New Series ------------------------------
 
     // Define the new ternaryscatter series type
     seriesType(

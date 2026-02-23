@@ -25,6 +25,7 @@ function TernaryPlotPlugin(H) {
         tickInterval: 50,
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
+        medianColor: '#d6d6d6',
         minorTickInterval: 0,
         minorGridLineWidth: 0,
         minorGridLineColor: '#d6d6d6',
@@ -532,7 +533,7 @@ function TernaryPlotPlugin(H) {
         noSharedTooltip: true,
         axisTypes: [],
         zoneAxis: '',
-        pointArrayMap: ['y', 'z'],
+        pointArrayMap: ['x', 'y', 'z'],
         parallelArrays: ['x', 'y', 'z'],
         // Override Series prorotype methods
         translate: translate,

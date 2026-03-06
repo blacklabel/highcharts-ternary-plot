@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" type="text/css" href="css/styles.css">
 
-    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="js/highcharts.js"></script>
     <script src="js/ternary-plot.js"></script>
 </head>
 
@@ -134,197 +134,426 @@ Highcharts.chart('container', {
     </div>
 
     <script>
-        const URLS = {
-            renewables: "https://ourworldindata.org/grapher/share-electricity-renewables.csv",
-            fossil: "https://ourworldindata.org/grapher/share-electricity-fossil-fuels.csv",
-            nuclear: "https://ourworldindata.org/grapher/share-electricity-nuclear.csv",
+        const energyMixData = {
+            "World": [
+                {
+                    "year": 2015,
+                    "renewables": 22.97,
+                    "fossil": 66.48,
+                    "nuclear": 10.55
+                },
+                {
+                    "year": 2016,
+                    "renewables": 23.73,
+                    "fossil": 65.86,
+                    "nuclear": 10.41
+                },
+                {
+                    "year": 2017,
+                    "renewables": 24.47,
+                    "fossil": 65.34,
+                    "nuclear": 10.2
+                },
+                {
+                    "year": 2018,
+                    "renewables": 25.09,
+                    "fossil": 64.86,
+                    "nuclear": 10.05
+                },
+                {
+                    "year": 2019,
+                    "renewables": 26.09,
+                    "fossil": 63.65,
+                    "nuclear": 10.26
+                },
+                {
+                    "year": 2020,
+                    "renewables": 28,
+                    "fossil": 62.09,
+                    "nuclear": 9.91
+                },
+                {
+                    "year": 2021,
+                    "renewables": 28.1,
+                    "fossil": 62.12,
+                    "nuclear": 9.78
+                },
+                {
+                    "year": 2022,
+                    "renewables": 29.45,
+                    "fossil": 61.42,
+                    "nuclear": 9.13
+                },
+                {
+                    "year": 2023,
+                    "renewables": 30.26,
+                    "fossil": 60.64,
+                    "nuclear": 9.1
+                },
+                {
+                    "year": 2024,
+                    "renewables": 31.82,
+                    "fossil": 59.2,
+                    "nuclear": 8.98
+                }
+            ],
+            "United States": [
+                {
+                    "year": 2015,
+                    "renewables": 13.63,
+                    "fossil": 66.85,
+                    "nuclear": 19.52
+                },
+                {
+                    "year": 2016,
+                    "renewables": 15.29,
+                    "fossil": 65,
+                    "nuclear": 19.71
+                },
+                {
+                    "year": 2017,
+                    "renewables": 17.45,
+                    "fossil": 62.68,
+                    "nuclear": 19.86
+                },
+                {
+                    "year": 2018,
+                    "renewables": 17.45,
+                    "fossil": 63.34,
+                    "nuclear": 19.21
+                },
+                {
+                    "year": 2019,
+                    "renewables": 18.29,
+                    "fossil": 62.24,
+                    "nuclear": 19.46
+                },
+                {
+                    "year": 2020,
+                    "renewables": 20.32,
+                    "fossil": 60.15,
+                    "nuclear": 19.54
+                },
+                {
+                    "year": 2021,
+                    "renewables": 20.74,
+                    "fossil": 60.49,
+                    "nuclear": 18.77
+                },
+                {
+                    "year": 2022,
+                    "renewables": 22.35,
+                    "fossil": 59.65,
+                    "nuclear": 18
+                },
+                {
+                    "year": 2023,
+                    "renewables": 22.68,
+                    "fossil": 59.11,
+                    "nuclear": 18.22
+                },
+                {
+                    "year": 2024,
+                    "renewables": 24.06,
+                    "fossil": 58.13,
+                    "nuclear": 17.81
+                }
+            ],
+            "Europe (EI)": [
+                {
+                    "year": 2015,
+                    "renewables": 31.71,
+                    "fossil": 41.99,
+                    "nuclear": 24.3
+                },
+                {
+                    "year": 2016,
+                    "renewables": 32.12,
+                    "fossil": 42.41,
+                    "nuclear": 23.42
+                },
+                {
+                    "year": 2017,
+                    "renewables": 32.08,
+                    "fossil": 42.82,
+                    "nuclear": 23.04
+                },
+                {
+                    "year": 2018,
+                    "renewables": 34.52,
+                    "fossil": 40.45,
+                    "nuclear": 23.02
+                },
+                {
+                    "year": 2019,
+                    "renewables": 36.64,
+                    "fossil": 38.13,
+                    "nuclear": 23.25
+                },
+                {
+                    "year": 2020,
+                    "renewables": 40.79,
+                    "fossil": 35.73,
+                    "nuclear": 21.46
+                },
+                {
+                    "year": 2021,
+                    "renewables": 39.6,
+                    "fossil": 36.66,
+                    "nuclear": 21.83
+                },
+                {
+                    "year": 2022,
+                    "renewables": 41.25,
+                    "fossil": 37.58,
+                    "nuclear": 19.01
+                },
+                {
+                    "year": 2023,
+                    "renewables": 46.64,
+                    "fossil": 31.9,
+                    "nuclear": 19.27
+                },
+                {
+                    "year": 2024,
+                    "renewables": 49.17,
+                    "fossil": 28.92,
+                    "nuclear": 19.71
+                }
+            ],
+            "China": [
+                {
+                    "year": 2015,
+                    "renewables": 23.97,
+                    "fossil": 73.08,
+                    "nuclear": 2.95
+                },
+                {
+                    "year": 2016,
+                    "renewables": 24.83,
+                    "fossil": 71.7,
+                    "nuclear": 3.48
+                },
+                {
+                    "year": 2017,
+                    "renewables": 25.24,
+                    "fossil": 71,
+                    "nuclear": 3.76
+                },
+                {
+                    "year": 2018,
+                    "renewables": 25.61,
+                    "fossil": 70.27,
+                    "nuclear": 4.12
+                },
+                {
+                    "year": 2019,
+                    "renewables": 26.85,
+                    "fossil": 68.5,
+                    "nuclear": 4.65
+                },
+                {
+                    "year": 2020,
+                    "renewables": 28.09,
+                    "fossil": 67.2,
+                    "nuclear": 4.71
+                },
+                {
+                    "year": 2021,
+                    "renewables": 28.69,
+                    "fossil": 66.53,
+                    "nuclear": 4.77
+                },
+                {
+                    "year": 2022,
+                    "renewables": 30.18,
+                    "fossil": 65.1,
+                    "nuclear": 4.72
+                },
+                {
+                    "year": 2023,
+                    "renewables": 30.61,
+                    "fossil": 64.8,
+                    "nuclear": 4.6
+                },
+                {
+                    "year": 2024,
+                    "renewables": 33.7,
+                    "fossil": 61.83,
+                    "nuclear": 4.47
+                }
+            ],
+            "India": [
+                {
+                    "year": 2015,
+                    "renewables": 14.63,
+                    "fossil": 82.45,
+                    "nuclear": 2.92
+                },
+                {
+                    "year": 2016,
+                    "renewables": 14.44,
+                    "fossil": 82.85,
+                    "nuclear": 2.72
+                },
+                {
+                    "year": 2017,
+                    "renewables": 15.45,
+                    "fossil": 81.99,
+                    "nuclear": 2.56
+                },
+                {
+                    "year": 2018,
+                    "renewables": 16.29,
+                    "fossil": 81.22,
+                    "nuclear": 2.48
+                },
+                {
+                    "year": 2019,
+                    "renewables": 18.14,
+                    "fossil": 79.06,
+                    "nuclear": 2.8
+                },
+                {
+                    "year": 2020,
+                    "renewables": 19.4,
+                    "fossil": 77.76,
+                    "nuclear": 2.84
+                },
+                {
+                    "year": 2021,
+                    "renewables": 19.01,
+                    "fossil": 78.38,
+                    "nuclear": 2.61
+                },
+                {
+                    "year": 2022,
+                    "renewables": 20.26,
+                    "fossil": 77.19,
+                    "nuclear": 2.56
+                },
+                {
+                    "year": 2023,
+                    "renewables": 19.32,
+                    "fossil": 78.17,
+                    "nuclear": 2.51
+                },
+                {
+                    "year": 2024,
+                    "renewables": 19.56,
+                    "fossil": 77.75,
+                    "nuclear": 2.69
+                }
+            ]
         };
- 
-        const TARGETS = new Set([
-            "World",
-            "United States",
-            "Europe (EI)",
-            "China",
-            "India",
-        ]);
 
-        function parseCSV(text) {
-            const [header, ...rows] = text.trim().split("\n");
-            const cols = header.split(",");
-            return rows.map(r => {
-                const vals = r.split(",");
-                return Object.fromEntries(cols.map((c, i) => [c, vals[i]]));
-            });
-        }
+        Highcharts.chart('chart', {
 
-        async function loadSeries(url, valueKey) {
-            const res = await fetch(url);
-            const csv = await res.text();
-            const rows = parseCSV(csv);
+            chart: {
+                ternary: true,
+                ternarySpacing: 35,
+                height: 600
+            },
 
-            const valueCol = Object.keys(rows[0]).find(
-                k => !["Entity", "Code", "Year"].includes(k)
-            );
+            credits: {
+                enabled: false
+            },
 
-            return rows.map(r => ({
-                entity: r.Entity,
-                year: Number(r.Year),
-                [valueKey]: Number(r[valueCol]),
-            }));
-        }
+            title: {
+                text: 'Changes in Electricity Generation Mix (%)<br/>2015-2024',
+                style: {
+                    fontSize: '30px',
+                    fontFamily: 'Inter',
+                    fontWeight: 500
+                }
+            },
 
-        async function getData() {
-            const ren = await loadSeries(URLS.renewables, "renewables");
-            const fos = await loadSeries(URLS.fossil, "fossil");
-            const nuc = await loadSeries(URLS.nuclear, "nuclear");
+            subtitle: {
+                text: `Each sequence shows annual progression from 2015 to 2024.<br/>
+                    <span style="font-size: 10px;">Data source: Our World in Data<span>`,
+                style: {
+                    fontSize: '16px',
+                    opacity: 0.6,
+                    fontFamily: 'Inter',
+                    fontWeight: 500
+                }
+            },
 
-            const map = new Map();
-            for (const r of [...ren, ...fos, ...nuc]) {
-                if (!TARGETS.has(r.entity)) continue;
-                const key = `${r.entity}-${r.year}`;
-                map.set(key, { ...(map.get(key) || {}), ...r });
-            }
-
-            let data = [...map.values()]
-                .filter(d => d.renewables != null && d.fossil != null && d.nuclear != null)
-                .sort((a, b) => a.entity.localeCompare(b.entity) || a.year - b.year);
-
-            // Last 10 years per entity
-            data = Object.values(
-                data.reduce((acc, d) => {
-                    acc[d.entity] ??= [];
-                    acc[d.entity].push(d);
-                    return acc;
-                }, {})
-            ).flatMap(arr => arr.slice(-10));
-
-            // Round and sanity check (≈100%)
-            data = data.map(d => ({
-                entity: d.entity,
-                year: d.year,
-                renewables: +d.renewables.toFixed(2),
-                fossil: +d.fossil.toFixed(2),
-                nuclear: +d.nuclear.toFixed(2),
-                sum: +(d.renewables + d.fossil + d.nuclear).toFixed(2),
-            }));
-
-            return data;
-        }
-
-        async function init() {
-            const rawData = await getData();
-
-            const grouped = rawData.reduce((acc, d) => {
-                (acc[d.entity] ??= []).push(d);
-                return acc;
-            }, {});
-
-            Highcharts.chart('chart', {
-
-                chart: {
-                    ternary: true,
-                    ternarySpacing: 35,
-                    height: 600
-                },
-
-                credits: {
-                    enabled: false
-                },
-
+            ternaryAxis: [{
+                tickInterval: 10,
                 title: {
-                    text: 'Changes in Electricity Generation Mix (%)<br/>2015-2024',
+                    useHTML: true,
+                    text: 'Higher renewables share (%)',
                     style: {
-                        fontSize: '30px',
-                        fontFamily: 'Inter',
-                        fontWeight: 500
+                        fontWeight: '500',
                     }
                 },
-
-                subtitle: {
-                    text: `Each sequence shows annual progression from 2015 to 2024.<br/>
-                        <span style="font-size: 10px;">Data source: Our World in Data<span>`,
+                labels: {
                     style: {
-                        fontSize: '16px',
-                        opacity: 0.6,
-                        fontFamily: 'Inter',
-                        fontWeight: 500
+                        color: '#9c9c9c'
+                    }
+                }
+            }, {
+                tickInterval: 10,
+                title: {
+                    text: 'Higher ossil share (%)',
+                    style: {
+                        fontWeight: '500',
                     }
                 },
+                labels: {
+                    style: {
+                        color: '#9c9c9c'
+                    }
+                }
+            }, {
+                tickInterval: 10,
+                title: {
+                    text: 'Higher nuclear share (%)',
+                    style: {
+                        fontWeight: '500',
+                    }
+                },
+                labels: {
+                    style: {
+                        color: '#9c9c9c'
+                    }
+                }
+            }],
 
-                ternaryAxis: [{
-                    tickInterval: 10,
-                    title: {
-                        useHTML: true,
-                        text: 'Higher renewables share (%)',
-                        style: {
-                            fontWeight: '500',
-                        }
+            plotOptions: {
+                ternaryscatter: {
+                    tooltip: {
+                        pointFormat: '<b>{point.custom.entity} ({point.custom.year}):</b><br/>' +
+                            'Renewables share: {point.x}%<br/>' +
+                            'Ossil: {point.y}%<br/>' +
+                            'Nuclear: {point.z}%'
                     },
-                    labels: {
-                        style: {
-                            color: '#9c9c9c'
-                        }
-                    }
-                }, {
-                    tickInterval: 10,
-                    title: {
-                        text: 'Higher ossil share (%)',
-                        style: {
-                            fontWeight: '500',
-                        }
-                    },
-                    labels: {
-                        style: {
-                            color: '#9c9c9c'
-                        }
-                    }
-                }, {
-                    tickInterval: 10,
-                    title: {
-                        text: 'Higher nuclear share (%)',
-                        style: {
-                            fontWeight: '500',
-                        }
-                    },
-                    labels: {
-                        style: {
-                            color: '#9c9c9c'
-                        }
-                    }
-                }],
-
-                series: [...TARGETS]
-                    .filter(entity => grouped[entity])
-                    .map(entity => ({
-                        type: 'ternaryscatter',
-                        name: entity,
-                        keys: ['x', 'y', 'z', 'entity', 'year', 'marker'],
-                        data: grouped[entity].map(d => ([
-                            d.renewables,
-                            d.fossil,
-                            d.nuclear,
-                            d.entity,
-                            d.year,
-                            d.year === 2024 ? { radius: 6 } : undefined
-                        ])),
-                        tooltip: {
-                            pointFormat: '<b>{point.entity} ({point.year}):</b><br/>' +
-                                'Renewables share: {point.x}%<br/>' +
-                                'Ossil: {point.y}%<br/>' +
-                                'Nuclear: {point.z}%'
-                        },
-                        marker: {
-                            radius: 3,
-                            symbol: 'circle',
-                            lineWidth: 0.5
-                        },
+                    marker: {
+                        radius: 3,
+                        symbol: 'circle',
                         lineWidth: 0.5
-                    }))
+                    },
+                    lineWidth: 0.5
+                }
+            },
 
-            });
-        }
+            series: Object.entries(energyMixData).map(([name, points]) => ({
+                type: 'ternaryscatter',
+                name,
+                data: points.map(point => ({
+                    x: point.renewables,
+                    y: point.fossil,
+                    z: point.nuclear,
+                    custom: {
+                        entity: name,
+                        year: point.year
+                    },
+                    marker: point.year === 2024 ? { radius: 6 } : undefined
+                }))
+            }))
 
-        init();
+        });
 
     </script>
 </body>

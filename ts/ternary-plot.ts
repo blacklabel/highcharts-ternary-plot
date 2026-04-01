@@ -277,8 +277,8 @@ export default function TernaryPlotPlugin(H: any): void {
             // Then shrink by spacing to get the final width
             width = Math.max(baseWidth - spacing, 5),
             sumTo = useSumTo ? ternaryOpts.sumTo : 100,
-            x = pick(point.x, point[0]) * width / sumTo,
-            y = pick(point.y, point[1]) * width / sumTo,
+            x = pick(point.a, point[0]) * width / sumTo,
+            y = pick(point.b, point[1]) * width / sumTo,
             // Center within plot area
             centerX = (chart.plotWidth - width) / 2,
             centerY = (chart.plotHeight - width * heightRatio) / 2;
@@ -370,7 +370,7 @@ export default function TernaryPlotPlugin(H: any): void {
         // Translate each point
         for (i = 0; i < dataLength; i++) {
             const point = points[i],
-                xValue = point.x;
+                xValue = point.a;
 
             point.yBottom = void 0;
 
@@ -387,6 +387,9 @@ export default function TernaryPlotPlugin(H: any): void {
             // Do we need it? Perhaps for the future
             //point.isInside = this.isPointInside(point);
             point.isInside = true;
+            // Highcharts evaluates isNull as !isNumber(point.y) — override it
+            // since ternary points have no y property
+            point.isNull = false;
 
             point.tooltipPos = [point.plotX, point.plotY];
 
@@ -440,9 +443,9 @@ export default function TernaryPlotPlugin(H: any): void {
 
     function getTernaryColor(
         this: any,
-        x: number,
-        y: number,
-        z: number,
+        a: number,
+        b: number,
+        c: number,
         alpha?: number
     ): string {
         // Parse color input → { r, g, b }
@@ -494,26 +497,26 @@ export default function TernaryPlotPlugin(H: any): void {
         }
 
         const sum = 100,
-            wa = x / sum,
-            wb = y / sum,
-            wc = z / sum,
-            r = Math.round(
+            wa = a / sum,
+            wb = b / sum,
+            wc = c / sum,
+            rCh = Math.round(
                 baseColors[0].r * wa +
                 baseColors[1].r * wb +
                 baseColors[2].r * wc
             ),
-            g = Math.round(
+            gCh = Math.round(
                 baseColors[0].g * wa +
                 baseColors[1].g * wb +
                 baseColors[2].g * wc
             ),
-            b = Math.round(
+            bCh = Math.round(
                 baseColors[0].b * wa +
                 baseColors[1].b * wb +
                 baseColors[2].b * wc
             );
 
-        return `rgba(${r}, ${g}, ${b}, ${alpha || 1})`;
+        return `rgba(${rCh}, ${gCh}, ${bCh}, ${alpha || 1})`;
     }
 
     function pointAttribs(this: any, point: any, state: any) {
@@ -527,11 +530,11 @@ export default function TernaryPlotPlugin(H: any): void {
             return attr;
         }
 
-        const [x, y, z] = [point.x, point.y, point.z];
+        const [a, b, c] = [point.a, point.b, point.c];
 
-        attr.fill = this.getTernaryColor(x, y, z);
+        attr.fill = this.getTernaryColor(a, b, c);
 
-        point.ternaryColor = this.getTernaryColor(x, y, z, 1);
+        point.ternaryColor = this.getTernaryColor(a, b, c, 1);
 
         attr.stroke = point.marker?.lineColor || point.ternaryColor;
 
@@ -626,8 +629,13 @@ export default function TernaryPlotPlugin(H: any): void {
             rotationSign,
             titleDirections
         }, i) => {
-            const userAxes = chart.options.ternaryAxis || [],
-                axis = merge(defaultTernary, userAxes[i] ?? {});
+            const axisKeys = ['a', 'b', 'c'] as const,
+                userTernaryAxis = chart.options.ternaryAxis || {},
+                axis = merge(
+                    defaultTernary,
+                    userTernaryAxis.plotOptions ?? {},
+                    userTernaryAxis[axisKeys[i]] ?? {}
+                );
 
             let rotation = 0,
                 axisCenter: [number, number];
@@ -639,7 +647,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 axisCenter = axisCenters[0];
 
                 rotation = pick(
-                    userAxes[i]?.title?.rotation,
+                    userTernaryAxis[axisKeys[i]]?.title?.rotation,
                     rotationSign * ternaryAngle
                 )
             }
@@ -802,7 +810,7 @@ export default function TernaryPlotPlugin(H: any): void {
         {
             tooltip: {
                 headerFormat: '{point.name}<br/>',
-                pointFormat: '{point.x}, {point.y}, {point.z}'
+                pointFormat: '{point.a}, {point.b}, {point.c}'
             }
         },
         // Series proto
@@ -812,8 +820,8 @@ export default function TernaryPlotPlugin(H: any): void {
             noSharedTooltip: true,
             axisTypes: [],
             zoneAxis: '',
-            pointArrayMap: ['x', 'y', 'z'],
-            parallelArrays: ['x', 'y', 'z'],
+            pointArrayMap: ['a', 'b', 'c'],
+            parallelArrays: ['a', 'b', 'c'],
             // Override Series prorotype methods
             translate: translate,
             getPlotBox: getPlotBox,

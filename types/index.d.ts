@@ -1,8 +1,15 @@
 import * as _Highcharts from 'highcharts';
 
 declare module 'highcharts' {
+    interface TernaryAxisGroupOptions {
+        plotOptions?: _Highcharts.AxisOptions;
+        a?: _Highcharts.AxisOptions;
+        b?: _Highcharts.AxisOptions;
+        c?: _Highcharts.AxisOptions;
+    }
+
     interface Options {
-        ternaryAxis?: _Highcharts.AxisOptions[];
+        ternaryAxis?: TernaryAxisGroupOptions;
     }
 
     interface TernaryOptions {

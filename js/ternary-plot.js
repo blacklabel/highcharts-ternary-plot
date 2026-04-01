@@ -201,7 +201,7 @@ function TernaryPlotPlugin(H) {
         // base based on the available space
         baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio), 
         // Then shrink by spacing to get the final width
-        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? ternaryOpts.sumTo : 100, x = pick(point.x, point[0]) * width / sumTo, y = pick(point.y, point[1]) * width / sumTo, 
+        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? ternaryOpts.sumTo : 100, x = pick(point.a, point[0]) * width / sumTo, y = pick(point.b, point[1]) * width / sumTo, 
         // Center within plot area
         centerX = (chart.plotWidth - width) / 2, centerY = (chart.plotHeight - width * heightRatio) / 2;
         return [
@@ -267,7 +267,7 @@ function TernaryPlotPlugin(H) {
         let i, plotX, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
         // Translate each point
         for (i = 0; i < dataLength; i++) {
-            const point = points[i], xValue = point.x;
+            const point = points[i], xValue = point.a;
             point.yBottom = void 0;
             const perspectivePoint = chart.ternaryToPlot(point, true);
             point.plotX = perspectivePoint[0];
@@ -279,6 +279,9 @@ function TernaryPlotPlugin(H) {
             // Do we need it? Perhaps for the future
             //point.isInside = this.isPointInside(point);
             point.isInside = true;
+            // Highcharts evaluates isNull as !isNumber(point.y) — override it
+            // since ternary points have no y property
+            point.isNull = false;
             point.tooltipPos = [point.plotX, point.plotY];
             // Set client related positions for mouse tracking
             point.clientX = dynamicallyPlaced ?
@@ -305,7 +308,7 @@ function TernaryPlotPlugin(H) {
         series.closestPointRangePx = closestPointRangePx;
         fireEvent(this, 'afterTranslate');
     }
-    function getTernaryColor(x, y, z, alpha) {
+    function getTernaryColor(a, b, c, alpha) {
         // Parse color input → { r, g, b }
         function parseColor(color) {
             // HEX
@@ -345,14 +348,14 @@ function TernaryPlotPlugin(H) {
         if (!alpha && isArray(colors) && isNumber(colors[3])) {
             alpha = colors[3];
         }
-        const sum = 100, wa = x / sum, wb = y / sum, wc = z / sum, r = Math.round(baseColors[0].r * wa +
+        const sum = 100, wa = a / sum, wb = b / sum, wc = c / sum, rCh = Math.round(baseColors[0].r * wa +
             baseColors[1].r * wb +
-            baseColors[2].r * wc), g = Math.round(baseColors[0].g * wa +
+            baseColors[2].r * wc), gCh = Math.round(baseColors[0].g * wa +
             baseColors[1].g * wb +
-            baseColors[2].g * wc), b = Math.round(baseColors[0].b * wa +
+            baseColors[2].g * wc), bCh = Math.round(baseColors[0].b * wa +
             baseColors[1].b * wb +
             baseColors[2].b * wc);
-        return `rgba(${r}, ${g}, ${b}, ${alpha || 1})`;
+        return `rgba(${rCh}, ${gCh}, ${bCh}, ${alpha || 1})`;
     }
     function pointAttribs(point, state) {
         var _a;
@@ -360,9 +363,9 @@ function TernaryPlotPlugin(H) {
         if ((point === null || point === void 0 ? void 0 : point.isNull) || !this.options.ternaryColors) {
             return attr;
         }
-        const [x, y, z] = [point.x, point.y, point.z];
-        attr.fill = this.getTernaryColor(x, y, z);
-        point.ternaryColor = this.getTernaryColor(x, y, z, 1);
+        const [a, b, c] = [point.a, point.b, point.c];
+        attr.fill = this.getTernaryColor(a, b, c);
+        point.ternaryColor = this.getTernaryColor(a, b, c, 1);
         attr.stroke = ((_a = point.marker) === null || _a === void 0 ? void 0 : _a.lineColor) || point.ternaryColor;
         return attr;
     }
@@ -419,8 +422,8 @@ function TernaryPlotPlugin(H) {
                 titleDirections: [[heightRatio, -1 / 2], [1, 0], [0, 1]]
             }];
         chart.ternaryAxis = axes.map(({ axisCenters, rotationSign, titleDirections }, i) => {
-            var _a, _b, _c;
-            const userAxes = chart.options.ternaryAxis || [], axis = merge(defaultTernary, (_a = userAxes[i]) !== null && _a !== void 0 ? _a : {});
+            var _a, _b, _c, _d;
+            const axisKeys = ['a', 'b', 'c'], userTernaryAxis = chart.options.ternaryAxis || {}, axis = merge(defaultTernary, (_a = userTernaryAxis.plotOptions) !== null && _a !== void 0 ? _a : {}, (_b = userTernaryAxis[axisKeys[i]]) !== null && _b !== void 0 ? _b : {});
             let rotation = 0, axisCenter;
             if (axis.title.stickToCorner) {
                 //axis.title.marginXOnly = false;
@@ -428,7 +431,7 @@ function TernaryPlotPlugin(H) {
             }
             else {
                 axisCenter = axisCenters[0];
-                rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotationSign * ternaryAngle);
+                rotation = pick((_d = (_c = userTernaryAxis[axisKeys[i]]) === null || _c === void 0 ? void 0 : _c.title) === null || _d === void 0 ? void 0 : _d.rotation, rotationSign * ternaryAngle);
             }
             axis.axisCenter = axisCenter;
             axis.title.style.rotation = rotation;
@@ -531,7 +534,7 @@ function TernaryPlotPlugin(H) {
     {
         tooltip: {
             headerFormat: '{point.name}<br/>',
-            pointFormat: '{point.x}, {point.y}, {point.z}'
+            pointFormat: '{point.a}, {point.b}, {point.c}'
         }
     }, 
     // Series proto
@@ -541,8 +544,8 @@ function TernaryPlotPlugin(H) {
         noSharedTooltip: true,
         axisTypes: [],
         zoneAxis: '',
-        pointArrayMap: ['x', 'y', 'z'],
-        parallelArrays: ['x', 'y', 'z'],
+        pointArrayMap: ['a', 'b', 'c'],
+        parallelArrays: ['a', 'b', 'c'],
         // Override Series prorotype methods
         translate: translate,
         getPlotBox: getPlotBox,

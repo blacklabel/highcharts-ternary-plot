@@ -91,31 +91,23 @@ Highcharts.chart('container', {
         text: 'Diet macronutrients'
     },
 
-    ternaryAxis: [{
-        title: {
-            text: 'Protein'
-        }
-    }, {
-        title: {
-            text: 'Fat'
-        }
-    }, {
-        title: {
-            text: 'Carbohydrates'
-        }
-    }],
+    ternaryAxis: {
+        a: { title: { text: 'Protein' } },
+        b: { title: { text: 'Fat' } },
+        c: { title: { text: 'Carbohydrates' } }
+    },
 
     series: [{
         type: 'ternaryscatter',
         name: 'Diet macronutrients',
-        keys: ['x', 'y', 'z', 'name'],
+        keys: ['a', 'b', 'c', 'name'],
         tooltip: {
             headerFormat: '',
             pointFormat: `
                 &lt;strong>{point.name} diet:&lt;/strong&gt&lt;br&gt
-                Protein: {point.x}%&lt;br&gt
-                Fat: {point.y}%&lt;br&gt
-                Carbohydrates: {point.z}%
+                Protein: {point.a}%&lt;br&gt
+                Fat: {point.b}%&lt;br&gt
+                Carbohydrates: {point.c}%
             `
         },
         data: [
@@ -1255,28 +1247,28 @@ Highcharts.chart('container', {
             const result = data.map(d => {
                 // TODO: consider normalizing so the rounding sums to 100
                 // (not 99 or 101)
-                const x = Math.round(d.shares.JavaScript * 100),
-                    y = Math.round(d.shares.Python * 100),
-                    z = Math.round(d.shares.Rust * 100),
+                const a = Math.round(d.shares.JavaScript * 100),
+                    b = Math.round(d.shares.Python * 100),
+                    c = Math.round(d.shares.Rust * 100),
                     total = d.counts.Python +
                         d.counts.JavaScript +
                         d.counts.Rust;
 
-                return [x, y, z, total, d.term];
+                return [a, b, c, total, d.term];
             });
 
             const radii = result.map(d => d[3]);
 
             const points = result.map(([
-                x,
-                y,
-                z,
+                a,
+                b,
+                c,
                 total,
                 name
             ]) => ({
-                x,
-                y,
-                z,
+                a,
+                b,
+                c,
                 total,
                 name,
                 marker: {
@@ -1286,17 +1278,6 @@ Highcharts.chart('container', {
                 }
             }));
 
-            const labelsEnabled = false;
-            const margin = 26;
-            const medianGrid = true;
-            const stickToCorner = true;
-            const medianColor = 'rgba(255,255,255,0.08)';
-            //const gridLineColor = 'rgba(255,255,255,0.35)';
-            const gridLineColor = 'rgba(255,255,255,1)';
-            const gridLineWidth = 1;
-            const gridLineExtension = 0;
-            const labelsFontSize = 16;
-            const labelsDistance = 6;
             Highcharts.chart('chart', {
 
                 chart: {
@@ -1349,99 +1330,63 @@ Highcharts.chart('container', {
                     enabled: false
                 },
 
-                ternaryAxis: [{
-                    tickInterval: 10,
-                    medianGrid: medianGrid,
-                    medianColor: medianColor,
-                    gridLineWidth: gridLineWidth,
-                    gridLineColor: gridLineColor,
-                    gridLineExtension: gridLineExtension,
-                    title: {
-                        stickToCorner: stickToCorner,
-                        margin: margin,
-                        useHTML: true,
-                        //text: 'Higher renewables share (%)',
-                        //text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaaaaaaa renewables share (%)',
-                        text: 'JS',
-                        //rotation: 0,
-                        style: {
-                            fontWeight: '500',
-                            //fontSize: '35px',
-                            fontSize: '40px',
-                            color: '#fcdc00'
+                ternaryAxis: {
+                    plotOptions: {
+                        tickInterval: 10,
+                        medianGrid: true,
+                        medianColor: 'rgba(255,255,255,0.08)',
+                        gridLineWidth: 1,
+                        //gridLineColor: 'rgba(255,255,255,0.35)',
+                        gridLineColor: 'rgba(255,255,255,1)',
+                        gridLineExtension: 0,
+                        title: {
+                            stickToCorner: true,
+                            margin: 26,
+                        },
+                        labels: {
+                            align: 'center',
+                            distance: 6,
+                            style: {
+                                color: '#9c9c9c',
+                                fontSize: 16
+                            },
+                            enabled: false
                         }
                     },
-                    labels: {
-                        align: 'center',
-                        distance: labelsDistance,
-                        style: {
-                            color: '#9c9c9c',
-                            fontSize: labelsFontSize
-                        },
-                        enabled: labelsEnabled
-                    }
-                }, {
-                    tickInterval: 10,
-                    medianGrid: medianGrid,
-                    medianColor: medianColor,
-                    gridLineWidth: gridLineWidth,
-                    gridLineColor: gridLineColor,
-                    minorGridLineColor: 'red',
-                    gridLineExtension: gridLineExtension,
-                    title: {
-                        //marginXOnly: true,
-                        //text: 'Higher fossil share (%)',
-                        //text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaa fossil share (%)',
-                        text: 'Python',
-                        stickToCorner: stickToCorner,
-                        //rotation: 0,
-                        margin: margin,
-                        style: {
-                            fontWeight: '500',
-                            fontSize: '40px',
-                            color: '#3776ab'
+                    a: {
+                        title: {
+                            useHTML: true,
+                            text: 'JS',
+                            style: {
+                                fontWeight: '500',
+                                fontSize: '40px',
+                                color: '#fcdc00'
+                            }
                         }
                     },
-                    labels: {
-                        align: 'center',
-                        distance: labelsDistance,
-                        style: {
-                            color: '#9c9c9c',
-                            fontSize: labelsFontSize
-                        },
-                        enabled: labelsEnabled
-                    }
-                }, {
-                    //marginXOnly: true,
-                    tickInterval: 10,
-                    gridLineWidth: gridLineWidth,
-                    gridLineColor: gridLineColor,
-                    medianGrid: medianGrid,
-                    medianColor: medianColor,
-                    gridLineExtension: gridLineExtension,
-                    title: {
-                        //text: 'Higher nuclear share (%)',
-                        //text: 'Higher aaaaaaaaaaaaaaaaaaaaaaaa nuclear share (%)',
-                        text: 'Rust',
-                        stickToCorner: stickToCorner,
-                        //rotation: 0,
-                        margin: margin,
-                        style: {
-                            fontWeight: '500',
-                            fontSize: '40px',
-                            color: '#a72145'
+                    b: {
+                        minorGridLineColor: 'red',
+                        title: {
+                            //marginXOnly: true,
+                            text: 'Python',
+                            style: {
+                                fontWeight: '500',
+                                fontSize: '40px',
+                                color: '#3776ab'
+                            }
                         }
                     },
-                    labels: {
-                        align: 'center',
-                        distance: labelsDistance,
-                        style: {
-                            color: '#9c9c9c',
-                            fontSize: labelsFontSize
-                        },
-                        enabled: labelsEnabled
+                    c: {
+                        title: {
+                            text: 'Rust',
+                            style: {
+                                fontWeight: '500',
+                                fontSize: '40px',
+                                color: '#a72145'
+                            }
+                        }
                     }
-                }],
+                },
 
                 // series: [...TARGETS]
                 //     .filter(entity => grouped[entity])
@@ -1545,9 +1490,9 @@ Highcharts.chart('container', {
                     tooltip: {
                         headerFormat: '',
                         pointFormat: '<b>{point.name}:</b><br/>' +
-                            'JS: {point.x}%<br/>' +
-                            'Python: {point.y}%<br/>' +
-                            'Rust: {point.z}%'
+                            'JS: {point.a}%<br/>' +
+                            'Python: {point.b}%<br/>' +
+                            'Rust: {point.c}%'
                     },
                     states: {
                         hover: {
@@ -1589,45 +1534,49 @@ Highcharts.chart('container', {
                     text: 'Diet macronutrients'
                 },
 
-                ternaryAxis: [{
-                    //gridLineExtension: 0,
-                    title: {
-                        text: 'Protein',
-                        // x: -45,
-                        // y: 40
+                ternaryAxis: {
+                    a: {
+                        //gridLineExtension: 0,
+                        title: {
+                            text: 'Protein',
+                            // x: -45,
+                            // y: 40
+                        },
+                        labels: {
+                            //distance: 10
+                        }
                     },
-                    labels: {
-                        //distance: 10
-                    }
-                }, {
-                    //gridLineExtension: 0,
-                    title: {
-                        text: 'Fat'
+                    b: {
+                        //gridLineExtension: 0,
+                        title: {
+                            text: 'Fat'
+                        },
+                        labels: {
+                            //distance: 0
+                        }
                     },
-                    labels: {
-                        //distance: 0
+                    c: {
+                        //gridLineExtension: 0,
+                        title: {
+                            text: 'Carbohydrates'
+                        },
+                        labels: {
+                            //distance: 0
+                        }
                     }
-                }, {
-                    //gridLineExtension: 0,
-                    title: {
-                        text: 'Carbohydrates'
-                    },
-                    labels: {
-                        //distance: 0
-                    }
-                }],
+                },
 
                 series: [{
                     type: 'ternaryscatter',
                     name: 'Diet macronutrients',
-                    keys: ['x', 'y', 'z', 'name'],
+                    keys: ['a', 'b', 'c', 'name'],
                     tooltip: {
                         headerFormat: '',
                         pointFormat: `
                             <strong>{point.name} diet:</strong><br>
-                            Protein: {point.x}%<br>
-                            Fat: {point.y}%<br>
-                            Carbohydrates: {point.z}%
+                            Protein: {point.a}%<br>
+                            Fat: {point.b}%<br>
+                            Carbohydrates: {point.c}%
                         `
                     },
                     data: [
@@ -1756,54 +1705,48 @@ Highcharts.chart('container', {
                     }
                 },
 
-                ternaryAxis: [{
-                    tickInterval: 10,
-                    title: {
-                        useHTML: true,
-                        text: 'Higher renewables share (%)',
-                        style: {
-                            fontWeight: '500',
+                ternaryAxis: {
+                    plotOptions: {
+                        tickInterval: 10,
+                        labels: {
+                            style: {
+                                color: '#9c9c9c'
+                            }
                         }
                     },
-                    labels: {
-                        style: {
-                            color: '#9c9c9c'
-                        }
-                    }
-                }, {
-                    tickInterval: 10,
-                    title: {
-                        text: 'Higher ossil share (%)',
-                        style: {
-                            fontWeight: '500',
+                    a: {
+                        title: {
+                            useHTML: true,
+                            text: 'Higher renewables share (%)',
+                            style: {
+                                fontWeight: '500',
+                            }
                         }
                     },
-                    labels: {
-                        style: {
-                            color: '#9c9c9c'
-                        }
-                    }
-                }, {
-                    tickInterval: 10,
-                    title: {
-                        text: 'Higher nuclear share (%)',
-                        style: {
-                            fontWeight: '500',
+                    b: {
+                        title: {
+                            text: 'Higher fossil share (%)',
+                            style: {
+                                fontWeight: '500',
+                            }
                         }
                     },
-                    labels: {
-                        style: {
-                            color: '#9c9c9c'
+                    c: {
+                        title: {
+                            text: 'Higher nuclear share (%)',
+                            style: {
+                                fontWeight: '500',
+                            }
                         }
                     }
-                }],
+                },
 
                 series: [...TARGETS]
                     .filter(entity => grouped[entity])
                     .map(entity => ({
                         type: 'ternaryscatter',
                         name: entity,
-                        keys: ['x', 'y', 'z', 'entity', 'year', 'marker'],
+                        keys: ['a', 'b', 'c', 'entity', 'year', 'marker'],
                         data: grouped[entity].map(d => ([
                             d.renewables,
                             d.fossil,
@@ -1814,9 +1757,9 @@ Highcharts.chart('container', {
                         ])),
                         tooltip: {
                             pointFormat: '<b>{point.entity} ({point.year}):</b><br/>' +
-                                'Renewables share: {point.x}%<br/>' +
-                                'Ossil: {point.y}%<br/>' +
-                                'Nuclear: {point.z}%'
+                                'Renewables share: {point.a}%<br/>' +
+                                'Fossil: {point.b}%<br/>' +
+                                'Nuclear: {point.c}%'
                         },
                         marker: {
                             radius: 3,

@@ -387,6 +387,12 @@ export default function TernaryPlotPlugin(H: any): void {
             // Do we need it? Perhaps for the future
             //point.isInside = this.isPointInside(point);
             point.isInside = true;
+
+            // Ensure the tooltip engine resolves to pointFormat/headerFormat.
+            // Custom series types may not inherit the default 'point' prefix,
+            // causing an empty tooltip.
+            point.formatPrefix = 'point';
+
             // Highcharts evaluates isNull as !isNumber(point.y) — override it
             // since ternary points have no y property
             point.isNull = false;

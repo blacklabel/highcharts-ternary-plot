@@ -25,7 +25,6 @@ function TernaryPlotPlugin(H) {
         tickInterval: 50,
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
-        medianColor: '#d6d6d6',
         minorTickInterval: 0,
         minorGridLineWidth: 0,
         minorGridLineColor: '#d6d6d6',
@@ -67,6 +66,20 @@ function TernaryPlotPlugin(H) {
             sumTo: (_c = opts.sumTo) !== null && _c !== void 0 ? _c : 100
         };
     }
+    function resolveMedian(medianOpt) {
+        var _a, _b, _c;
+        if (!medianOpt)
+            return null;
+        const isObj = typeof medianOpt === 'object' && medianOpt !== null;
+        if (isObj && medianOpt.enabled === false)
+            return null;
+        const opts = isObj ? medianOpt : {};
+        return {
+            color: (_a = opts.color) !== null && _a !== void 0 ? _a : '#d6d6d6',
+            width: (_b = opts.width) !== null && _b !== void 0 ? _b : 1,
+            dashStyle: (_c = opts.dashStyle) !== null && _c !== void 0 ? _c : 'Solid'
+        };
+    }
     // ----------------------- Chart prototype methods -----------------------
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (axis, index) {
@@ -76,20 +89,20 @@ function TernaryPlotPlugin(H) {
             return gridLines;
         const chart = this, ternaryOpts = chart.ternaryOpts, sumTo = ternaryOpts.sumTo;
         let p1, p2;
+        const medianOpts = resolveMedian(axis.median);
         function renderLine(path, isMedian) {
-            // TODO: take from options
-            const medianColor = axis.medianColor, width = axis.gridLineWidth, stroke = axis.gridLineColor;
-            return chart.renderer
-                .path(path)
-                .attr({
-                'stroke-width': width,
-                // TODO: for medians add dashStyle, width etc. from options
-                stroke: isMedian ? medianColor : stroke,
+            const stroke = isMedian ? medianOpts.color : axis.gridLineColor, strokeWidth = isMedian ? medianOpts.width : axis.gridLineWidth, dashStyle = isMedian ? medianOpts.dashStyle : undefined;
+            const attrs = {
+                'stroke-width': strokeWidth,
+                stroke,
                 zIndex: 2
-            })
-                .add();
+            };
+            if (dashStyle && dashStyle !== 'Solid') {
+                attrs.dashstyle = dashStyle;
+            }
+            return chart.renderer.path(path).attr(attrs).add();
         }
-        if (axis.medianGrid) {
+        if (medianOpts) {
             const sidesAndMedians = [
                 // Sides
                 [[0, 100], [0, 0]],

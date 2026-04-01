@@ -1333,8 +1333,9 @@ Highcharts.chart('container', {
                 ternaryAxis: {
                     plotOptions: {
                         tickInterval: 10,
-                        medianGrid: true,
-                        medianColor: 'rgba(255,255,255,0.08)',
+                        median: {
+                            color: 'rgba(255,255,255,0.08)'
+                        },
                         gridLineWidth: 1,
                         //gridLineColor: 'rgba(255,255,255,0.35)',
                         gridLineColor: 'rgba(255,255,255,1)',

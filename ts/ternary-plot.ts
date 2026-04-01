@@ -54,14 +54,25 @@ export default function TernaryPlotPlugin(H: any): void {
         }
     } as const;
 
-    const defaultChartOpts = {
-        ternaryAngle: 60,
-        ternarySpacing: 35,
-        ternarySumTo: 100
-    }
-
-    H.defaultOptions.chart = merge(H.defaultOptions.chart, defaultChartOpts);
     H.defaultOptions.defaultTernary = defaultTernary;
+
+    function resolveTernary(
+        ternaryOpt: any
+    ): { angle: number, spacing: number, sumTo: number } | null {
+        if (!ternaryOpt) return null;
+
+        const isObj = typeof ternaryOpt === 'object' && ternaryOpt !== null;
+
+        if (isObj && ternaryOpt.enabled === false) return null;
+
+        const opts = isObj ? ternaryOpt : {};
+
+        return {
+            angle: opts.angle ?? 60,
+            spacing: opts.spacing ?? 35,
+            sumTo: opts.sumTo ?? 100
+        };
+    }
 
     // ----------------------- Chart prototype methods -----------------------
 
@@ -77,8 +88,8 @@ export default function TernaryPlotPlugin(H: any): void {
         if (!interval || interval <= 0) return gridLines;
 
         const chart = this,
-            chartOptions = chart.options.chart,
-            sumTo = chartOptions.ternarySumTo;
+            ternaryOpts = chart.ternaryOpts,
+            sumTo = ternaryOpts.sumTo;
 
         let p1: [number, number],
             p2: [number, number];
@@ -113,7 +124,7 @@ export default function TernaryPlotPlugin(H: any): void {
             ];
 
             for (let i = 0; i < 2; i++) {
-                let [from, to] = sidesAndMedians[index + i * 3];
+                const [from, to] = sidesAndMedians[index + i * 3];
 
                 p1 = chart.ternaryToPlot(from);
                 p2 = chart.ternaryToPlot(to);
@@ -131,7 +142,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 // TODO: use axis.tickLength instead and other tick options (color, width)
                 const gridLineExtension = axis.gridLineExtension || 0,
                     alpha =
-                        clamp(chartOptions.ternaryAngle, 1, 89)
+                        clamp(ternaryOpts.angle, 1, 89)
                         * Math.PI / 180,
                     heightRatio = Math.tan(alpha) / 2;
 
@@ -186,14 +197,14 @@ export default function TernaryPlotPlugin(H: any): void {
         if (!interval || interval <= 0) return labels;
 
         const chart = this,
-            chartOptions = chart.options.chart,
-            sumTo = chart.options.chart.ternarySumTo,
+            ternaryOpts = chart.ternaryOpts,
+            sumTo = ternaryOpts.sumTo,
             { plotLeft, plotTop } = chart,
             { align, zIndex, style, x, y } = axis.labels,
             gridLineExtension = axis.gridLineExtension || 0,
             labelMargin = axis.labels.distance || 0,
             distance = gridLineExtension + labelMargin,
-            alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180,
+            alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180,
             heightRatio = Math.tan(alpha) / 2;
 
         for (let tick = 0; tick <= sumTo; tick += interval) {
@@ -251,11 +262,11 @@ export default function TernaryPlotPlugin(H: any): void {
         useSumTo?: boolean
     ): [number, number] {
         const chart = this,
-            chartOptions = chart.options.chart,
-            spacing = chart.ternarySpacing * 2,
+            ternaryOpts = chart.ternaryOpts,
+            spacing = ternaryOpts.spacing * 2,
             // α - angle between the triangle side and the base
             // (0° < α < 90°)
-            alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180,
+            alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180,
             heightRatio = Math.tan(alpha) / 2,
             // Determine the length of the triangle's
             // base based on the available space
@@ -265,7 +276,7 @@ export default function TernaryPlotPlugin(H: any): void {
             ),
             // Then shrink by spacing to get the final width
             width = Math.max(baseWidth - spacing, 5),
-            sumTo = useSumTo ? chartOptions.ternarySumTo : 100,
+            sumTo = useSumTo ? ternaryOpts.sumTo : 100,
             x = pick(point.x, point[0]) * width / sumTo,
             y = pick(point.y, point[1]) * width / sumTo,
             // Center within plot area
@@ -574,11 +585,11 @@ export default function TernaryPlotPlugin(H: any): void {
     // Initialize ternary axes before rendering the chart
     addEvent(Chart, 'beforeRender', function (this: any) {
         const chart = this,
-            chartOptions = chart.options.chart;
+            ternaryOpts = resolveTernary(chart.options.chart.ternary);
 
-        if (!chartOptions.ternary) return;
+        if (!ternaryOpts) return;
 
-        chart.ternarySpacing = chartOptions.ternarySpacing;
+        chart.ternaryOpts = ternaryOpts;
 
         type Vec2 = [number, number];
 
@@ -588,7 +599,7 @@ export default function TernaryPlotPlugin(H: any): void {
             titleDirections: [Vec2, Vec2, Vec2];
         };
 
-        const ternaryAngle = clamp(chartOptions.ternaryAngle, 1, 89),
+        const ternaryAngle = clamp(ternaryOpts.angle, 1, 89),
             alpha = ternaryAngle * Math.PI / 180,
             heightRatio = Math.tan(alpha) / 2,
             axes: AxisDef[] = [{
@@ -652,10 +663,9 @@ export default function TernaryPlotPlugin(H: any): void {
     // Position ternary axis titles and render gridlines/labels after
     // setting chart size
     addEvent(Chart, 'afterSetChartSize', function (this: any) {
-        const chart = this,
-            { options } = chart;
+        const chart = this;
 
-        if (!options.chart.ternary || !chart.ternaryAxis) return;
+        if (!chart.ternaryOpts || !chart.ternaryAxis) return;
 
         const destroyCollection = (coll: Record<string, any> | undefined) => {
             if (!coll) return;
@@ -724,7 +734,7 @@ export default function TernaryPlotPlugin(H: any): void {
     H.addEvent(Chart, 'afterIsInsidePlot', function (this: any, e: any) {
         const chart = this;
 
-        if (!chart.options.chart.ternary) {
+        if (!chart.ternaryOpts) {
             return;
         }
 

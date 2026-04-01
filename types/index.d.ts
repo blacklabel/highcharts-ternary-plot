@@ -5,9 +5,15 @@ declare module 'highcharts' {
         ternaryAxis?: _Highcharts.AxisOptions[];
     }
 
+    interface TernaryOptions {
+        enabled?: boolean;
+        angle?: number;
+        spacing?: number;
+        sumTo?: number;
+    }
+
     interface ChartOptions {
-        ternary?: boolean;
-        ternarySpacing?: number;
+        ternary?: boolean | TernaryOptions;
     }
 
     interface SeriesTernaryScatterOptions extends _Highcharts.SeriesOptions, _Highcharts.PlotScatterOptions {

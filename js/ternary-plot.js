@@ -52,13 +52,21 @@ function TernaryPlotPlugin(H) {
             }
         }
     };
-    const defaultChartOpts = {
-        ternaryAngle: 60,
-        ternarySpacing: 35,
-        ternarySumTo: 100
-    };
-    H.defaultOptions.chart = merge(H.defaultOptions.chart, defaultChartOpts);
     H.defaultOptions.defaultTernary = defaultTernary;
+    function resolveTernary(ternaryOpt) {
+        var _a, _b, _c;
+        if (!ternaryOpt)
+            return null;
+        const isObj = typeof ternaryOpt === 'object' && ternaryOpt !== null;
+        if (isObj && ternaryOpt.enabled === false)
+            return null;
+        const opts = isObj ? ternaryOpt : {};
+        return {
+            angle: (_a = opts.angle) !== null && _a !== void 0 ? _a : 60,
+            spacing: (_b = opts.spacing) !== null && _b !== void 0 ? _b : 35,
+            sumTo: (_c = opts.sumTo) !== null && _c !== void 0 ? _c : 100
+        };
+    }
     // ----------------------- Chart prototype methods -----------------------
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (axis, index) {
@@ -66,7 +74,7 @@ function TernaryPlotPlugin(H) {
         const interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return gridLines;
-        const chart = this, chartOptions = chart.options.chart, sumTo = chartOptions.ternarySumTo;
+        const chart = this, ternaryOpts = chart.ternaryOpts, sumTo = ternaryOpts.sumTo;
         let p1, p2;
         function renderLine(path, isMedian) {
             // TODO: take from options
@@ -93,7 +101,7 @@ function TernaryPlotPlugin(H) {
                 [[0, 0,], [50, 50]]
             ];
             for (let i = 0; i < 2; i++) {
-                let [from, to] = sidesAndMedians[index + i * 3];
+                const [from, to] = sidesAndMedians[index + i * 3];
                 p1 = chart.ternaryToPlot(from);
                 p2 = chart.ternaryToPlot(to);
                 const path = [
@@ -107,7 +115,7 @@ function TernaryPlotPlugin(H) {
         else {
             for (let cursor = 0; cursor <= sumTo; cursor += interval) {
                 // TODO: use axis.tickLength instead and other tick options (color, width)
-                const gridLineExtension = axis.gridLineExtension || 0, alpha = clamp(chartOptions.ternaryAngle, 1, 89)
+                const gridLineExtension = axis.gridLineExtension || 0, alpha = clamp(ternaryOpts.angle, 1, 89)
                     * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
                 switch (index) {
                     // First grid (bottom axis)
@@ -144,7 +152,7 @@ function TernaryPlotPlugin(H) {
         const labels = {}, interval = axis.tickInterval;
         if (!interval || interval <= 0)
             return labels;
-        const chart = this, chartOptions = chart.options.chart, sumTo = chart.options.chart.ternarySumTo, { plotLeft, plotTop } = chart, { align, zIndex, style, x, y } = axis.labels, gridLineExtension = axis.gridLineExtension || 0, labelMargin = axis.labels.distance || 0, distance = gridLineExtension + labelMargin, alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
+        const chart = this, ternaryOpts = chart.ternaryOpts, sumTo = ternaryOpts.sumTo, { plotLeft, plotTop } = chart, { align, zIndex, style, x, y } = axis.labels, gridLineExtension = axis.gridLineExtension || 0, labelMargin = axis.labels.distance || 0, distance = gridLineExtension + labelMargin, alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
         for (let tick = 0; tick <= sumTo; tick += interval) {
             const label = labels[tick] = chart.renderer
                 .text(tick, x, y)
@@ -185,15 +193,15 @@ function TernaryPlotPlugin(H) {
     // Convert ternary (x, y) to plot coordinates
     // using 2D barycentric projection
     Chart.prototype.ternaryToPlot = function (point, useSumTo) {
-        const chart = this, chartOptions = chart.options.chart, spacing = chart.ternarySpacing * 2, 
+        const chart = this, ternaryOpts = chart.ternaryOpts, spacing = ternaryOpts.spacing * 2, 
         // α - angle between the triangle side and the base
         // (0° < α < 90°)
-        alpha = clamp(chartOptions.ternaryAngle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, 
+        alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, 
         // Determine the length of the triangle's
         // base based on the available space
         baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio), 
         // Then shrink by spacing to get the final width
-        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? chartOptions.ternarySumTo : 100, x = pick(point.x, point[0]) * width / sumTo, y = pick(point.y, point[1]) * width / sumTo, 
+        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? ternaryOpts.sumTo : 100, x = pick(point.x, point[0]) * width / sumTo, y = pick(point.y, point[1]) * width / sumTo, 
         // Center within plot area
         centerX = (chart.plotWidth - width) / 2, centerY = (chart.plotHeight - width * heightRatio) / 2;
         return [
@@ -388,11 +396,11 @@ function TernaryPlotPlugin(H) {
     // -------------------------------- Events --------------------------------
     // Initialize ternary axes before rendering the chart
     addEvent(Chart, 'beforeRender', function () {
-        const chart = this, chartOptions = chart.options.chart;
-        if (!chartOptions.ternary)
+        const chart = this, ternaryOpts = resolveTernary(chart.options.chart.ternary);
+        if (!ternaryOpts)
             return;
-        chart.ternarySpacing = chartOptions.ternarySpacing;
-        const ternaryAngle = clamp(chartOptions.ternaryAngle, 1, 89), alpha = ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, axes = [{
+        chart.ternaryOpts = ternaryOpts;
+        const ternaryAngle = clamp(ternaryOpts.angle, 1, 89), alpha = ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, axes = [{
                 // Horizontal
                 axisCenters: [[50, 0], [100, 0]],
                 rotationSign: 0,
@@ -436,8 +444,8 @@ function TernaryPlotPlugin(H) {
     // Position ternary axis titles and render gridlines/labels after
     // setting chart size
     addEvent(Chart, 'afterSetChartSize', function () {
-        const chart = this, { options } = chart;
-        if (!options.chart.ternary || !chart.ternaryAxis)
+        const chart = this;
+        if (!chart.ternaryOpts || !chart.ternaryAxis)
             return;
         const destroyCollection = (coll) => {
             if (!coll)
@@ -490,7 +498,7 @@ function TernaryPlotPlugin(H) {
     });
     H.addEvent(Chart, 'afterIsInsidePlot', function (e) {
         const chart = this;
-        if (!chart.options.chart.ternary) {
+        if (!chart.ternaryOpts) {
             return;
         }
         // Barycentric technique to determine if point is inside triangle

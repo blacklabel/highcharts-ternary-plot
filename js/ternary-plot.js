@@ -399,12 +399,8 @@ function TernaryPlotPlugin(H) {
     }
     // ---- Events ----
     // Initialize ternary axes before rendering the chart
-    addEvent(Chart, 'beforeRender', function () {
-        const chart = this, ternaryOpts = resolveTernary(chart.options.chart.ternary);
-        if (!ternaryOpts)
-            return;
-        chart.ternaryOpts = ternaryOpts;
-        const ternaryAngle = clamp(ternaryOpts.angle, 1, 89), alpha = ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, axes = [{
+    function buildTernaryAxis(chart) {
+        const ternaryOpts = chart.ternaryOpts, ternaryAngle = clamp(ternaryOpts.angle, 1, 89), alpha = ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, axes = [{
                 // Horizontal
                 axisCenters: [[50, 0], [100, 0]],
                 rotationSign: 0,
@@ -427,7 +423,7 @@ function TernaryPlotPlugin(H) {
             var _a, _b, _c, _d;
             const axis = merge(defaultTernary, (_a = userTernaryAxis.plotOptions) !== null && _a !== void 0 ? _a : {}, (_b = userTernaryAxis[axisKeys[i]]) !== null && _b !== void 0 ? _b : {});
             let rotation = 0, axisCenter;
-            if (axis.title.stickToCorner) {
+            if (axis.title.titlePosition === 'corner') {
                 axisCenter = axisCenters[1];
             }
             else {
@@ -437,12 +433,19 @@ function TernaryPlotPlugin(H) {
             axis.axisCenter = axisCenter;
             axis.title.style['rotation'] = rotation;
             axis.titleDirection =
-                titleDirections[axis.title.stickToCorner ?
+                titleDirections[axis.title.titlePosition === 'corner' ?
                     2 :
                     (axis.title.offsetDirection === 'horizontal' ? 1 : 0)];
             axis.gridlineTicks = {};
             return axis;
         });
+    }
+    addEvent(Chart, 'beforeRender', function () {
+        const chart = this, ternaryOpts = resolveTernary(chart.options.chart.ternary);
+        if (!ternaryOpts)
+            return;
+        chart.ternaryOpts = ternaryOpts;
+        buildTernaryAxis(chart);
     });
     // Position ternary axis titles and render gridlines/labels after
     // setting chart size
@@ -476,7 +479,7 @@ function TernaryPlotPlugin(H) {
                 // Move one or two bottom titles down to avoid overlapping
                 // with gridLines
                 let offsetY = 0;
-                if (i !== 1 && (title.stickToCorner || i === 0)) {
+                if (i !== 1 && (title.titlePosition === 'corner' || i === 0)) {
                     // Font metrics baseline is better than bbox.height
                     // for better baseline alignment
                     const fm = chart.renderer.fontMetrics(axis.titleElem);
@@ -498,6 +501,42 @@ function TernaryPlotPlugin(H) {
                 axis.gridlineLabels = chart.getLabels(axis, i);
             }
         });
+    });
+    function destroyTernaryAxis(chart) {
+        if (!chart.ternaryAxis)
+            return;
+        chart.ternaryAxis.forEach(axis => {
+            var _a;
+            (_a = axis.titleElem) === null || _a === void 0 ? void 0 : _a.destroy();
+            axis.titleElem = undefined;
+            [axis.gridlineTicks, axis.gridlineLabels].forEach(coll => {
+                var _a;
+                if (!coll)
+                    return;
+                for (const k in coll) {
+                    (_a = coll[k]) === null || _a === void 0 ? void 0 : _a.destroy();
+                    coll[k] = null;
+                }
+            });
+        });
+    }
+    addEvent(Chart, 'destroy', function () {
+        destroyTernaryAxis(this);
+    });
+    // Rebuild ternary axis config when chart options change via chart.update()
+    addEvent(Chart, 'afterUpdate', function () {
+        const chart = this, ternaryOpts = resolveTernary(chart.options.chart.ternary);
+        if (!ternaryOpts)
+            return;
+        // Destroy old SVG elements before rebuilding axis objects,
+        // otherwise the old titleElem references would be lost and leaked
+        destroyTernaryAxis(chart);
+        chart.ternaryOpts = ternaryOpts;
+        // Rebuild axis config from updated options
+        buildTernaryAxis(chart);
+        // afterSetChartSize already ran during chart.update() with old config —
+        // re-render now that ternaryAxis has been rebuilt
+        fireEvent(chart, 'afterSetChartSize');
     });
     addEvent(Chart, 'afterIsInsidePlot', function (e) {
         const chart = this;

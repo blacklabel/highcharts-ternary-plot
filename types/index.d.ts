@@ -180,4 +180,3 @@ declare module 'highcharts' {
 
 export function factory(highcharts: typeof Highcharts): void;
 export default factory;
-export let Highcharts: typeof _Highcharts;

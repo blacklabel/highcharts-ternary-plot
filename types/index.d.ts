@@ -24,8 +24,6 @@ declare module 'highcharts' {
 
     interface Options {
         ternaryAxis?: TernaryAxisGroupOptions;
-        /** @internal Plugin default config storage */
-        defaultTernary?: unknown;
     }
 
     interface SeriesTernaryScatterOptions
@@ -83,10 +81,8 @@ declare module 'highcharts' {
         marker?: PointMarkerOptionsObject & { radius?: number };
         dataLabel?: SVGElement & { placed?: boolean };
         formatPrefix?: string;
-        /** @internal writable override */
-        tooltipPos?: number[];
-        /** @internal writable override */
-        shapeArgs?: SVGAttributes;
+        readonly tooltipPos?: readonly number[];
+        readonly shapeArgs?: Readonly<SVGAttributes>;
     }
 }
 

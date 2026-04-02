@@ -26,8 +26,6 @@ function TernaryPlotPlugin(H) {
         tickInterval: 50,
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
-        minorGridLineWidth: 0,
-        minorGridLineColor: '#d6d6d6',
         title: {
             text: 'Axis',
             margin: 30,
@@ -51,7 +49,6 @@ function TernaryPlotPlugin(H) {
             }
         }
     };
-    H.defaultOptions.defaultTernary = defaultTernary;
     function resolveTernary(ternaryOpt) {
         var _a, _b, _c;
         if (!ternaryOpt)
@@ -464,7 +461,6 @@ function TernaryPlotPlugin(H) {
                     2 :
                     (axis.title.marginXOnly ? 1 : 0)];
             axis.gridlineTicks = {};
-            axis.minorGridlineTicks = {};
             return axis;
         });
     });
@@ -511,15 +507,10 @@ function TernaryPlotPlugin(H) {
             // Axis grid lines and labels: destroy previous
             destroyCollection(axis.gridlineTicks);
             destroyCollection(axis.gridlineLabels);
-            destroyCollection(axis.minorGridlineTicks);
             // Recreate
             if (axis.gridLineWidth >= 1) {
                 // TODO: consider having the getGridLines method on axis class
                 axis.gridlineTicks = chart.getGridLines(axis, i);
-            }
-            // TODO: test minor gridlines with medianGrid
-            if (axis.minorGridLineWidth >= 1) {
-                axis.minorGridlineTicks = chart.getGridLines(axis, i);
             }
             if (axis.labels.enabled !== false) {
                 axis.gridlineLabels = chart.getLabels(axis, i);

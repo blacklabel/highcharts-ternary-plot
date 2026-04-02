@@ -21,8 +21,6 @@ declare module 'highcharts' {
             b?: AxisOptions;
             c?: AxisOptions;
         };
-        /** @internal Plugin default config storage */
-        defaultTernary?: unknown;
     }
 
     interface Chart {
@@ -81,9 +79,7 @@ declare module 'highcharts' {
         dataLabel?: SVGElement & { placed?: boolean };
         /** @internal */
         formatPrefix?: string;
-        /** @internal writable override */
-        tooltipPos?: number[];
-        /** @internal writable override */
-        shapeArgs?: SVGAttributes;
+        readonly tooltipPos?: readonly number[];
+        readonly shapeArgs?: Readonly<SVGAttributes>;
     }
 }

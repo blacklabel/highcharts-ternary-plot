@@ -24,8 +24,6 @@ type TernaryAxisOptions = {
     gridLineWidth: number;
     gridLineColor: string;
     gridLineExtension?: number;
-    minorGridLineWidth: number;
-    minorGridLineColor: string;
     median?: boolean | {
         enabled?: boolean;
         color?: string;
@@ -59,7 +57,6 @@ type TernaryAxisState = {
     axisCenter?: Vec2;
     titleElem?: Highcharts.SVGElement;
     gridlineTicks?: Record<string, Highcharts.SVGElement | null>;
-    minorGridlineTicks?: Record<string, Highcharts.SVGElement | null>;
     gridlineLabels?: Record<string, Highcharts.SVGElement | null>;
 };
 
@@ -162,8 +159,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         tickInterval: 50,
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
-        minorGridLineWidth: 0,
-        minorGridLineColor: '#d6d6d6',
         title: {
             text: 'Axis',
             margin: 30,
@@ -187,8 +182,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             }
         }
     };
-
-    (H.defaultOptions as Record<string, unknown>).defaultTernary = defaultTernary;
 
     function resolveTernary(
         ternaryOpt:
@@ -844,7 +837,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                     (axis.title.marginXOnly ? 1 : 0)];
 
             axis.gridlineTicks = {};
-            axis.minorGridlineTicks = {};
 
             return axis;
         });
@@ -907,17 +899,11 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             // Axis grid lines and labels: destroy previous
             destroyCollection(axis.gridlineTicks);
             destroyCollection(axis.gridlineLabels);
-            destroyCollection(axis.minorGridlineTicks);
 
             // Recreate
             if (axis.gridLineWidth >= 1) {
                 // TODO: consider having the getGridLines method on axis class
                 axis.gridlineTicks = chart.getGridLines(axis, i);
-            }
-
-            // TODO: test minor gridlines with medianGrid
-            if (axis.minorGridLineWidth >= 1) {
-                axis.minorGridlineTicks = chart.getGridLines(axis, i);
             }
 
             if (axis.labels.enabled !== false) {

@@ -19,14 +19,13 @@ function TernaryPlotPlugin(H) {
     if (H.ternaryPlotPluginLoaded)
         return;
     H.ternaryPlotPluginLoaded = true;
-    // -------------------------------- Utils --------------------------------
+    // ---- Utils ----
     const { addEvent, Chart, clamp, correctFloat, defined, fireEvent, isArray, isNumber, merge, pick, Series, seriesType, wrap } = H;
-    // ------------------------------- Defaults -------------------------------
+    // ---- Defaults ----
     const defaultTernary = {
         tickInterval: 50,
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
-        minorTickInterval: 0,
         minorGridLineWidth: 0,
         minorGridLineColor: '#d6d6d6',
         title: {
@@ -81,7 +80,7 @@ function TernaryPlotPlugin(H) {
             dashStyle: (_c = opts.dashStyle) !== null && _c !== void 0 ? _c : 'Solid'
         };
     }
-    // ----------------------- Chart prototype methods -----------------------
+    // ---- Chart prototype methods ----
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (axis, index) {
         const gridLines = {};
@@ -268,10 +267,12 @@ function TernaryPlotPlugin(H) {
             return ret;
         });
     }
-    // ----------------------- Series prototype methods -----------------------
+    // ---- Series prototype methods ----
     // Translate data points from ternary x,y to plotX,plotY
     function translate() {
         this.generatePoints();
+        // Stub xAxis so that pointPlacementToXValue() and isRadial checks
+        // inside Highcharts internals don't throw on a non-cartesian series
         this.xAxis = {
             isRadial: false,
             options: {
@@ -280,7 +281,7 @@ function TernaryPlotPlugin(H) {
         };
         const series = this, chart = series.chart, xAxis = series.xAxis, points = series.points, dataLength = points.length, pointPlacement = series.pointPlacementToXValue(), // #7860
         dynamicallyPlaced = Boolean(pointPlacement);
-        let i, plotX, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
+        let i, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
         // Translate each point
         for (i = 0; i < dataLength; i++) {
             const point = points[i], xValue = point.a;
@@ -308,13 +309,13 @@ function TernaryPlotPlugin(H) {
             // Set client related positions for mouse tracking
             point.clientX = dynamicallyPlaced ?
                 correctFloat(xAxis.translate(xValue, false, false, false, true, pointPlacement)) :
-                plotX; // #1514, #5383, #5518
+                point.plotX; // #1514, #5383, #5518
             // Determine auto enabling of markers (#3635, #5099)
             if (!point.isNull && point.visible !== false) {
                 if (typeof lastPlotX !== 'undefined') {
-                    closestPointRangePx = Math.min(closestPointRangePx, Math.abs(plotX - lastPlotX));
+                    closestPointRangePx = Math.min(closestPointRangePx, Math.abs(point.plotX - lastPlotX));
                 }
-                lastPlotX = plotX;
+                lastPlotX = point.plotX;
             }
             // Zones disabled for now
             point.zone = undefined;
@@ -419,7 +420,7 @@ function TernaryPlotPlugin(H) {
         const t = (this.total - minValue) / (maxValue - minValue), minA = Math.PI * minR * minR, maxA = Math.PI * maxR * maxR, A = minA + t * (maxA - minA);
         return Math.sqrt(A / Math.PI);
     }
-    // -------------------------------- Events --------------------------------
+    // ---- Events ----
     // Initialize ternary axes before rendering the chart
     addEvent(Chart, 'beforeRender', function () {
         const chart = this, ternaryOpts = resolveTernary(chart.options.chart.ternary);
@@ -444,9 +445,10 @@ function TernaryPlotPlugin(H) {
                 rotationSign: -1,
                 titleDirections: [[heightRatio, -1 / 2], [1, 0], [0, 1]]
             }];
+        const axisKeys = ['a', 'b', 'c'], userTernaryAxis = chart.options.ternaryAxis || {};
         chart.ternaryAxis = axes.map(({ axisCenters, rotationSign, titleDirections }, i) => {
             var _a, _b, _c, _d;
-            const axisKeys = ['a', 'b', 'c'], userTernaryAxis = chart.options.ternaryAxis || {}, axis = merge(defaultTernary, (_a = userTernaryAxis.plotOptions) !== null && _a !== void 0 ? _a : {}, (_b = userTernaryAxis[axisKeys[i]]) !== null && _b !== void 0 ? _b : {});
+            const axis = merge(defaultTernary, (_a = userTernaryAxis.plotOptions) !== null && _a !== void 0 ? _a : {}, (_b = userTernaryAxis[axisKeys[i]]) !== null && _b !== void 0 ? _b : {});
             let rotation = 0, axisCenter;
             if (axis.title.stickToCorner) {
                 axisCenter = axisCenters[1];
@@ -552,7 +554,7 @@ function TernaryPlotPlugin(H) {
             });
         });
     });
-    // ------------------------------ New Series ------------------------------
+    // ---- New Series ----
     // Define the new ternaryscatter series type
     seriesType('ternaryscatter', 'scatter', 
     // Default series options

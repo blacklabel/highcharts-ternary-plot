@@ -50,6 +50,11 @@ declare module 'highcharts' {
         plotGroup?: SVGElement;
     }
 
+    interface Color {
+        /** @internal [r, g, b, a] where r/g/b are 0–255 and a is 0–1 */
+        rgba: [number, number, number, number];
+    }
+
     interface Axis {
         /** @internal */
         translate(

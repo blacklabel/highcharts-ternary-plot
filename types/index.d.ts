@@ -26,14 +26,33 @@ declare module 'highcharts' {
         ternaryAxis?: TernaryAxisGroupOptions;
     }
 
+    interface TernaryComponentColors {
+        /** Color at the vertex where component A = 100% */
+        a: string;
+        /** Color at the vertex where component B = 100% */
+        b: string;
+        /** Color at the vertex where component C = 100% */
+        c: string;
+        /**
+         * Opacity of all points. Overrides any alpha in the color strings.
+         * @default 1
+         */
+        alpha?: number;
+    }
+
     interface SeriesTernaryScatterOptions
         extends _Highcharts.SeriesOptions,
             _Highcharts.PlotScatterOptions {
         type: 'ternaryscatter';
         data?: Array<number | [number | string, number | null] | null | PointOptionsObject>;
-        minR?: number;
-        maxR?: number;
-        ternaryColors?: Array<string | number>;
+        minSize?: number;
+        maxSize?: number;
+        /**
+         * Barycentric color interpolation across the triangle. Each point's
+         * color is a weighted blend of the three corner colors, proportional
+         * to its a/b/c component values.
+         */
+        componentColors?: TernaryComponentColors;
     }
 
     interface SeriesOptionsRegistry {

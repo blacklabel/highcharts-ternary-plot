@@ -84,13 +84,20 @@ type TernaryPoint = Highcharts.Point & {
     total: number;
     ternaryColor?: string;
     formatPrefix: string;
-    getRadius(): number;
+    getRadius(minR: number, maxR: number): number;
+};
+
+type ComponentColors = {
+    a: string;
+    b: string;
+    c: string;
+    alpha?: number;
 };
 
 type TernarySeriesOptions = Highcharts.SeriesOptions & {
-    minR?: number;
-    maxR?: number;
-    ternaryColors?: Array<string | number>;
+    minSize?: number;
+    maxSize?: number;
+    componentColors?: ComponentColors;
 };
 
 type TernarySeries = Highcharts.Series & {
@@ -142,11 +149,10 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         addEvent,
         Chart,
         clamp,
+        color,
         correctFloat,
         defined,
         fireEvent,
-        isArray,
-        isNumber,
         merge,
         pick,
         Series,
@@ -601,11 +607,14 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                     !point.marker ||
                     !defined(point.marker.radius)
                 ) &&
-                series.options.minR &&
-                series.options.maxR
+                series.options.minSize &&
+                series.options.maxSize
             ) {
                 point.marker = {
-                    radius: point.getRadius()
+                    radius: point.getRadius(
+                        series.options.minSize,
+                        series.options.maxSize
+                    )
                 };
             }
         }
@@ -615,8 +624,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         fireEvent(this, 'afterTranslate');
     }
 
-    type RGB = { r: number; g: number; b: number };
-
     function getTernaryColor(
         this: TernarySeries,
         a: number,
@@ -624,76 +631,33 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         c: number,
         alpha?: number
     ): string {
-        // Parse color input → { r, g, b }
-        function parseColor(color: string): RGB | null {
-            // HEX
-            if (color[0] === '#') {
-                const hex = color.replace('#', '');
-                const bigint = parseInt(hex.length === 3
-                    ? hex.split('').map(ch => ch + ch).join('')
-                    : hex, 16);
+        const { componentColors } = this.options;
 
-                return {
-                    r: (bigint >> 16) & 255,
-                    g: (bigint >> 8) & 255,
-                    b: bigint & 255
-                };
-            }
+        // H.color handles all formats HC supports (hex, rgb, rgba, named,
+        // 8-digit hex, etc.) — new formats added to HC work here for free.
+        // Alpha from the color string is intentionally ignored; use
+        // componentColors.alpha to control opacity uniformly.
+        const ca = color(componentColors!.a).rgba,
+            cb = color(componentColors!.b).rgba,
+            cc = color(componentColors!.c).rgba;
 
-            // rgb / rgba
-            const m = color.match(
-                /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/
-            );
-            if (m) {
-                if (!alpha && m[4] !== undefined) {
-                    alpha = Number(m[4]);
-                }
-                return {
-                    r: Number(m[1]),
-                    g: Number(m[2]),
-                    b: Number(m[3])
-                };
-            }
-
-            return null;
+        // Return transparent if any color string was unparseable
+        if (!ca || !cb || !cc) {
+            return 'rgba(0,0,0,0)';
         }
 
-        const colors = this.options.ternaryColors;
+        // Barycentric interpolation: each point color is a weighted blend
+        // of the three corner colors, where weights = a/b/c component values
+        const sumTo = this.chart.ternaryOpts.sumTo,
+            wa = a / sumTo,
+            wb = b / sumTo,
+            wc = c / sumTo,
+            rCh = Math.round(ca[0] * wa + cb[0] * wb + cc[0] * wc),
+            gCh = Math.round(ca[1] * wa + cb[1] * wb + cc[1] * wc),
+            bCh = Math.round(ca[2] * wa + cb[2] * wb + cc[2] * wc),
+            finalAlpha = alpha ?? componentColors!.alpha ?? 1;
 
-        // Resolve base colors: [{ r, g, b }, ...]
-        const baseColors = [0, 1, 2].map(i => {
-            if (isArray(colors) && colors[i]) {
-                return parseColor(colors[i] as string);
-            }
-            return null;
-        }) as [RGB, RGB, RGB];
-
-        // Alpha from 4th element if provided
-        if (!alpha && isArray(colors) && isNumber(colors[3])) {
-            alpha = colors[3] as number;
-        }
-
-        const sum = 100,
-            wa = a / sum,
-            wb = b / sum,
-            wc = c / sum,
-            rCh = Math.round(
-                baseColors[0].r * wa +
-                baseColors[1].r * wb +
-                baseColors[2].r * wc
-            ),
-            gCh = Math.round(
-                baseColors[0].g * wa +
-                baseColors[1].g * wb +
-                baseColors[2].g * wc
-            ),
-            bCh = Math.round(
-                baseColors[0].b * wa +
-                baseColors[1].b * wb +
-                baseColors[2].b * wc
-            );
-
-        return `rgba(${rCh}, ${gCh}, ${bCh}, ${alpha || 1})`;
+        return `rgba(${rCh}, ${gCh}, ${bCh}, ${finalAlpha})`;
     }
 
     function pointAttribs(
@@ -707,7 +671,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             state
         );
 
-        if (point?.isNull || !this.options.ternaryColors) {
+        if (!point || point.isNull || !this.options.componentColors) {
             return attr;
         }
 
@@ -745,12 +709,10 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         };
     }
 
-    function getRadius(this: TernaryPoint): number {
-        const series = this.series as TernarySeries,
-            minR = series.options.minR!,
-            maxR = series.options.maxR!;
+    function getRadius(this: TernaryPoint, minR: number, maxR: number): number {
+        const series = this.series as TernarySeries;
 
-        const allValues = series.points.map(p => p.total),
+        const allValues = series.points.map((p: TernaryPoint) => p.total),
             minValue = Math.min(...allValues),
             maxValue = Math.max(...allValues);
 
@@ -962,7 +924,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     });
 
     addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
-        if (!(this.options.minR && this.options.maxR)) {
+        if (!(this.options.minSize && this.options.maxSize)) {
             return;
         }
 

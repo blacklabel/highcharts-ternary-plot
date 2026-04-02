@@ -1480,14 +1480,20 @@ Highcharts.chart('container', {
                     name: 'Programming Languages',
                     //keys: ['x', 'y', 'z', 'marker', 'name'],
                     data: points,
-                    //ternaryColors: ['#fcdc00', '#3776ab', '#a72145', 0.15],
-                    ternaryColors: [
-                        'rgba(253, 220, 0, 0.15)',    // JS
-                        'rgba(55, 118, 171, 0.15)',   // Python
-                        'rgba(167, 33, 69, 0.15)',     // Rust
-                    ],
-                    minR: 6,
-                    maxR: 48,
+                    componentColors: {
+                        a: 'rgb(253, 220, 0)',    // JS
+                        b: 'rgb(55, 118, 171)',   // Python
+                        c: 'rgb(167, 33, 69)',     // Rust
+                        alpha: 0.15
+                    },
+                    // componentColors: {
+                    //     a: '#fcdc00', // JS
+                    //     b: '#3776ab', // Python
+                    //     c: '#a72145', // Rust
+                    //     alpha: 0.15
+                    // },
+                    minSize: 6,
+                    maxSize: 48,
                     tooltip: {
                         headerFormat: '',
                         pointFormat: '<b>{point.name}:</b><br/>' +

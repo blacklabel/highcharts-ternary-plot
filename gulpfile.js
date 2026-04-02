@@ -29,7 +29,7 @@ const decorator = [
 
 // Step 1: Compile TS → JS (no wrapping yet)
 gulp.task('tsc', () => {
-  return gulp.src('ts/ternary-plot.ts')
+  return gulp.src('ts/**/*.ts')
     .pipe(tsProject())
     .js
     .pipe(rename('ternary-plot.js'))

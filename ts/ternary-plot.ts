@@ -1,4 +1,115 @@
-export default function TernaryPlotPlugin(H: any): void {
+import * as Highcharts from 'highcharts';
+
+// ---------------------------------------------------------------------------
+// Plugin-internal types
+// ---------------------------------------------------------------------------
+
+type Vec2 = [number, number];
+
+type TernaryOpts = {
+    angle: number;
+    spacing: number;
+    sumTo: number;
+};
+
+type MedianOpts = {
+    color: string;
+    width: number;
+    dashStyle: string;
+};
+
+type TernaryAxisConfig = {
+    tickInterval: number;
+    gridLineWidth: number;
+    gridLineColor: string;
+    gridLineExtension?: number;
+    minorGridLineWidth: number;
+    minorGridLineColor: string;
+    median?: boolean | {
+        enabled?: boolean;
+        color?: string;
+        width?: number;
+        dashStyle?: string;
+    };
+    labels: {
+        enabled?: boolean;
+        align: string;
+        zIndex: number;
+        distance: number;
+        x: number;
+        y: number;
+        style: Record<string, string | number>;
+    };
+    title: {
+        text?: string;
+        margin: number;
+        x: number;
+        y: number;
+        stickToCorner?: boolean;
+        marginXOnly?: boolean;
+        rotation?: number;
+        titleDirection?: Vec2;
+        style: Record<string, string | number>;
+    };
+    axisCenter?: Vec2;
+    titleElem?: Highcharts.SVGElement;
+    gridlineTicks?: Record<string, Highcharts.SVGElement | null>;
+    minorGridlineTicks?: Record<string, Highcharts.SVGElement | null>;
+    gridlineLabels?: Record<string, Highcharts.SVGElement | null>;
+};
+
+type TernaryChart = Highcharts.Chart & {
+    ternaryOpts: TernaryOpts;
+    ternaryAxis: TernaryAxisConfig[];
+    ternaryToPlot(point: TernaryPlotInput, useSumTo?: boolean): Vec2;
+    getGridLines(
+        axis: TernaryAxisConfig,
+        index: number
+    ): Record<string, Highcharts.SVGElement | null>;
+    getLabels(
+        axis: TernaryAxisConfig,
+        index: number
+    ): Record<string, Highcharts.SVGElement | null>;
+};
+
+type TernaryPoint = Highcharts.Point & {
+    a: number;
+    b: number;
+    c: number;
+    total: number;
+    ternaryColor?: string;
+    formatPrefix: string;
+    getRadius(): number;
+};
+
+type TernarySeriesOptions = Highcharts.SeriesOptions & {
+    minR?: number;
+    maxR?: number;
+    ternaryColors?: Array<string | number>;
+};
+
+type TernarySeries = Highcharts.Series & {
+    options: TernarySeriesOptions;
+    points: TernaryPoint[];
+    chart: TernaryChart;
+    getTernaryColor(a: number, b: number, c: number, alpha?: number): string;
+};
+
+// Both object-form (TernaryPoint) and array-form ([a, b] or [a, b, c])
+// are valid inputs to ternaryToPlot
+type TernaryPlotInput =
+    | { a?: number; b?: number; [n: number]: number | undefined }
+    | number[];
+
+// Highcharts exposes clamp internally but not in its public types
+type HighchartsPlugin = typeof Highcharts & {
+    clamp: (value: number, min: number, max: number) => number;
+    ternaryPlotPluginLoaded?: boolean;
+};
+
+// ---------------------------------------------------------------------------
+
+export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     if (H.ternaryPlotPluginLoaded) return;
     H.ternaryPlotPluginLoaded = true;
 
@@ -51,13 +162,16 @@ export default function TernaryPlotPlugin(H: any): void {
                 fontSize: '0.8em'
             }
         }
-    } as const;
+    };
 
-    H.defaultOptions.defaultTernary = defaultTernary;
+    (H.defaultOptions as Record<string, unknown>).defaultTernary = defaultTernary;
 
     function resolveTernary(
-        ternaryOpt: any
-    ): { angle: number, spacing: number, sumTo: number } | null {
+        ternaryOpt:
+            | boolean
+            | { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number }
+            | undefined
+    ): TernaryOpts | null {
         if (!ternaryOpt) return null;
 
         const isObj = typeof ternaryOpt === 'object' && ternaryOpt !== null;
@@ -74,8 +188,11 @@ export default function TernaryPlotPlugin(H: any): void {
     }
 
     function resolveMedian(
-        medianOpt: any
-    ): { color: string, width: number, dashStyle: string } | null {
+        medianOpt:
+            | boolean
+            | { enabled?: boolean; color?: string; width?: number; dashStyle?: string }
+            | undefined
+    ): MedianOpts | null {
         if (!medianOpt) return null;
 
         const isObj = typeof medianOpt === 'object' && medianOpt !== null;
@@ -95,11 +212,11 @@ export default function TernaryPlotPlugin(H: any): void {
 
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (
-        this: any,
-        axis: any,
+        this: TernaryChart,
+        axis: TernaryAxisConfig,
         index: number
-    ) {
-        const gridLines: Record<string, any> = {};
+    ): Record<string, Highcharts.SVGElement | null> {
+        const gridLines: Record<string, Highcharts.SVGElement | null> = {};
         const interval = axis.tickInterval;
 
         if (!interval || interval <= 0) return gridLines;
@@ -108,17 +225,20 @@ export default function TernaryPlotPlugin(H: any): void {
             ternaryOpts = chart.ternaryOpts,
             sumTo = ternaryOpts.sumTo;
 
-        let p1: [number, number],
-            p2: [number, number];
+        let p1: Vec2 = [0, 0],
+            p2: Vec2 = [0, 0];
 
         const medianOpts = resolveMedian(axis.median);
 
-        function renderLine(path: any[], isMedian?: boolean): any {
-            const stroke = isMedian ? medianOpts.color : axis.gridLineColor,
-                strokeWidth = isMedian ? medianOpts.width : axis.gridLineWidth,
-                dashStyle = isMedian ? medianOpts.dashStyle : undefined;
+        function renderLine(
+            path: (string | number)[],
+            median?: MedianOpts
+        ): Highcharts.SVGElement {
+            const stroke = median ? median.color : axis.gridLineColor,
+                strokeWidth = median ? median.width : axis.gridLineWidth,
+                dashStyle = median ? median.dashStyle : undefined;
 
-            const attrs: Record<string, any> = {
+            const attrs: Record<string, unknown> = {
                 'stroke-width': strokeWidth,
                 stroke,
                 zIndex: 2
@@ -128,7 +248,10 @@ export default function TernaryPlotPlugin(H: any): void {
                 attrs.dashstyle = dashStyle;
             }
 
-            return chart.renderer.path(path).attr(attrs).add();
+            return chart.renderer
+                .path(path as unknown as Highcharts.SVGPathArray)
+                .attr(attrs)
+                .add();
         }
 
         if (medianOpts) {
@@ -140,7 +263,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 // Medians: vertex -> midpoint of opposite side
                 [[100, 0], [0, 50]],
                 [[0, 100], [50, 0]],
-                [[0, 0,], [50, 50]]
+                [[0, 0], [50, 50]]
             ];
 
             for (let i = 0; i < 2; i++) {
@@ -154,8 +277,7 @@ export default function TernaryPlotPlugin(H: any): void {
                     'L', chart.plotLeft + p2[0], p2[1] + chart.plotTop
                 ];
 
-                const isMedian = i % 2 === 1;
-                gridLines[i] = renderLine(path, isMedian);
+                gridLines[i] = renderLine(path, i % 2 === 1 ? medianOpts : undefined);
             }
         } else {
             for (let cursor = 0; cursor <= sumTo; cursor += interval) {
@@ -207,11 +329,11 @@ export default function TernaryPlotPlugin(H: any): void {
 
     // Render ternary axis labels. Keep it on chart for easy access
     Chart.prototype.getLabels = function (
-        this: any,
-        axis: any,
+        this: TernaryChart,
+        axis: TernaryAxisConfig,
         index: number
-    ) {
-        const labels: Record<string, any> = {},
+    ): Record<string, Highcharts.SVGElement | null> {
+        const labels: Record<string, Highcharts.SVGElement | null> = {},
             interval = axis.tickInterval;
 
         if (!interval || interval <= 0) return labels;
@@ -229,7 +351,7 @@ export default function TernaryPlotPlugin(H: any): void {
 
         for (let tick = 0; tick <= sumTo; tick += interval) {
             const label = labels[tick] = chart.renderer
-                .text(tick, x, y)
+                .text(String(tick), x, y)
                 .attr({ align, zIndex })
                 .css(style)
                 .add();
@@ -237,7 +359,7 @@ export default function TernaryPlotPlugin(H: any): void {
             const fm = chart.renderer.fontMetrics(label),
                 bb = label.getBBox();
 
-            let pos: any,
+            let pos: Vec2 = [0, 0],
                 offsetX = 0,
                 offsetY = 0;
 
@@ -277,10 +399,10 @@ export default function TernaryPlotPlugin(H: any): void {
     // Convert ternary (x, y) to plot coordinates
     // using 2D barycentric projection
     Chart.prototype.ternaryToPlot = function (
-        this: any,
-        point: any,
+        this: TernaryChart,
+        point: TernaryPlotInput,
         useSumTo?: boolean
-    ): [number, number] {
+    ): Vec2 {
         const chart = this,
             ternaryOpts = chart.ternaryOpts,
             spacing = ternaryOpts.spacing * 2,
@@ -297,8 +419,14 @@ export default function TernaryPlotPlugin(H: any): void {
             // Then shrink by spacing to get the final width
             width = Math.max(baseWidth - spacing, 5),
             sumTo = useSumTo ? ternaryOpts.sumTo : 100,
-            x = pick(point.a, point[0]) * width / sumTo,
-            y = pick(point.b, point[1]) * width / sumTo,
+            x = pick(
+                    (point as { a?: number }).a,
+                    (point as number[])[0]
+                ) * width / sumTo,
+            y = pick(
+                    (point as { b?: number }).b,
+                    (point as number[])[1]
+                ) * width / sumTo,
             // Center within plot area
             centerX = (chart.plotWidth - width) / 2,
             centerY = (chart.plotHeight - width * heightRatio) / 2;
@@ -335,10 +463,10 @@ export default function TernaryPlotPlugin(H: any): void {
     //                   /             ○                   \
     //                  /             /|                    \
     //                 /             / |                     \
-    //                /             /  |                      \ 
+    //                /             /  |                      \
     //               /           y /   | (tan(α)/2)*y          \ y
-    //              /             /    |                        \      
-    //             /             /     |                         \     
+    //              /             /    |                        \
+    //             /             /     |                         \
     //            /α            / α    |                       α  \
     //           /_____________/_______|___________________________\___
     //   (0, 0)  |      x      |  y/2  |                             (100, 0)
@@ -348,12 +476,12 @@ export default function TernaryPlotPlugin(H: any): void {
     // (getClipBox moved to Chart prototype)
     if (Chart.prototype.getClipBox) {
         wrap(Chart.prototype, 'getClipBox', function (
-            this: any,
-            p: any,
-            series: any,
-            chartCoords: any
+            this: TernaryChart,
+            proceed: Highcharts.WrapProceedFunction,
+            series: Highcharts.Series,
+            chartCoords: boolean
         ) {
-            const ret = p.call(this, series, chartCoords);
+            const ret = proceed.call(this, series, chartCoords) as Record<string, number>;
 
             ret.width = this.xAxis[0].len;
 
@@ -364,7 +492,7 @@ export default function TernaryPlotPlugin(H: any): void {
     // ----------------------- Series prototype methods -----------------------
 
     // Translate data points from ternary x,y to plotX,plotY
-    function translate(this: any) {
+    function translate(this: TernarySeries): void {
         this.generatePoints();
 
         this.xAxis = {
@@ -372,7 +500,7 @@ export default function TernaryPlotPlugin(H: any): void {
             options: {
                 type: 'linear'
             }
-        };
+        } as unknown as Highcharts.Axis;
 
         const series = this,
             chart = series.chart,
@@ -392,14 +520,14 @@ export default function TernaryPlotPlugin(H: any): void {
             const point = points[i],
                 xValue = point.a;
 
-            point.yBottom = void 0;
+            point.yBottom = undefined;
 
             const perspectivePoint = chart.ternaryToPlot(point, true);
 
             point.plotX = perspectivePoint[0];
             point.plotY = perspectivePoint[1];
 
-            point.shapeArgs = {
+            (point as { shapeArgs: Highcharts.SVGAttributes }).shapeArgs = {
                 x: point.plotX,
                 y: point.plotY
             };
@@ -413,11 +541,13 @@ export default function TernaryPlotPlugin(H: any): void {
             // causing an empty tooltip.
             point.formatPrefix = 'point';
 
-            // Highcharts evaluates isNull as !isNumber(point.y) — override it
-            // since ternary points have no y property
+            // Keep Highcharts internals happy: isNull check, getLabelConfig
+            // and yData all rely on point.y being a valid number
+            point.y = point.b;
             point.isNull = false;
 
-            point.tooltipPos = [point.plotX, point.plotY];
+            (point as unknown as { tooltipPos: number[] }).tooltipPos =
+                [point.plotX, point.plotY];
 
             // Set client related positions for mouse tracking
             point.clientX = dynamicallyPlaced ?
@@ -431,22 +561,22 @@ export default function TernaryPlotPlugin(H: any): void {
                         pointPlacement
                     )
                 ) :
-                plotX; // #1514, #5383, #5518
+                plotX!; // #1514, #5383, #5518
 
             // Determine auto enabling of markers (#3635, #5099)
             if (!point.isNull && point.visible !== false) {
                 if (typeof lastPlotX !== 'undefined') {
                     closestPointRangePx = Math.min(
                         closestPointRangePx,
-                        Math.abs(plotX - lastPlotX)
+                        Math.abs(plotX! - lastPlotX)
                     );
                 }
 
-                lastPlotX = plotX;
+                lastPlotX = plotX!;
             }
 
             // Zones disabled for now
-            point.zone = void 0;
+            point.zone = undefined;
 
             if (
                 (
@@ -467,20 +597,22 @@ export default function TernaryPlotPlugin(H: any): void {
         fireEvent(this, 'afterTranslate');
     }
 
+    type RGB = { r: number; g: number; b: number };
+
     function getTernaryColor(
-        this: any,
+        this: TernarySeries,
         a: number,
         b: number,
         c: number,
         alpha?: number
     ): string {
         // Parse color input → { r, g, b }
-        function parseColor(color: string) {
+        function parseColor(color: string): RGB | null {
             // HEX
             if (color[0] === '#') {
                 const hex = color.replace('#', '');
                 const bigint = parseInt(hex.length === 3
-                    ? hex.split('').map(c => c + c).join('')
+                    ? hex.split('').map(ch => ch + ch).join('')
                     : hex, 16);
 
                 return {
@@ -513,13 +645,14 @@ export default function TernaryPlotPlugin(H: any): void {
         // Resolve base colors: [{ r, g, b }, ...]
         const baseColors = [0, 1, 2].map(i => {
             if (isArray(colors) && colors[i]) {
-                return parseColor(colors[i]);
+                return parseColor(colors[i] as string);
             }
-        });
+            return null;
+        }) as [RGB, RGB, RGB];
 
         // Alpha from 4th element if provided
         if (!alpha && isArray(colors) && isNumber(colors[3])) {
-            alpha = colors[3];
+            alpha = colors[3] as number;
         }
 
         const sum = 100,
@@ -545,7 +678,11 @@ export default function TernaryPlotPlugin(H: any): void {
         return `rgba(${rCh}, ${gCh}, ${bCh}, ${alpha || 1})`;
     }
 
-    function pointAttribs(this: any, point: any, state: any) {
+    function pointAttribs(
+        this: TernarySeries,
+        point: TernaryPoint,
+        state: string
+    ): Highcharts.SVGAttributes {
         const attr = Series.prototype.pointAttribs.call(
             this,
             point,
@@ -568,7 +705,7 @@ export default function TernaryPlotPlugin(H: any): void {
     }
 
     // Return the plot box of the ternary plot area
-    function getPlotBox(this: any, name: any) {
+    function getPlotBox(this: TernarySeries, name: string): Highcharts.Series['plotGroup'] {
         const { plotLeft, plotTop } = this.chart,
             params = {
                 name,
@@ -587,13 +724,13 @@ export default function TernaryPlotPlugin(H: any): void {
             rotationOriginY: 0,
             scaleX: 1,
             scaleY: 1
-        };
+        } as unknown as Highcharts.Series['plotGroup'];
     }
 
-    function getRadius(this: any) {
-        const series = this.series,
-            minR = series.options.minR,
-            maxR = series.options.maxR;
+    function getRadius(this: TernaryPoint): number {
+        const series = this.series as TernarySeries,
+            minR = series.options.minR!,
+            maxR = series.options.maxR!;
 
         const allValues = series.points.map(p => p.total),
             minValue = Math.min(...allValues),
@@ -612,15 +749,15 @@ export default function TernaryPlotPlugin(H: any): void {
     // -------------------------------- Events --------------------------------
 
     // Initialize ternary axes before rendering the chart
-    addEvent(Chart, 'beforeRender', function (this: any) {
+    addEvent(Chart, 'beforeRender', function (this: TernaryChart) {
         const chart = this,
-            ternaryOpts = resolveTernary(chart.options.chart.ternary);
+            ternaryOpts = resolveTernary(
+                (chart.options.chart as Highcharts.ChartOptions).ternary
+            );
 
         if (!ternaryOpts) return;
 
         chart.ternaryOpts = ternaryOpts;
-
-        type Vec2 = [number, number];
 
         type AxisDef = {
             axisCenters: [Vec2, Vec2];
@@ -639,7 +776,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 // perpendicular to the axis line, or purely horizontal
                 titleDirections: [[0, 1], [0, 1], [0, 1]]
             }, {
-                // Vertical right 
+                // Vertical right
                 axisCenters: [[50, 50], [0, 100]],
                 rotationSign: 1,
                 titleDirections: [[-heightRatio, -1 / 2], [-1, 0], [0, -1]]
@@ -656,18 +793,17 @@ export default function TernaryPlotPlugin(H: any): void {
             titleDirections
         }, i) => {
             const axisKeys = ['a', 'b', 'c'] as const,
-                userTernaryAxis = chart.options.ternaryAxis || {},
+                userTernaryAxis = (chart.options as Highcharts.Options).ternaryAxis || {},
                 axis = merge(
                     defaultTernary,
                     userTernaryAxis.plotOptions ?? {},
                     userTernaryAxis[axisKeys[i]] ?? {}
-                );
+                ) as TernaryAxisConfig;
 
             let rotation = 0,
-                axisCenter: [number, number];
+                axisCenter: Vec2;
 
             if (axis.title.stickToCorner) {
-                //axis.title.marginXOnly = false;
                 axisCenter = axisCenters[1];
             } else {
                 axisCenter = axisCenters[0];
@@ -675,12 +811,12 @@ export default function TernaryPlotPlugin(H: any): void {
                 rotation = pick(
                     userTernaryAxis[axisKeys[i]]?.title?.rotation,
                     rotationSign * ternaryAngle
-                )
+                );
             }
 
             axis.axisCenter = axisCenter;
 
-            axis.title.style.rotation = rotation;
+            axis.title.style['rotation'] = rotation;
 
             axis.title.titleDirection =
                 titleDirections[axis.title.stickToCorner ?
@@ -688,7 +824,7 @@ export default function TernaryPlotPlugin(H: any): void {
                     (axis.title.marginXOnly ? 1 : 0)];
 
             axis.gridlineTicks = {};
-            axis.gridlineMinorTicks = {};
+            axis.minorGridlineTicks = {};
 
             return axis;
         });
@@ -696,20 +832,25 @@ export default function TernaryPlotPlugin(H: any): void {
 
     // Position ternary axis titles and render gridlines/labels after
     // setting chart size
-    addEvent(Chart, 'afterSetChartSize', function (this: any) {
+    addEvent(Chart, 'afterSetChartSize', function (this: TernaryChart) {
         const chart = this;
 
         if (!chart.ternaryOpts || !chart.ternaryAxis) return;
 
-        const destroyCollection = (coll: Record<string, any> | undefined) => {
+        const destroyCollection = (
+            coll: Record<string, Highcharts.SVGElement | null> | undefined
+        ): void => {
             if (!coll) return;
 
             for (const k in coll) {
-                coll[k] = coll[k].destroy();
+                if (coll[k]) {
+                    coll[k]!.destroy();
+                    coll[k] = null;
+                }
             }
         };
 
-        chart.ternaryAxis.forEach((axis: any, i: number) => {
+        chart.ternaryAxis.forEach((axis: TernaryAxisConfig, i: number) => {
             const title = axis.title;
 
             if (title?.text) {
@@ -721,8 +862,8 @@ export default function TernaryPlotPlugin(H: any): void {
                         .add();
                 }
 
-                const [x0, y0] = chart.ternaryToPlot(axis.axisCenter),
-                    [dirX, dirY] = title.titleDirection,
+                const [x0, y0] = chart.ternaryToPlot(axis.axisCenter!),
+                    [dirX, dirY] = title.titleDirection!,
                     // The pixel distance between the axis line and the title.
                     titleMargin = title.margin;
 
@@ -732,7 +873,7 @@ export default function TernaryPlotPlugin(H: any): void {
                 if (i !== 1 && (title.stickToCorner || i === 0)) {
                     // Font metrics baseline is better than bbox.height
                     // for better baseline alignment
-                    const fm = chart.renderer.fontMetrics(axis.titleElem);
+                    const fm = chart.renderer.fontMetrics(axis.titleElem!);
 
                     offsetY = fm.b - 5;
                 }
@@ -765,7 +906,10 @@ export default function TernaryPlotPlugin(H: any): void {
         });
     });
 
-    H.addEvent(Chart, 'afterIsInsidePlot', function (this: any, e: any) {
+    addEvent(Chart, 'afterIsInsidePlot', function (
+        this: TernaryChart,
+        e: { x: number; y: number; isInsidePlot: boolean }
+    ) {
         const chart = this;
 
         if (!chart.ternaryOpts) {
@@ -811,7 +955,7 @@ export default function TernaryPlotPlugin(H: any): void {
         );
     });
 
-    H.addEvent(Series, 'afterDrawDataLabels', function (this: any) {
+    addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
         if (!(this.options.minR && this.options.maxR)) {
             return;
         }
@@ -848,7 +992,7 @@ export default function TernaryPlotPlugin(H: any): void {
             zoneAxis: '',
             pointArrayMap: ['a', 'b', 'c'],
             parallelArrays: ['a', 'b', 'c'],
-            // Override Series prorotype methods
+            // Override Series prototype methods
             translate: translate,
             getPlotBox: getPlotBox,
             getTernaryColor: getTernaryColor,

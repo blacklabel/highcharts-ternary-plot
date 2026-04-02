@@ -4,7 +4,6 @@
     "module": "es6",
     "moduleResolution": "Node",
     "outDir": ".cache/tmp",
-    "rootDir": "./ts",
     "strict": false,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

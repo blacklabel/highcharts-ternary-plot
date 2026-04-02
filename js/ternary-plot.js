@@ -88,7 +88,7 @@ function TernaryPlotPlugin(H) {
         let p1 = [0, 0], p2 = [0, 0];
         const medianOpts = resolveMedian(axis.median);
         function renderLine(path, median) {
-            const stroke = median ? median.color : axis.gridLineColor, strokeWidth = median ? median.width : axis.gridLineWidth, dashStyle = median ? median.dashStyle : undefined;
+            const stroke = median ? median.color : axis.gridLineColor, strokeWidth = median ? median.width : axis.gridLineWidth, dashStyle = median ? median.dashStyle : axis.gridLineDashStyle;
             const attrs = {
                 'stroke-width': strokeWidth,
                 stroke,
@@ -126,7 +126,6 @@ function TernaryPlotPlugin(H) {
         }
         else {
             for (let cursor = 0; cursor <= sumTo; cursor += interval) {
-                // TODO: use axis.tickLength instead and other tick options (color, width)
                 const gridLineExtension = axis.gridLineExtension || 0, alpha = clamp(ternaryOpts.angle, 1, 89)
                     * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
                 switch (index) {

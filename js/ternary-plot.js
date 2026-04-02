@@ -459,7 +459,7 @@ function TernaryPlotPlugin(H) {
             axis.title.titleDirection =
                 titleDirections[axis.title.stickToCorner ?
                     2 :
-                    (axis.title.marginXOnly ? 1 : 0)];
+                    (axis.title.offsetDirection === 'horizontal' ? 1 : 0)];
             axis.gridlineTicks = {};
             return axis;
         });

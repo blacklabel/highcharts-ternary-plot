@@ -45,7 +45,7 @@ type TernaryAxisOptions = {
         x: number;
         y: number;
         stickToCorner?: boolean;
-        marginXOnly?: boolean;
+        offsetDirection?: 'perpendicular' | 'horizontal';
         rotation?: number;
         titleDirection?: Vec2;
         style: Record<string, string | number>;
@@ -834,7 +834,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             axis.title.titleDirection =
                 titleDirections[axis.title.stickToCorner ?
                     2 :
-                    (axis.title.marginXOnly ? 1 : 0)];
+                    (axis.title.offsetDirection === 'horizontal' ? 1 : 0)];
 
             axis.gridlineTicks = {};
 

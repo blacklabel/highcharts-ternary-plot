@@ -14,11 +14,13 @@ const fs = require('fs');
 // TypeScript project (reads tsconfig.json)
 const tsProject = gulpTypescript.createProject('tsconfig.json');
 
+const { version } = require('./package.json');
+
 const decorator = [
   '/**',
   '----',
   '*',
-  '* Highcharts Ternary Plot v0.1.0',
+  `* Highcharts Ternary Plot v${version}`,
   '*',
   '* (c) 2012-2025 Black Label, Rafał Sebestjański',
   '*',

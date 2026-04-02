@@ -1,7 +1,7 @@
 /**
 ----
 *
-* Highcharts Ternary Plot v0.1.0
+* Highcharts Ternary Plot v1.0.0
 *
 * (c) 2012-2025 Black Label, Rafał Sebestjański
 *
@@ -267,6 +267,10 @@ function TernaryPlotPlugin(H) {
     // Translate data points from ternary x,y to plotX,plotY
     function translate() {
         this.generatePoints();
+        if (!this.chart.ternaryOpts) {
+            this.points.forEach(p => { p.isNull = true; });
+            return;
+        }
         // Stub xAxis so that pointPlacementToXValue() and isRadial checks
         // inside Highcharts internals don't throw on a non-cartesian series
         this.xAxis = {
@@ -325,8 +329,6 @@ function TernaryPlotPlugin(H) {
                 }
                 lastPlotX = point.plotX;
             }
-            // Zones disabled for now
-            point.zone = undefined;
             if ((!point.marker ||
                 !defined(point.marker.radius)) &&
                 series.options.minSize &&
@@ -434,7 +436,7 @@ function TernaryPlotPlugin(H) {
             }
             axis.axisCenter = axisCenter;
             axis.title.style['rotation'] = rotation;
-            axis.title.titleDirection =
+            axis.titleDirection =
                 titleDirections[axis.title.stickToCorner ?
                     2 :
                     (axis.title.offsetDirection === 'horizontal' ? 1 : 0)];
@@ -468,7 +470,7 @@ function TernaryPlotPlugin(H) {
                         .attr(title.style)
                         .add();
                 }
-                const [x0, y0] = chart.ternaryToPlot(axis.axisCenter), [dirX, dirY] = title.titleDirection, 
+                const [x0, y0] = chart.ternaryToPlot(axis.axisCenter), [dirX, dirY] = axis.titleDirection, 
                 // The pixel distance between the axis line and the title.
                 titleMargin = title.margin;
                 // Move one or two bottom titles down to avoid overlapping
@@ -513,18 +515,19 @@ function TernaryPlotPlugin(H) {
         const [Ax, Ay] = chart.ternaryToPlot([0, 0]), [Bx, By] = chart.ternaryToPlot([100, 0]), [Cx, Cy] = chart.ternaryToPlot([0, 100]), px = e.x, py = e.y;
         e.isInsidePlot = pointInTriangle(px, py, Ax, Ay, Bx, By, Cx, Cy);
     });
-    addEvent(Series, 'afterDrawDataLabels', function () {
-        if (!(this.options.minSize && this.options.maxSize)) {
-            return;
-        }
-        this.points.forEach(point => {
-            const dataLabel = point.dataLabel;
-            dataLabel[dataLabel.placed ? 'animate' : 'attr']({
-            //y: dataLabel.y - point.marker.radius + 5
-            //y: dataLabel.y + dataLabel.height / 2
-            });
-        });
-    });
+    // TODO: decide on a dataLabel placement
+    // addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
+    //     if (!(this.options.minSize && this.options.maxSize)) {
+    //         return;
+    //     }
+    //     this.points.forEach(point => {
+    //         const dataLabel = point.dataLabel;
+    //         dataLabel[dataLabel.placed ? 'animate' : 'attr']({
+    //             //y: dataLabel.y - point.marker.radius + 5
+    //             //y: dataLabel.y + dataLabel.height / 2
+    //         });
+    //     });
+    // });
     // ---- New Series ----
     // Define the new ternaryscatter series type
     seriesType('ternaryscatter', 'scatter', 
@@ -541,7 +544,6 @@ function TernaryPlotPlugin(H) {
         isCartesian: false,
         noSharedTooltip: true,
         axisTypes: [],
-        zoneAxis: '',
         pointArrayMap: ['a', 'b', 'c'],
         parallelArrays: ['a', 'b', 'c'],
         // Override Series prototype methods

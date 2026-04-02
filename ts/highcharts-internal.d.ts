@@ -77,8 +77,6 @@ declare module 'highcharts' {
         /** @internal */
         clientX?: number;
         /** @internal */
-        zone?: unknown;
-        /** @internal */
         marker?: PointMarkerOptionsObject & { radius?: number };
         /** @internal */
         dataLabel?: SVGElement & { placed?: boolean };

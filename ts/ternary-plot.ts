@@ -48,7 +48,6 @@ type TernaryAxisOptions = {
         stickToCorner?: boolean;
         offsetDirection?: 'perpendicular' | 'horizontal';
         rotation?: number;
-        titleDirection?: Vec2;
         style: Record<string, string | number>;
     };
 };
@@ -56,6 +55,7 @@ type TernaryAxisOptions = {
 // Runtime rendering state attached to each axis by the plugin
 type TernaryAxisState = {
     axisCenter?: Vec2;
+    titleDirection?: Vec2;
     titleElem?: Highcharts.SVGElement;
     gridlineTicks?: Record<string, Highcharts.SVGElement | null>;
     gridlineLabels?: Record<string, Highcharts.SVGElement | null>;
@@ -519,6 +519,11 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     function translate(this: TernarySeries): void {
         this.generatePoints();
 
+        if (!this.chart.ternaryOpts) {
+            this.points.forEach(p => { p.isNull = true; });
+            return;
+        }
+
         // Stub xAxis so that pointPlacementToXValue() and isRadial checks
         // inside Highcharts internals don't throw on a non-cartesian series
         this.xAxis = {
@@ -614,9 +619,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
                 lastPlotX = point.plotX!;
             }
-
-            // Zones disabled for now
-            point.zone = undefined;
 
             if (
                 (
@@ -809,7 +811,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
             axis.title.style['rotation'] = rotation;
 
-            axis.title.titleDirection =
+            axis.titleDirection =
                 titleDirections[axis.title.stickToCorner ?
                     2 :
                     (axis.title.offsetDirection === 'horizontal' ? 1 : 0)];
@@ -853,7 +855,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                 }
 
                 const [x0, y0] = chart.ternaryToPlot(axis.axisCenter!),
-                    [dirX, dirY] = title.titleDirection!,
+                    [dirX, dirY] = axis.titleDirection!,
                     // The pixel distance between the axis line and the title.
                     titleMargin = title.margin;
 
@@ -941,20 +943,21 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         );
     });
 
-    addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
-        if (!(this.options.minSize && this.options.maxSize)) {
-            return;
-        }
+    // TODO: decide on a dataLabel placement
+    // addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
+    //     if (!(this.options.minSize && this.options.maxSize)) {
+    //         return;
+    //     }
 
-        this.points.forEach(point => {
-            const dataLabel = point.dataLabel;
+    //     this.points.forEach(point => {
+    //         const dataLabel = point.dataLabel;
 
-            dataLabel[dataLabel.placed ? 'animate' : 'attr']({
-                //y: dataLabel.y - point.marker.radius + 5
-                //y: dataLabel.y + dataLabel.height / 2
-            });
-        });
-    });
+    //         dataLabel[dataLabel.placed ? 'animate' : 'attr']({
+    //             //y: dataLabel.y - point.marker.radius + 5
+    //             //y: dataLabel.y + dataLabel.height / 2
+    //         });
+    //     });
+    // });
 
     // ---- New Series ----
 
@@ -975,7 +978,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             isCartesian: false,
             noSharedTooltip: true,
             axisTypes: [],
-            zoneAxis: '',
             pointArrayMap: ['a', 'b', 'c'],
             parallelArrays: ['a', 'b', 'c'],
             // Override Series prototype methods

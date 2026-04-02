@@ -20,7 +20,7 @@ function TernaryPlotPlugin(H) {
         return;
     H.ternaryPlotPluginLoaded = true;
     // ---- Utils ----
-    const { addEvent, Chart, clamp, color, correctFloat, defined, fireEvent, merge, pick, Series, seriesType, wrap } = H;
+    const { addEvent, Chart, clamp, color, correctFloat, defined, fireEvent, isNumber, merge, pick, Series, seriesType, wrap } = H;
     // ---- Defaults ----
     const defaultTernary = {
         tickInterval: 50,
@@ -275,7 +275,7 @@ function TernaryPlotPlugin(H) {
                 type: 'linear'
             }
         };
-        const series = this, chart = series.chart, xAxis = series.xAxis, points = series.points, dataLength = points.length, pointPlacement = series.pointPlacementToXValue(), // #7860
+        const series = this, chart = series.chart, xAxis = series.xAxis, points = series.points, dataLength = points.length, sumTo = chart.ternaryOpts.sumTo, pointPlacement = series.pointPlacementToXValue(), // #7860
         dynamicallyPlaced = Boolean(pointPlacement);
         let i, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
         // Translate each point
@@ -285,6 +285,18 @@ function TernaryPlotPlugin(H) {
             const perspectivePoint = chart.ternaryToPlot(point, true);
             point.plotX = perspectivePoint[0];
             point.plotY = perspectivePoint[1];
+            // Derive c from a + b if not explicitly provided.
+            // The projection only needs a and b, but c must be a valid number
+            // for tooltips and color interpolation.
+            if (!isNumber(point.c)) {
+                point.c = sumTo - point.a - point.b;
+            }
+            // Preserve user-provided total (independent 4th dimension, e.g.
+            // raw count for bubble sizing). Fall back to component sum only
+            // when absent.
+            if (!isNumber(point.total)) {
+                point.total = point.a + point.b + point.c;
+            }
             point.shapeArgs = {
                 x: point.plotX,
                 y: point.plotY
@@ -308,7 +320,7 @@ function TernaryPlotPlugin(H) {
                 point.plotX; // #1514, #5383, #5518
             // Determine auto enabling of markers (#3635, #5099)
             if (!point.isNull && point.visible !== false) {
-                if (typeof lastPlotX !== 'undefined') {
+                if (defined(lastPlotX)) {
                     closestPointRangePx = Math.min(closestPointRangePx, Math.abs(point.plotX - lastPlotX));
                 }
                 lastPlotX = point.plotX;
@@ -320,7 +332,7 @@ function TernaryPlotPlugin(H) {
                 series.options.minSize &&
                 series.options.maxSize) {
                 point.marker = {
-                    radius: point.getRadius()
+                    radius: point.getRadius(series.options.minSize, series.options.maxSize)
                 };
             }
         }
@@ -375,9 +387,9 @@ function TernaryPlotPlugin(H) {
             scaleY: 1
         };
     }
-    function getRadius() {
-        const series = this.series, minR = series.options.minSize, maxR = series.options.maxSize;
-        const allValues = series.points.map(p => p.total), minValue = Math.min(...allValues), maxValue = Math.max(...allValues);
+    function getRadius(minR, maxR) {
+        const series = this.series;
+        const allValues = series.points.map((p) => p.total), minValue = Math.min(...allValues), maxValue = Math.max(...allValues);
         if (maxValue === minValue)
             return (minR + maxR) / 2;
         const t = (this.total - minValue) / (maxValue - minValue), minA = Math.PI * minR * minR, maxA = Math.PI * maxR * maxR, A = minA + t * (maxA - minA);
@@ -475,7 +487,9 @@ function TernaryPlotPlugin(H) {
             destroyCollection(axis.gridlineLabels);
             // Recreate
             if (axis.gridLineWidth >= 1) {
-                // TODO: consider having the getGridLines method on axis class
+                // TODO: if a TernaryAxis class is introduced, move getGridLines
+                // and getLabels onto it so each axis manages its own rendering.
+                // Requires passing chart/renderer reference in the constructor.
                 axis.gridlineTicks = chart.getGridLines(axis, i);
             }
             if (axis.labels.enabled !== false) {

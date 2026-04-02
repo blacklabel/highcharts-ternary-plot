@@ -153,6 +153,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         correctFloat,
         defined,
         fireEvent,
+        isNumber,
         merge,
         pick,
         Series,
@@ -532,6 +533,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             xAxis = series.xAxis,
             points = series.points,
             dataLength = points.length,
+            sumTo = chart.ternaryOpts.sumTo,
             pointPlacement = series.pointPlacementToXValue(), // #7860
             dynamicallyPlaced = Boolean(pointPlacement);
 
@@ -550,6 +552,20 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
             point.plotX = perspectivePoint[0];
             point.plotY = perspectivePoint[1];
+
+            // Derive c from a + b if not explicitly provided.
+            // The projection only needs a and b, but c must be a valid number
+            // for tooltips and color interpolation.
+            if (!isNumber(point.c)) {
+                point.c = sumTo - point.a - point.b;
+            }
+
+            // Preserve user-provided total (independent 4th dimension, e.g.
+            // raw count for bubble sizing). Fall back to component sum only
+            // when absent.
+            if (!isNumber(point.total)) {
+                point.total = point.a + point.b + point.c;
+            }
 
             (point as { shapeArgs: Highcharts.SVGAttributes }).shapeArgs = {
                 x: point.plotX,
@@ -589,7 +605,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
             // Determine auto enabling of markers (#3635, #5099)
             if (!point.isNull && point.visible !== false) {
-                if (typeof lastPlotX !== 'undefined') {
+                if (defined(lastPlotX)) {
                     closestPointRangePx = Math.min(
                         closestPointRangePx,
                         Math.abs(point.plotX! - lastPlotX)
@@ -864,7 +880,9 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
             // Recreate
             if (axis.gridLineWidth >= 1) {
-                // TODO: consider having the getGridLines method on axis class
+                // TODO: if a TernaryAxis class is introduced, move getGridLines
+                // and getLabels onto it so each axis manages its own rendering.
+                // Requires passing chart/renderer reference in the constructor.
                 axis.gridlineTicks = chart.getGridLines(axis, i);
             }
 

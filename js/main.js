@@ -49,16 +49,27 @@ const HC_LIGHT = {
                 }
             }
         }
+    },
+    ternaryAxis: {
+        plotOptions: {
+            gridLineColor: '#d6d6d6',
+            title: {
+                style: { color: '#6B6B68' }
+            },
+            labels: {
+                style: { color: '#6B6B68' }
+            }
+        }
     }
 };
 
 const HC_DARK = {
     chart: { backgroundColor: null },
     title: {
-        style: { color: '#E6E6E4' }
+        style: { color: 'rgba(255,255,255,0.78)' }
     },
     subtitle: {
-        style: { color: '#8B8B88' }
+        style: { color: 'rgba(255,255,255,0.45)' }
     },
     legend: {
         itemStyle: { color: '#C8C8C6' },
@@ -92,6 +103,17 @@ const HC_DARK = {
                     color: '#E6E6E4',
                     textOutline: 'none'
                 }
+            }
+        }
+    },
+    ternaryAxis: {
+        plotOptions: {
+            gridLineColor: '#30363D',
+            title: {
+                style: { color: 'rgba(255,255,255,0.45)' }
+            },
+            labels: {
+                style: { color: 'rgba(255,255,255,0.4)' }
             }
         }
     }

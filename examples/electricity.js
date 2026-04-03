@@ -2,14 +2,14 @@ const energyMixData = {
     'World': [
         { year: 2015, renewables: 22.97, fossil: 66.48, nuclear: 10.55 },
         { year: 2016, renewables: 23.73, fossil: 65.86, nuclear: 10.41 },
-        { year: 2017, renewables: 24.47, fossil: 65.34, nuclear: 10.2  },
+        { year: 2017, renewables: 24.47, fossil: 65.34, nuclear: 10.2 },
         { year: 2018, renewables: 25.09, fossil: 64.86, nuclear: 10.05 },
         { year: 2019, renewables: 26.09, fossil: 63.65, nuclear: 10.26 },
-        { year: 2020, renewables: 28,    fossil: 62.09, nuclear:  9.91 },
-        { year: 2021, renewables: 28.1,  fossil: 62.12, nuclear:  9.78 },
-        { year: 2022, renewables: 29.45, fossil: 61.42, nuclear:  9.13 },
-        { year: 2023, renewables: 30.26, fossil: 60.64, nuclear:  9.1  },
-        { year: 2024, renewables: 31.82, fossil: 59.2,  nuclear:  8.98 }
+        { year: 2020, renewables: 28,    fossil: 62.09, nuclear: 9.91 },
+        { year: 2021, renewables: 28.1,  fossil: 62.12, nuclear: 9.78 },
+        { year: 2022, renewables: 29.45, fossil: 61.42, nuclear: 9.13 },
+        { year: 2023, renewables: 30.26, fossil: 60.64, nuclear: 9.1 },
+        { year: 2024, renewables: 31.82, fossil: 59.2,  nuclear: 8.98 }
     ],
     'United States': [
         { year: 2015, renewables: 13.63, fossil: 66.85, nuclear: 19.52 },
@@ -19,12 +19,12 @@ const energyMixData = {
         { year: 2019, renewables: 18.29, fossil: 62.24, nuclear: 19.46 },
         { year: 2020, renewables: 20.32, fossil: 60.15, nuclear: 19.54 },
         { year: 2021, renewables: 20.74, fossil: 60.49, nuclear: 18.77 },
-        { year: 2022, renewables: 22.35, fossil: 59.65, nuclear: 18    },
+        { year: 2022, renewables: 22.35, fossil: 59.65, nuclear: 18 },
         { year: 2023, renewables: 22.68, fossil: 59.11, nuclear: 18.22 },
         { year: 2024, renewables: 24.06, fossil: 58.13, nuclear: 17.81 }
     ],
     'Europe (EI)': [
-        { year: 2015, renewables: 31.71, fossil: 41.99, nuclear: 24.3  },
+        { year: 2015, renewables: 31.71, fossil: 41.99, nuclear: 24.3 },
         { year: 2016, renewables: 32.12, fossil: 42.41, nuclear: 23.42 },
         { year: 2017, renewables: 32.08, fossil: 42.82, nuclear: 23.04 },
         { year: 2018, renewables: 34.52, fossil: 40.45, nuclear: 23.02 },
@@ -44,7 +44,7 @@ const energyMixData = {
         { year: 2020, renewables: 28.09, fossil: 67.2,  nuclear: 4.71 },
         { year: 2021, renewables: 28.69, fossil: 66.53, nuclear: 4.77 },
         { year: 2022, renewables: 30.18, fossil: 65.1,  nuclear: 4.72 },
-        { year: 2023, renewables: 30.61, fossil: 64.8,  nuclear: 4.6  },
+        { year: 2023, renewables: 30.61, fossil: 64.8,  nuclear: 4.6 },
         { year: 2024, renewables: 33.7,  fossil: 61.83, nuclear: 4.47 }
     ],
     'India': [
@@ -52,7 +52,7 @@ const energyMixData = {
         { year: 2016, renewables: 14.44, fossil: 82.85, nuclear: 2.72 },
         { year: 2017, renewables: 15.45, fossil: 81.99, nuclear: 2.56 },
         { year: 2018, renewables: 16.29, fossil: 81.22, nuclear: 2.48 },
-        { year: 2019, renewables: 18.14, fossil: 79.06, nuclear: 2.8  },
+        { year: 2019, renewables: 18.14, fossil: 79.06, nuclear: 2.8 },
         { year: 2020, renewables: 19.4,  fossil: 77.76, nuclear: 2.84 },
         { year: 2021, renewables: 19.01, fossil: 78.38, nuclear: 2.61 },
         { year: 2022, renewables: 20.26, fossil: 77.19, nuclear: 2.56 },
@@ -62,16 +62,18 @@ const energyMixData = {
 };
 
 const ELECTRICITY_COLORS = {
-    'World': '#3B82F6',
-    'United States': '#EF4444',
-    'Europe (EI)': '#10B981',
-    'China': '#F59E0B',
-    'India': '#A78BFA'
+    'World': '#4A7FBF',
+    'United States': '#BF4A4A',
+    'Europe (EI)': '#3A9E7A',
+    'China': '#BF8A30',
+    'India': '#7A5BBF'
 };
 
 Highcharts.chart('chart-electricity', {
     chart: {
-        ternary: true,
+        ternary: {
+            spacing: 45
+        },
         height: 680
     },
 
@@ -85,7 +87,7 @@ Highcharts.chart('chart-electricity', {
             const p = this.point,
                 color = this.series.color;
 
-            return '<div style="min-width:200px;font-family:\'Neue Montreal\',system-ui,sans-serif;">' +
+            return '<div style="min-width:200px;font-family:Inter,system-ui,sans-serif;">' +
                 '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--color-border);">' +
                     '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
                     '<span style="font-size:14px;font-weight:500;">' + p.entity + '</span>' +
@@ -108,37 +110,69 @@ Highcharts.chart('chart-electricity', {
     },
 
     title: {
-        text: 'Changes in Electricity Generation Mix (%)<br/>2015–2024',
+        text: 'Changes in Electricity Generation Mix (%)',
         style: {
-            fontSize: '30px',
+            fontSize: '26px',
             fontFamily: 'Inter',
-            fontWeight: 500
+            fontWeight: '500'
         }
     },
 
     subtitle: {
-        text: 'Each sequence shows annual progression from 2015 to 2024.' +
-            '<br/><span style="font-size: 10px;">Data source: Our World in Data</span>',
-        style: {
-            fontSize: '16px',
-            opacity: 0.6,
-            fontFamily: 'Inter',
-            fontWeight: 500
-        }
+        useHTML: true,
+        text: '<span style="font-family:Inter,system-ui,sans-serif;font-size:14px;color:var(--color-text-muted);">' +
+            '2015–2024 — each sequence shows annual progression' +
+            '</span><br/>' +
+            '<span style="font-family:Inter,system-ui,sans-serif;font-size:11px;color:var(--color-text-muted);opacity:0.65;">' +
+            'Data source: Our World in Data' +
+            '</span>'
     },
 
+    // TODO: check if title common options can be applied to ternaryAxis titles as well,
+    // to avoid repeating the style
     ternaryAxis: {
         plotOptions: {
-            tickInterval: 20
+            tickInterval: 20,
+            gridLineColor: '#d6d6d6',
+            title: {
+                margin: 34
+            },
+            labels: {
+                style: {
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontSize: '11px'
+                }
+            }
         },
         a: {
-            title: { text: 'Higher renewables share (%)' }
+            title: {
+                text: 'Renewables (%)',
+                style: {
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontSize: '13px',
+                    fontWeight: '500'
+                }
+            }
         },
         b: {
-            title: { text: 'Higher fossil share (%)' }
+            title: {
+                text: 'Fossil (%)',
+                style: {
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontSize: '13px',
+                    fontWeight: '500'
+                }
+            }
         },
         c: {
-            title: { text: 'Higher nuclear share (%)' }
+            title: {
+                text: 'Nuclear (%)',
+                style: {
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontSize: '13px',
+                    fontWeight: '500'
+                }
+            }
         }
     },
 
@@ -158,7 +192,7 @@ Highcharts.chart('chart-electricity', {
         marker: {
             radius: 4,
             symbol: 'circle',
-            lineWidth: 1
+            //lineWidth: 1
         },
         lineWidth: 2
     }))

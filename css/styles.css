@@ -339,7 +339,8 @@ body {
     padding: 0;
 }
 
-.chart-container--languages:hover {
+.chart-container--languages:hover,
+[data-theme="dark"] .chart-container--languages:hover {
     box-shadow: none;
 }
 

@@ -4,6 +4,10 @@ Highcharts.chart('chart-usage', {
         height: 480
     },
 
+    credits: {
+        enabled: false
+    },
+
     title: {
         text: 'Diet macronutrients',
         style: {

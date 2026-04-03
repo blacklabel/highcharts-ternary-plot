@@ -1,26 +1,31 @@
 # Ternary Plot – Highcharts Plugin
 
 [![npm version](https://img.shields.io/npm/v/highcharts-ternary-plot)](https://www.npmjs.com/package/highcharts-ternary-plot)
+[![TypeScript](https://img.shields.io/badge/TypeScript-included-blue?logo=typescript&logoColor=white)](types/index.d.ts)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Ternary Plot** is an official [Black Label](https://blacklabel.net/highcharts/) plugin for Highcharts, extending the charting library with support for ternary charts used to visualize data composed of three interdependent values that sum to a constant (typically 100%). Each data point represents a composition of three components and is plotted within a triangular coordinate system, making it easy to compare proportions and relationships between them. The plugin is built as a separate add-on to the Highcharts library, owned and maintained by Highsoft AS.
+**Ternary Plot** is an official [Black Label](https://blacklabel.net/highcharts/) plugin for Highcharts, extending the charting library with support for ternary charts used to visualize data composed of three interdependent values that sum to a constant (typically 100%). Each data point represents a composition of three components and is plotted within a triangular coordinate system, making it easy to compare proportions and relationships between them. The plugin is built as a separate add-on to [Highcharts](https://www.highcharts.com/), a charting library owned and maintained by Highsoft AS.
 
-This module is the result of our long-standing collaboration with Highsoft, where we’ve been a trusted partner since 2010 — helping build, maintain, and expand the Highcharts ecosystem. With Ternary Plot, you can easily present complex three-component datasets in a clear and interactive way, without relying on custom implementations or workarounds.
+This plugin is the result of our long-standing collaboration with Highsoft, where we’ve been a trusted partner since 2010 — helping build, maintain, and expand the Highcharts ecosystem. With Ternary Plot, you can easily present complex three-component datasets in a clear and interactive way, without relying on custom implementations or workarounds.
+
+Ternary charts are commonly used in fields where data is expressed as proportions of three components: geology (soil composition), chemistry (phase diagrams), materials science, nutrition (macronutrient ratios), or market research (share of three competing options).
 
 ➖ [Live demo](https://blacklabel.github.io/highcharts-ternary-plot/)  
 ➖ [GitHub repository](https://github.com/blacklabel/highcharts-ternary-plot)
 
 ![Demo](assets/docs/demo-image.png)
+
 ---
 
 ## Table of Contents
 - [Getting Started](#getting-started)
   - [Compatibility](#compatibility)
   - [Installation](#installation)
-- [Minimal Code](#usage)
+- [Minimal Code](#minimal-code)
+- [TypeScript](#typescript)
 - [Available Options](#available-options)
 - [Migrating from v1 to v2](#migrating-from-v1-to-v2)
 - [Development Setup](#development-setup)
-- [Using the Plugin Locally in index.html](#using-the-plugin-locally-in-indexhtml)
 
 ## Getting Started
 
@@ -34,7 +39,7 @@ This module is the result of our long-standing collaboration with Highsoft, wher
 
 All modern evergreen browsers are supported: Chrome, Firefox, Safari, Edge. Internet Explorer is not supported.
 
-## Installation
+### Installation
 
 Install via NPM:
 
@@ -55,19 +60,15 @@ HighchartsTernaryPlot(Highcharts);
 ```
 
 Or include via a `<script>` tag after loading Highcharts:
-```js
+```html
 <script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://blacklabel.github.io/highcharts-ternary-plot/js/ternary-plot.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highcharts-ternary-plot/js/ternary-plot.js"></script>
 ```
 
 ## Minimal Code
 
 Enable `chart.ternary` and add a `ternaryscatter` series with three-dimensional data:
 ```js
-// After loading Highcharts and the plugin:
-// <script src="highcharts.js"></script>
-// <script src="ternary-plot.js"></script>
-
 Highcharts.chart('container', {
 
   chart: {
@@ -86,6 +87,40 @@ Highcharts.chart('container', {
     ]
   }]
 
+});
+```
+
+## TypeScript
+
+Type declarations are included in the package — no separate `@types` install needed. Importing the plugin automatically augments the Highcharts module with all ternary-specific types (`TernaryOptions`, `TernaryPointOptions`, `SeriesTernaryScatterOptions`, etc.).
+
+```ts
+import Highcharts from 'highcharts';
+import HighchartsTernaryPlot from 'highcharts-ternary-plot';
+
+HighchartsTernaryPlot(Highcharts);
+
+Highcharts.chart('container', {
+  chart: {
+    ternary: {
+      angle: 60,
+      spacing: 40,
+      sumTo: 100
+    }
+  },
+  series: [{
+    type: 'ternaryscatter',
+    componentColors: {
+      a: '#e74c3c',
+      b: '#2ecc71',
+      c: '#3498db'
+    },
+    data: [
+      { a: 20, b: 10, c: 70 },
+      { a: 80, b: 15, c: 5 },
+      { a: 95, b: 3, c: 2 },
+    ]
+  }]
 });
 ```
 
@@ -129,6 +164,7 @@ Each axis supports standard Highcharts axis options, plus the following plugin-s
 | `plotOptions.median.width`      | `number`              | Width of the median lines in pixels.                                                        |
 | `plotOptions.median.dashStyle`  | `string`              | Dash style of the median lines (any Highcharts `DashStyleValue`).                           |
 | `plotOptions.gridLineDashStyle` | `string`              | Dash style for grid lines.                                                                  |
+| `plotOptions.gridLineExtension` | `number`              | Extends grid lines beyond the triangle edges, in pixels.                                    |
 
 ---
 
@@ -225,55 +261,24 @@ npm install
 # or
 yarn install
 ```
-3. Start a local dev server
-```bash
-npm start
-```
-This will launch a local server (via http-server or similar) and open the demo page in your browser.
-
-4. Build the plugin
+3. Build the plugin
 ```bash
 npm run build
 ```
-The compiled file will be available in the dist/ folder.
+The compiled file will be available as `js/ternary-plot.js`.
 
-## Using the Plugin Locally in index.html
-After building, include the plugin file after Highcharts in your index.html:
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Highcharts Ternary Plot - Local Dev</title>
-  <script src="https://code.highcharts.com/highcharts.js"></script>
-  <script src="dist/highcharts-ternary-plot.js"></script>
-</head>
-<body>
-  <div id="container"></div>
-  <script>
-    Highcharts.chart('container', {
+Available commands:
 
-    chart: {
-      ternary: true
-    },
+| Command               | Description                              |
+| --------------------- | ---------------------------------------- |
+| `npm run build`       | Compile and bundle the plugin            |
+| `npm run build:watch` | Rebuild automatically on file changes    |
+| `npm run typecheck`   | Run TypeScript type checking             |
+| `npm test`            | Run tests                                |
+| `npm run lint`        | Lint TypeScript source files             |
+| `npm run lint:fix`    | Lint and auto-fix TypeScript source files |
 
-    series: [{
-      type: 'ternaryscatter',
-      data: [
-        [20, 70, 10],
-        [30, 40, 30],
-        [20, 35, 45],
-        [15, 35, 50],
-        [20, 20, 60],
-        [0, 100, 0]
-      ]
-    }]
-
-  });
-  </script>
-</body>
-</html>
-```
+After building, load `js/ternary-plot.js` after Highcharts in your HTML to test locally.
 
 ## Why Black Label Built This Plugin
 

@@ -124,15 +124,15 @@ declare module 'highcharts' {
          * or `null` if ternary mode is disabled.
          */
         resolveTernary(
-            opt: boolean | { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number } | undefined
-        ): { angle: number; spacing: number; sumTo: number } | null;
+            opt: boolean | TernaryOptions | undefined
+        ): Required<TernaryOptions> | null;
         /**
          * Resolve a `median` axis option into a normalized options object,
          * or `null` if medians are disabled.
          */
         resolveMedian(
             opt: boolean | { enabled?: boolean; color?: string; width?: number; dashStyle?: string } | undefined
-        ): { color: string; width: number; dashStyle: string } | null;
+        ): { enabled: boolean; color: string; width: number; dashStyle: string } | null;
         /** @internal */
         getGridLines(axis: unknown, index: number): Record<string, SVGElement | null>;
         /** @internal */
@@ -192,5 +192,5 @@ declare module 'highcharts' {
     }
 }
 
-export function factory(highcharts: typeof Highcharts): void;
+export function factory(highcharts: typeof _Highcharts): void;
 export default factory;

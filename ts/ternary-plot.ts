@@ -6,17 +6,11 @@ import * as Highcharts from 'highcharts';
 
 type Vec2 = [number, number];
 
-type TernaryOpts = {
-    angle: number;
-    spacing: number;
-    sumTo: number;
-};
+type TernaryOptsInput = { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number };
+type TernaryOpts = Required<TernaryOptsInput>;
 
-type MedianOpts = {
-    color: string;
-    width: number;
-    dashStyle: string;
-};
+type MedianOptsInput = { enabled?: boolean; color?: string; width?: number; dashStyle?: string };
+type MedianOpts = Required<MedianOptsInput>;
 
 // User-configurable axis options (mirrors chart.ternaryAxis.a / .b / .c)
 type TernaryAxisOptions = {
@@ -66,16 +60,8 @@ type TernaryAxisConfig = TernaryAxisOptions & TernaryAxisState;
 type TernaryChart = Highcharts.Chart & {
     ternaryOpts: TernaryOpts;
     ternaryAxis: TernaryAxisConfig[];
-    resolveTernary(
-        opt: boolean |
-        { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number } |
-        undefined
-    ): TernaryOpts | null;
-    resolveMedian(
-        opt: boolean |
-        { enabled?: boolean; color?: string; width?: number; dashStyle?: string } |
-        undefined
-    ): MedianOpts | null;
+    resolveTernary(opt: boolean | TernaryOptsInput | undefined): TernaryOpts | null;
+    resolveMedian(opt: boolean | MedianOptsInput | undefined): MedianOpts | null;
     ternaryToPlot(point: TernaryPlotInput, useSumTo?: boolean): Vec2;
     getGridLines(
         axis: TernaryAxisConfig,
@@ -149,6 +135,8 @@ type HighchartsPlugin = typeof Highcharts & {
 
 // ---------------------------------------------------------------------------
 
+export type { TernaryOptsInput, MedianOptsInput, TernaryOpts, MedianOpts };
+
 export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     if (H.ternaryPlotPluginLoaded) return;
     H.ternaryPlotPluginLoaded = true;
@@ -219,6 +207,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         const opts = isObj ? ternaryOpt : {};
 
         return {
+            enabled: true,
             angle: opts.angle ?? 60,
             spacing: opts.spacing ?? 35,
             sumTo: opts.sumTo ?? 100
@@ -241,6 +230,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         const opts = isObj ? medianOpt : {};
 
         return {
+            enabled: true,
             color: opts.color ?? '#d6d6d6',
             width: opts.width ?? 1,
             dashStyle: opts.dashStyle ?? 'Solid'

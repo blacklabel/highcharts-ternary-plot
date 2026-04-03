@@ -1,17 +1,17 @@
 // Internal Highcharts API augmentations used by the plugin implementation.
 // `export {}` makes this file a module so `declare module` is treated as
 // augmentation (merges with existing types) rather than redeclaration.
-export {};
+import type {
+    TernaryOptsInput,
+    MedianOptsInput,
+    TernaryOpts,
+    MedianOpts
+} from './ternary-plot';
 
 declare module 'highcharts' {
 
     interface ChartOptions {
-        ternary?: boolean | {
-            enabled?: boolean;
-            angle?: number;
-            spacing?: number;
-            sumTo?: number;
-        };
+        ternary?: boolean | TernaryOptsInput;
     }
 
     interface Options {
@@ -24,16 +24,8 @@ declare module 'highcharts' {
     }
 
     interface Chart {
-        resolveTernary(
-            opt: boolean |
-            { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number } |
-            undefined
-        ): { angle: number; spacing: number; sumTo: number } | null;
-        resolveMedian(
-            opt: boolean |
-            { enabled?: boolean; color?: string; width?: number; dashStyle?: string } |
-            undefined
-        ): { color: string; width: number; dashStyle: string } | null;
+        resolveTernary(opt: boolean | TernaryOptsInput | undefined): TernaryOpts | null;
+        resolveMedian(opt: boolean | MedianOptsInput | undefined): MedianOpts | null;
         getGridLines(
             axis: unknown,
             index: number

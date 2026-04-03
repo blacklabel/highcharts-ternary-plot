@@ -34,14 +34,23 @@ declare module 'highcharts' {
             axis: unknown,
             index: number
         ): Record<string, SVGElement | null>;
-        ternaryToPlot(point: unknown, useSumTo?: boolean): [number, number];
+        ternaryToPlot(
+            point: unknown,
+            useSumTo?: boolean
+        ): [number, number];
         /** Added in Highcharts 12.1.0 */
-        getClipBox?(series?: Series, chartCoords?: boolean): BBoxObject;
+        getClipBox?(
+            series?: Series,
+            chartCoords?: boolean
+        ): BBoxObject;
     }
 
     interface Series {
         /** @internal */
-        pointAttribs(point: Point, state: string): SVGAttributes;
+        pointAttribs(
+            point: Point,
+            state: string
+        ): SVGAttributes;
         /** @internal */
         generatePoints(): void;
         /** @internal */

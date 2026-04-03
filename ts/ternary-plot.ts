@@ -6,10 +6,20 @@ import * as Highcharts from 'highcharts';
 
 type Vec2 = [number, number];
 
-type TernaryOptsInput = { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number };
+type TernaryOptsInput = {
+    enabled?: boolean;
+    angle?: number;
+    spacing?: number;
+    sumTo?: number
+};
 type TernaryOpts = Required<TernaryOptsInput>;
 
-type MedianOptsInput = { enabled?: boolean; color?: string; width?: number; dashStyle?: string };
+type MedianOptsInput = {
+    enabled?: boolean;
+    color?: string;
+    width?: number;
+    dashStyle?: string
+};
 type MedianOpts = Required<MedianOptsInput>;
 
 // User-configurable axis options (mirrors chart.ternaryAxis.a / .b / .c)
@@ -60,9 +70,16 @@ type TernaryAxisConfig = TernaryAxisOptions & TernaryAxisState;
 type TernaryChart = Highcharts.Chart & {
     ternaryOpts: TernaryOpts;
     ternaryAxis: TernaryAxisConfig[];
-    resolveTernary(opt: boolean | TernaryOptsInput | undefined): TernaryOpts | null;
-    resolveMedian(opt: boolean | MedianOptsInput | undefined): MedianOpts | null;
-    ternaryToPlot(point: TernaryPlotInput, useSumTo?: boolean): Vec2;
+    resolveTernary(
+        opt: boolean | TernaryOptsInput | undefined
+    ): TernaryOpts | null;
+    resolveMedian(
+        opt: boolean | MedianOptsInput | undefined
+    ): MedianOpts | null;
+    ternaryToPlot(
+        point: TernaryPlotInput,
+        useSumTo?: boolean
+    ): Vec2;
     getGridLines(
         axis: TernaryAxisConfig,
         index: number
@@ -100,14 +117,20 @@ type TernarySeries = Highcharts.Series & {
     options: TernarySeriesOptions;
     points: TernaryPoint[];
     chart: TernaryChart;
-    getTernaryColor(a: number, b: number, c: number, alpha?: number): string;
+    getTernaryColor(
+        a: number,
+        b: number,
+        c: number,
+        alpha?: number
+    ): string;
 };
 
 // Both object-form (TernaryPoint) and array-form ([a, b] or [a, b, c])
 // are valid inputs to ternaryToPlot
-type TernaryPlotInput =
-    | { a?: number; b?: number }
-    | number[];
+type TernaryPlotInput = {
+    a?: number;
+    b?: number
+} | number[];
 
 // Geometry for each of the 3 axes, computed from ternaryOpts.angle
 type AxisDef = {
@@ -129,13 +152,22 @@ type PlotBoxTransform = {
 
 // Highcharts exposes clamp internally but not in its public types
 type HighchartsPlugin = typeof Highcharts & {
-    clamp: (value: number, min: number, max: number) => number;
+    clamp(
+        value: number,
+        min: number,
+        max: number
+    ): number;
     ternaryPlotPluginLoaded?: boolean;
 };
 
 // ---------------------------------------------------------------------------
 
-export type { TernaryOptsInput, MedianOptsInput, TernaryOpts, MedianOpts };
+export type {
+    TernaryOptsInput,
+    MedianOptsInput,
+    TernaryOpts,
+    MedianOpts
+};
 
 export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     if (H.ternaryPlotPluginLoaded) return;
@@ -193,10 +225,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
     Chart.prototype.resolveTernary = function (
         this: TernaryChart,
-        ternaryOpt:
-            | boolean
-            | { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number }
-            | undefined
+        ternaryOpt: boolean | TernaryOptsInput | undefined
     ): TernaryOpts | null {
         if (!ternaryOpt) return null;
 
@@ -216,10 +245,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
     Chart.prototype.resolveMedian = function (
         this: TernaryChart,
-        medianOpt:
-            | boolean
-            | { enabled?: boolean; color?: string; width?: number; dashStyle?: string }
-            | undefined
+        medianOpt: boolean | MedianOptsInput | undefined
     ): MedianOpts | null {
         if (!medianOpt) return null;
 
@@ -283,6 +309,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
         if (medianOpts) {
             const sidesAndMedians = [
+                // TODO: Consider changing the order to match with gridLines (or axis line)
                 // // Sides
                 // [[0, 100], [0, 0]],
                 // [[0, 0], [100, 0]],
@@ -703,7 +730,10 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     }
 
     // Return the plot box of the ternary plot area
-    function getPlotBox(this: TernarySeries, name: string): PlotBoxTransform {
+    function getPlotBox(
+        this: TernarySeries,
+        name: string
+    ): PlotBoxTransform {
         const { plotLeft, plotTop } = this.chart,
             params = {
                 name,

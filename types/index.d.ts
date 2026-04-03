@@ -134,20 +134,32 @@ declare module 'highcharts' {
             opt: boolean | { enabled?: boolean; color?: string; width?: number; dashStyle?: string } | undefined
         ): { enabled: boolean; color: string; width: number; dashStyle: string } | null;
         /** @internal */
-        getGridLines(axis: unknown, index: number): Record<string, SVGElement | null>;
+        getGridLines(
+            axis: unknown,
+            index: number
+        ): Record<string, SVGElement | null>;
         /** @internal */
-        getLabels(axis: unknown, index: number): Record<string, SVGElement | null>;
+        getLabels(
+            axis: unknown,
+            index: number
+        ): Record<string, SVGElement | null>;
         /** @internal */
         ternaryToPlot(point: unknown, useSumTo?: boolean): [number, number];
         /** Added in Highcharts 12.1.0 */
-        getClipBox?(series?: Series, chartCoords?: boolean): BBoxObject;
+        getClipBox?(
+            series?: Series,
+            chartCoords?: boolean
+        ): BBoxObject;
     }
 
     // ---- Internal Series APIs used by the plugin ----
 
     interface Series {
         /** @internal */
-        pointAttribs(point: Point, state: string): SVGAttributes;
+        pointAttribs(
+            point: Point,
+            state: string
+        ): SVGAttributes;
         /** @internal */
         generatePoints(): void;
         /** @internal */

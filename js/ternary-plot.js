@@ -14,7 +14,6 @@
     factory(Highcharts);
   }
 }(function (Highcharts) {
-// ---------------------------------------------------------------------------
 function TernaryPlotPlugin(H) {
     if (H.ternaryPlotPluginLoaded)
         return;
@@ -59,6 +58,7 @@ function TernaryPlotPlugin(H) {
             return null;
         const opts = isObj ? ternaryOpt : {};
         return {
+            enabled: true,
             angle: (_a = opts.angle) !== null && _a !== void 0 ? _a : 60,
             spacing: (_b = opts.spacing) !== null && _b !== void 0 ? _b : 35,
             sumTo: (_c = opts.sumTo) !== null && _c !== void 0 ? _c : 100
@@ -73,6 +73,7 @@ function TernaryPlotPlugin(H) {
             return null;
         const opts = isObj ? medianOpt : {};
         return {
+            enabled: true,
             color: (_a = opts.color) !== null && _a !== void 0 ? _a : '#d6d6d6',
             width: (_b = opts.width) !== null && _b !== void 0 ? _b : 1,
             dashStyle: (_c = opts.dashStyle) !== null && _c !== void 0 ? _c : 'Solid'
@@ -104,6 +105,7 @@ function TernaryPlotPlugin(H) {
         }
         if (medianOpts) {
             const sidesAndMedians = [
+                // TODO: Consider changing the order to match with gridLines (or axis line)
                 // // Sides
                 // [[0, 100], [0, 0]],
                 // [[0, 0], [100, 0]],

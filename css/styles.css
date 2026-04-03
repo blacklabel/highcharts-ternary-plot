@@ -11,22 +11,6 @@
 }
 
 @font-face {
-    font-family: 'Neue Montreal';
-    src: url('../assets/fonts/PPNeueMontreal-Medium.ttf') format('truetype');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Neue Montreal';
-    src: url('../assets/fonts/PPNeueMontreal-Bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Inter';
     src: url('../assets/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
     font-weight: 100 900;
@@ -292,19 +276,30 @@ body {
    =================================================== */
 
 .section-header {
-    margin-bottom: 20px;
+    margin-bottom: 28px;
 }
 
 .section-title {
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 500;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     color: var(--color-text);
     transition: color var(--transition);
 }
 
+.section-title::before {
+    content: '';
+    display: block;
+    width: 28px;
+    height: 3px;
+    background: var(--color-accent);
+    border-radius: 2px;
+    margin-bottom: 12px;
+    transition: background var(--transition);
+}
+
 .section-description {
-    margin-top: 5px;
+    margin-top: 6px;
     font-size: 14px;
     color: var(--color-text-muted);
     max-width: 680px;
@@ -328,9 +323,34 @@ body {
         box-shadow var(--transition);
 }
 
+.chart-container:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 12px 40px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .chart-container:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
 .chart-container--languages {
     background: var(--bg-languages);
-    border-color: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+}
+
+.chart-container--languages:hover {
+    box-shadow: none;
+}
+
+/* ===================================================
+   Languages Section (full-width dark)
+   =================================================== */
+
+.page-section--languages {
+    background: var(--bg-languages);
+    padding: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* ===================================================

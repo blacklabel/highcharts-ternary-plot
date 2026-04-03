@@ -61,14 +61,50 @@ const energyMixData = {
     ]
 };
 
+const ELECTRICITY_COLORS = {
+    'World': '#3B82F6',
+    'United States': '#EF4444',
+    'Europe (EI)': '#10B981',
+    'China': '#F59E0B',
+    'India': '#A78BFA'
+};
+
 Highcharts.chart('chart-electricity', {
     chart: {
         ternary: true,
-        height: 600
+        height: 680
     },
 
     credits: {
         enabled: false
+    },
+
+    tooltip: {
+        useHTML: true,
+        formatter: function () {
+            const p = this.point,
+                color = this.series.color;
+
+            return '<div style="min-width:200px;font-family:\'Neue Montreal\',system-ui,sans-serif;">' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--color-border);">' +
+                    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
+                    '<span style="font-size:14px;font-weight:500;">' + p.entity + '</span>' +
+                    '<span style="margin-left:auto;font-size:12px;color:var(--color-text-muted);">' + p.year + '</span>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;">' +
+                    '<span style="color:var(--color-text-muted);">Renewables</span>' +
+                    '<span style="font-weight:500;">' + p.a + '%</span>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;">' +
+                    '<span style="color:var(--color-text-muted);">Fossil</span>' +
+                    '<span style="font-weight:500;">' + p.b + '%</span>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;">' +
+                    '<span style="color:var(--color-text-muted);">Nuclear</span>' +
+                    '<span style="font-weight:500;">' + p.c + '%</span>' +
+                '</div>' +
+            '</div>';
+        }
     },
 
     title: {
@@ -93,10 +129,7 @@ Highcharts.chart('chart-electricity', {
 
     ternaryAxis: {
         plotOptions: {
-            tickInterval: 10,
-            labels: {
-                style: { color: '#9c9c9c' }
-            }
+            tickInterval: 20
         },
         a: {
             title: { text: 'Higher renewables share (%)' }
@@ -112,6 +145,7 @@ Highcharts.chart('chart-electricity', {
     series: Object.entries(energyMixData).map(([entity, points]) => ({
         type: 'ternaryscatter',
         name: entity,
+        color: ELECTRICITY_COLORS[entity],
         keys: ['a', 'b', 'c', 'entity', 'year', 'marker'],
         data: points.map(d => ([
             d.renewables,
@@ -119,20 +153,13 @@ Highcharts.chart('chart-electricity', {
             d.nuclear,
             entity,
             d.year,
-            d.year === 2024 ? { radius: 6 } : undefined
+            d.year === 2024 ? { radius: 9 } : undefined
         ])),
-        tooltip: {
-            pointFormat:
-                '<b>{point.entity} ({point.year}):</b><br/>' +
-                'Renewables: {point.a}%<br/>' +
-                'Fossil: {point.b}%<br/>' +
-                'Nuclear: {point.c}%'
-        },
         marker: {
-            radius: 3,
+            radius: 4,
             symbol: 'circle',
-            lineWidth: 0.5
+            lineWidth: 1
         },
-        lineWidth: 0.5
+        lineWidth: 2
     }))
 });

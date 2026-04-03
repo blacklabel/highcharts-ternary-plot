@@ -89,25 +89,68 @@ Highcharts.chart('chart-languages', {
         enabled: false
     },
 
+    tooltip: {
+        useHTML: true,
+        backgroundColor: '#1C2129',
+        borderColor: 'rgba(255,255,255,0.1)',
+        style: {
+            color: '#E6E6E4',
+            fontSize: '13px'
+        },
+        formatter: function () {
+            const p = this.point;
+
+            return '<div style="min-width:160px;font-family:\'Neue Montreal\',system-ui,sans-serif;">' +
+                '<div style="font-size:15px;font-weight:500;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);">' + p.name + '</div>' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;">' +
+                    '<span style="display:flex;align-items:center;gap:8px;">' +
+                        '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E8C830;"></span>' +
+                        '<span style="color:rgba(255,255,255,0.5);">JS</span>' +
+                    '</span>' +
+                    '<span style="font-weight:500;">' + p.a + '%</span>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;">' +
+                    '<span style="display:flex;align-items:center;gap:8px;">' +
+                        '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3776AB;"></span>' +
+                        '<span style="color:rgba(255,255,255,0.5);">Python</span>' +
+                    '</span>' +
+                    '<span style="font-weight:500;">' + p.b + '%</span>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;">' +
+                    '<span style="display:flex;align-items:center;gap:8px;">' +
+                        '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#CE412B;"></span>' +
+                        '<span style="color:rgba(255,255,255,0.5);">Rust</span>' +
+                    '</span>' +
+                    '<span style="font-weight:500;">' + p.c + '%</span>' +
+                '</div>' +
+            '</div>';
+        }
+    },
+
     title: {
         text: 'Programming Language Vocabulary Landscape',
         style: {
-            fontSize: '30px',
+            fontSize: '28px',
             fontFamily: 'Inter',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,0.85)'
+            fontWeight: 400,
+            letterSpacing: '-0.02em',
+            color: 'rgba(255,255,255,0.78)'
         }
     },
 
     subtitle: {
-        text: 'How technical terms distribute between JavaScript, Python, and Rust — ' +
-            'position shows relative usage, bubble size shows total hit frequency<br/>' +
-            '<span style="font-size: 10px;">Data source: GitHub API — Code Search (public repositories)</span>',
+        useHTML: true,
+        text: '<span style="color:rgba(255,255,255,0.45);font-size:13px;font-family:Inter,system-ui,sans-serif;font-weight:400;">' +
+            'How technical terms distribute between JavaScript, Python, and Rust — ' +
+            'position shows relative usage, bubble size shows total hit frequency' +
+            '</span><br/>' +
+            '<span style="color:rgba(255,255,255,0.28);font-size:11px;font-family:Inter,system-ui,sans-serif;">' +
+            'Data source: GitHub API — Code Search (public repositories)</span>',
         style: {
-            fontSize: '16px',
+            fontSize: '13px',
             fontFamily: 'Inter',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,0.55)'
+            fontWeight: 400,
+            color: 'rgba(255,255,255,0.45)'
         }
     },
 
@@ -119,10 +162,10 @@ Highcharts.chart('chart-languages', {
         plotOptions: {
             tickInterval: 10,
             median: {
-                color: 'rgba(255,255,255,0.08)'
+                color: '#1C1F25'
             },
             gridLineWidth: 1,
-            gridLineColor: 'rgba(255,255,255,1)',
+            gridLineColor: '#3E4145',
             gridLineExtension: 0,
             title: {
                 titlePosition: 'corner',
@@ -133,13 +176,12 @@ Highcharts.chart('chart-languages', {
             }
         },
         a: {
-            gridLineColor: 'red',
             title: {
                 text: 'JS',
                 style: {
-                    fontWeight: '500',
-                    fontSize: '40px',
-                    color: '#fcdc00'
+                    fontWeight: '400',
+                    fontSize: '36px',
+                    color: '#E8C830'
                 }
             }
         },
@@ -147,9 +189,9 @@ Highcharts.chart('chart-languages', {
             title: {
                 text: 'Python',
                 style: {
-                    fontWeight: '500',
-                    fontSize: '40px',
-                    color: '#3776ab'
+                    fontWeight: '400',
+                    fontSize: '36px',
+                    color: '#3776AB'
                 }
             }
         },
@@ -157,9 +199,9 @@ Highcharts.chart('chart-languages', {
             title: {
                 text: 'Rust',
                 style: {
-                    fontWeight: '500',
-                    fontSize: '40px',
-                    color: '#a72145'
+                    fontWeight: '400',
+                    fontSize: '36px',
+                    color: '#CE412B'
                 }
             }
         }
@@ -169,24 +211,19 @@ Highcharts.chart('chart-languages', {
         name: 'Programming languages',
         data: points,
         componentColors: {
-            a: 'rgb(253, 220, 0)',   // JS
-            b: 'rgb(55, 118, 171)',  // Python
-            c: 'rgb(167, 33, 69)',   // Rust
-            alpha: 0.15
+            a: 'rgb(232, 200, 48)',  // JS  — #E8C830
+            b: 'rgb(55, 118, 171)',  // Python — #3776AB
+            c: 'rgb(206, 65, 43)',   // Rust — #CE412B
+            alpha: 0.15,
+            strokeAlpha: 0.65
         },
-        minSize: 6,
+        minSize: 8,
         maxSize: 48,
-        tooltip: {
-            headerFormat: '',
-            pointFormat:
-                '<b>{point.name}:</b><br/>' +
-                'JS: {point.a}%<br/>' +
-                'Python: {point.b}%<br/>' +
-                'Rust: {point.c}%'
-        },
         states: {
             hover: {
-                halo: { size: 0 }
+                halo: {
+                    size: 0
+                }
             }
         },
         marker: {
@@ -201,8 +238,10 @@ Highcharts.chart('chart-languages', {
                     this.name + '</span>';
             },
             style: {
-                fontSize: '16px',
+                fontSize: '12px',
                 fontWeight: '400',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                letterSpacing: '-0.01em',
                 textOutline: 'none'
             }
         }

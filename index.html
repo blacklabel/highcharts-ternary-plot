@@ -9,8 +9,8 @@
     <!-- Prevent flash of wrong theme: detect preference before CSS renders -->
     <script>
         (function () {
-            var saved = localStorage.getItem('ternary-theme');
-            var system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const saved = localStorage.getItem('ternary-theme');
+            const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', saved || system);
         }());
     </script>
@@ -22,21 +22,41 @@
     <!-- Set Highcharts global theme before charts are created -->
     <script>
         (function () {
-            var theme = document.documentElement.getAttribute('data-theme');
-            var isDark = theme === 'dark';
+            const theme = document.documentElement.getAttribute('data-theme');
+            const isDark = theme === 'dark';
             Highcharts.setOptions({
                 chart: { backgroundColor: null },
-                title:    { style: { color: isDark ? '#E6E6E4' : '#1A1A18' } },
+                title: { style: { color: isDark ? '#E6E6E4' : '#1A1A18' } },
                 subtitle: { style: { color: isDark ? '#8B8B88' : '#6B6B68' } },
                 legend: {
-                    itemStyle:      { color: isDark ? '#C8C8C6' : '#333330' },
+                    itemStyle: { color: isDark ? '#C8C8C6' : '#333330' },
                     itemHoverStyle: { color: isDark ? '#FFFFFF' : '#000000' }
                 },
                 credits: { style: { color: isDark ? '#555551' : '#999994' } },
                 tooltip: {
                     backgroundColor: isDark ? '#1C2129' : '#FFFFFF',
-                    style:           { color: isDark ? '#E6E6E4' : '#1A1A18' },
-                    borderColor:     isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+                    style: { color: isDark ? '#E6E6E4' : '#1A1A18', fontSize: '13px' },
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    padding: 14,
+                    shadow: {
+                        color: 'rgba(0,0,0,0.08)',
+                        offsetX: 0,
+                        offsetY: 4,
+                        opacity: 1,
+                        width: 20
+                    }
+                },
+                plotOptions: {
+                    series: {
+                        dataLabels: {
+                            style: {
+                                color: isDark ? '#E6E6E4' : '#1A1A18',
+                                textOutline: 'none'
+                            }
+                        }
+                    }
                 }
             });
         }());
@@ -74,10 +94,10 @@
                 </div>
             </div>
             <nav class="demo-nav" aria-label="Demo sections">
-                <a href="#section-languages"   class="nav-link">Vocabulary Chart</a>
-                <a href="#section-info"        class="nav-link">Get Started</a>
+                <a href="#section-languages" class="nav-link">Vocabulary Chart</a>
+                <a href="#section-info" class="nav-link">Get Started</a>
                 <a href="#section-electricity" class="nav-link">Electricity</a>
-                <a href="#section-usage"       class="nav-link">Usage</a>
+                <a href="#section-usage" class="nav-link">Usage</a>
             </nav>
         </div>
     </header>
@@ -85,13 +105,8 @@
     <main class="page-body">
 
         <!-- 1. Languages bubble chart -->
-         <!-- TODO: add number of used words -->
-        <section class="page-section" id="section-languages">
+        <section class="page-section page-section--languages" id="section-languages">
             <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Programming language vocabulary</h2>
-                    <p class="section-description">GitHub Code Search hit counts for technical terms across JavaScript, Python, and Rust. Bubble size reflects total hit frequency across all three languages.</p>
-                </div>
                 <div class="chart-container chart-container--languages">
                     <div id="chart-languages"></div>
                 </div>
@@ -247,7 +262,7 @@ Highcharts.chart('container', {
             [20, 35, 45, 'Mediterranean'],
             [15, 35, 50, 'Standard Western'],
             [20, 20, 60, 'High-carbohydrate'],
-            [0, 100,  0, 'Fat-only']
+            [0, 100, 0, 'Fat-only']
         ]
     }]
 });</code>
@@ -265,47 +280,69 @@ Highcharts.chart('container', {
     <script>
         // ── Header height offset ──────────────────────────────────────────
         function updateHeaderHeight() {
-            var h = document.getElementById('site-header').offsetHeight;
+            const h = document.getElementById('site-header').offsetHeight;
             document.documentElement.style.setProperty('--header-height', h + 'px');
         }
         updateHeaderHeight();
         window.addEventListener('resize', updateHeaderHeight);
 
         // ── Theme management ──────────────────────────────────────────────
-        var HC_LIGHT = {
+        const HC_LIGHT = {
             chart: { backgroundColor: null },
-            title:    { style: { color: '#1A1A18' } },
+            title: { style: { color: '#1A1A18' } },
             subtitle: { style: { color: '#6B6B68' } },
             legend: {
-                itemStyle:      { color: '#333330' },
+                itemStyle: { color: '#333330' },
                 itemHoverStyle: { color: '#000000' }
             },
             credits: { style: { color: '#999994' } },
             tooltip: {
                 backgroundColor: '#FFFFFF',
-                style:           { color: '#1A1A18' },
-                borderColor:     'rgba(0,0,0,0.12)'
+                style: { color: '#1A1A18', fontSize: '13px' },
+                borderColor: 'rgba(0,0,0,0.1)',
+                borderRadius: 8,
+                borderWidth: 1,
+                padding: 14,
+                shadow: { color: 'rgba(0,0,0,0.08)', offsetX: 0, offsetY: 4, opacity: 1, width: 20 }
+            },
+            plotOptions: {
+                series: {
+                    dataLabels: {
+                        style: { color: '#1A1A18', textOutline: 'none' }
+                    }
+                }
             }
         };
 
-        var HC_DARK = {
+        const HC_DARK = {
             chart: { backgroundColor: null },
-            title:    { style: { color: '#E6E6E4' } },
+            title: { style: { color: '#E6E6E4' } },
             subtitle: { style: { color: '#8B8B88' } },
             legend: {
-                itemStyle:      { color: '#C8C8C6' },
+                itemStyle: { color: '#C8C8C6' },
                 itemHoverStyle: { color: '#FFFFFF' }
             },
             credits: { style: { color: '#555551' } },
             tooltip: {
                 backgroundColor: '#1C2129',
-                style:           { color: '#E6E6E4' },
-                borderColor:     'rgba(255,255,255,0.12)'
+                style: { color: '#E6E6E4', fontSize: '13px' },
+                borderColor: 'rgba(255,255,255,0.1)',
+                borderRadius: 8,
+                borderWidth: 1,
+                padding: 14,
+                shadow: { color: 'rgba(0,0,0,0.35)', offsetX: 0, offsetY: 4, opacity: 1, width: 20 }
+            },
+            plotOptions: {
+                series: {
+                    dataLabels: {
+                        style: { color: '#E6E6E4', textOutline: 'none' }
+                    }
+                }
             }
         };
 
         function applyHCTheme(isDark) {
-            var opts = isDark ? HC_DARK : HC_LIGHT;
+            const opts = isDark ? HC_DARK : HC_LIGHT;
             Highcharts.setOptions(opts);
             // Skip the languages chart — it always uses its own dark color scheme
             (Highcharts.charts || []).forEach(function (chart) {
@@ -322,7 +359,7 @@ Highcharts.chart('container', {
         }
 
         document.getElementById('theme-toggle').addEventListener('click', function () {
-            var current = document.documentElement.getAttribute('data-theme');
+            const current = document.documentElement.getAttribute('data-theme');
             setTheme(current === 'dark' ? 'light' : 'dark');
         });
 
@@ -333,15 +370,15 @@ Highcharts.chart('container', {
         });
 
         // ── Active nav via IntersectionObserver ───────────────────────────
-        var navLinks     = document.querySelectorAll('.nav-link');
-        var pageSections = document.querySelectorAll('.page-section[id]');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pageSections = document.querySelectorAll('.page-section[id]');
 
         if ('IntersectionObserver' in window) {
-            var navObserver = new IntersectionObserver(function (entries) {
+            const navObserver = new IntersectionObserver(function (entries) {
                 entries.forEach(function (entry) {
                     if (entry.isIntersecting) {
                         navLinks.forEach(function (l) { l.classList.remove('active'); });
-                        var link = document.querySelector('.nav-link[href="#' + entry.target.id + '"]');
+                        const link = document.querySelector('.nav-link[href="#' + entry.target.id + '"]');
                         if (link) { link.classList.add('active'); }
                     }
                 });
@@ -365,7 +402,7 @@ Highcharts.chart('container', {
         });
 
         document.getElementById('copy-usage').addEventListener('click', function () {
-            var text = document.getElementById('usage-code').textContent;
+            const text = document.getElementById('usage-code').textContent;
             navigator.clipboard.writeText(text).then(function () {
                 flashCopied(document.getElementById('copy-usage'));
             });

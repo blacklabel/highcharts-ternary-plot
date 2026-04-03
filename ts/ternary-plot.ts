@@ -105,6 +105,7 @@ type ComponentColors = {
     b: string;
     c: string;
     alpha?: number;
+    strokeAlpha?: number;
 };
 
 type TernarySeriesOptions = Highcharts.SeriesOptions & {
@@ -296,6 +297,10 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                 stroke,
                 zIndex: 2
             };
+
+            if (median) {
+                attrs['shape-rendering'] = 'geometricPrecision';
+            }
 
             if (dashStyle && dashStyle !== 'Solid') {
                 attrs.dashstyle = dashStyle;
@@ -726,7 +731,11 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
         point.ternaryColor = this.getTernaryColor(a, b, c, 1);
 
-        attr.stroke = point.marker?.lineColor || point.ternaryColor;
+        const strokeAlpha = this.options.componentColors?.strokeAlpha;
+        attr.stroke = point.marker?.lineColor ||
+            (strokeAlpha !== undefined
+                ? this.getTernaryColor(a, b, c, strokeAlpha)
+                : point.ternaryColor);
 
         return attr;
     }
@@ -1023,20 +1032,27 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     });
 
     // TODO: decide on a dataLabel placement
-    // addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
-    //     if (!(this.options.minSize && this.options.maxSize)) {
-    //         return;
-    //     }
+    addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
+        if (!(this.options.minSize && this.options.maxSize)) {
+            return;
+        }
 
-    //     this.points.forEach(point => {
-    //         const dataLabel = point.dataLabel;
+        this.points.forEach(point => {
+            // Is there a better TS type?
+            const dataLabel = point.dataLabel as Highcharts.SVGElement & {
+                placed?:
+                boolean;
+                y: number;
+                height: number
+            };
 
-    //         dataLabel[dataLabel.placed ? 'animate' : 'attr']({
-    //             //y: dataLabel.y - point.marker.radius + 5
-    //             //y: dataLabel.y + dataLabel.height / 2
-    //         });
-    //     });
-    // });
+            dataLabel[dataLabel.placed ? 'animate' : 'attr']({
+                y: dataLabel.y - point.marker.radius + 5
+                //y: dataLabel.y - 5
+                //y: dataLabel.y + dataLabel.height / 2
+            });
+        });
+    });
 
     // ---- New Series ----
 

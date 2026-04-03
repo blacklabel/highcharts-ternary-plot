@@ -95,6 +95,9 @@ function TernaryPlotPlugin(H) {
                 stroke,
                 zIndex: 2
             };
+            if (median) {
+                attrs['shape-rendering'] = 'geometricPrecision';
+            }
             if (dashStyle && dashStyle !== 'Solid') {
                 attrs.dashstyle = dashStyle;
             }
@@ -369,7 +372,7 @@ function TernaryPlotPlugin(H) {
         return `rgba(${rCh}, ${gCh}, ${bCh}, ${finalAlpha})`;
     }
     function pointAttribs(point, state) {
-        var _a;
+        var _a, _b;
         const attr = Series.prototype.pointAttribs.call(this, point, state);
         if (!point || point.isNull || !this.options.componentColors) {
             return attr;
@@ -377,7 +380,11 @@ function TernaryPlotPlugin(H) {
         const [a, b, c] = [point.a, point.b, point.c];
         attr.fill = this.getTernaryColor(a, b, c);
         point.ternaryColor = this.getTernaryColor(a, b, c, 1);
-        attr.stroke = ((_a = point.marker) === null || _a === void 0 ? void 0 : _a.lineColor) || point.ternaryColor;
+        const strokeAlpha = (_a = this.options.componentColors) === null || _a === void 0 ? void 0 : _a.strokeAlpha;
+        attr.stroke = ((_b = point.marker) === null || _b === void 0 ? void 0 : _b.lineColor) ||
+            (strokeAlpha !== undefined
+                ? this.getTernaryColor(a, b, c, strokeAlpha)
+                : point.ternaryColor);
         return attr;
     }
     // Return the plot box of the ternary plot area
@@ -564,18 +571,20 @@ function TernaryPlotPlugin(H) {
         e.isInsidePlot = pointInTriangle(px, py, Ax, Ay, Bx, By, Cx, Cy);
     });
     // TODO: decide on a dataLabel placement
-    // addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
-    //     if (!(this.options.minSize && this.options.maxSize)) {
-    //         return;
-    //     }
-    //     this.points.forEach(point => {
-    //         const dataLabel = point.dataLabel;
-    //         dataLabel[dataLabel.placed ? 'animate' : 'attr']({
-    //             //y: dataLabel.y - point.marker.radius + 5
-    //             //y: dataLabel.y + dataLabel.height / 2
-    //         });
-    //     });
-    // });
+    addEvent(Series, 'afterDrawDataLabels', function () {
+        if (!(this.options.minSize && this.options.maxSize)) {
+            return;
+        }
+        this.points.forEach(point => {
+            // Is there a better TS type?
+            const dataLabel = point.dataLabel;
+            dataLabel[dataLabel.placed ? 'animate' : 'attr']({
+                y: dataLabel.y - point.marker.radius + 5
+                //y: dataLabel.y - 5
+                //y: dataLabel.y + dataLabel.height / 2
+            });
+        });
+    });
     // ---- New Series ----
     // Define the new ternaryscatter series type
     seriesType('ternaryscatter', 'scatter', 

@@ -1,10 +1,15 @@
 Highcharts.chart('chart-usage', {
     chart: {
-        ternary: true
+        ternary: true,
+        height: 480
     },
 
     title: {
-        text: 'Diet macronutrients'
+        text: 'Diet macronutrients',
+        style: {
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontWeight: '500'
+        }
     },
 
     ternaryAxis: {

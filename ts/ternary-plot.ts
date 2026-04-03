@@ -684,8 +684,10 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             cb = color(componentColors!.b).rgba,
             cc = color(componentColors!.c).rgba;
 
-        // Return transparent if any color string was unparseable
-        if (!ca || !cb || !cc) {
+        // Return transparent if any color string was unparseable.
+        // H.color() always returns an rgba array, but invalid strings produce
+        // NaN values — isNumber(NaN) is false, so we check the red channel.
+        if (!isNumber(ca[0]) || !isNumber(cb[0]) || !isNumber(cc[0])) {
             return 'rgba(0,0,0,0)';
         }
 

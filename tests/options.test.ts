@@ -1,33 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
+import * as Highcharts from 'highcharts';
+import TernaryPlotPlugin from '../ts/ternary-plot';
 
-// resolveTernary and resolveMedian live on Chart.prototype.
-// We test them by calling the methods directly on a minimal fake chart object
-// that carries only what the method bodies actually use (nothing — they are
-// stateless and only read their argument).
+// Test the real Chart.prototype.resolveTernary / resolveMedian methods.
+// Both are stateless (they only read their argument), so a bare empty object
+// is a sufficient `this` context.
 
-// Inline the same logic as Chart.prototype.resolveTernary so tests don't
-// depend on the plugin being initialised (which requires a real Highcharts).
-// This mirrors the implementation exactly — if it drifts, TypeScript will
-// catch it via the shared MedianOpts / TernaryOpts types.
-function resolveTernary(
-    opt: boolean | { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number } | undefined
-): { angle: number; spacing: number; sumTo: number } | null {
-    if (!opt) return null;
-    const isObj = typeof opt === 'object' && opt !== null;
-    if (isObj && (opt as any).enabled === false) return null;
-    const o = isObj ? (opt as any) : {};
-    return { angle: o.angle ?? 60, spacing: o.spacing ?? 35, sumTo: o.sumTo ?? 100 };
-}
+const H = Highcharts as any;
+let resolveTernary: (opt: unknown) => unknown;
+let resolveMedian:  (opt: unknown) => unknown;
 
-function resolveMedian(
-    opt: boolean | { enabled?: boolean; color?: string; width?: number; dashStyle?: string } | undefined
-): { color: string; width: number; dashStyle: string } | null {
-    if (!opt) return null;
-    const isObj = typeof opt === 'object' && opt !== null;
-    if (isObj && (opt as any).enabled === false) return null;
-    const o = isObj ? (opt as any) : {};
-    return { color: o.color ?? '#d6d6d6', width: o.width ?? 1, dashStyle: o.dashStyle ?? 'Solid' };
-}
+beforeAll(() => {
+    TernaryPlotPlugin(H);
+    resolveTernary = (opt) => H.Chart.prototype.resolveTernary.call({}, opt);
+    resolveMedian  = (opt) => H.Chart.prototype.resolveMedian.call({}, opt);
+});
 
 // ── resolveTernary ───────────────────────────────────────────────────────────
 
@@ -46,24 +33,28 @@ describe('resolveTernary', () => {
     });
 
     it('returns defaults for true', () => {
-        expect(resolveTernary(true)).toEqual({ angle: 60, spacing: 35, sumTo: 100 });
+        expect(resolveTernary(true)).toEqual({ enabled: true, angle: 60, spacing: 35, sumTo: 100 });
     });
 
     it('returns defaults for empty object', () => {
-        expect(resolveTernary({})).toEqual({ angle: 60, spacing: 35, sumTo: 100 });
+        expect(resolveTernary({})).toEqual({ enabled: true, angle: 60, spacing: 35, sumTo: 100 });
     });
 
     it('returns defaults when enabled: true', () => {
-        expect(resolveTernary({ enabled: true })).toEqual({ angle: 60, spacing: 35, sumTo: 100 });
+        expect(resolveTernary({ enabled: true })).toEqual({ enabled: true, angle: 60, spacing: 35, sumTo: 100 });
     });
 
     it('merges partial options with defaults', () => {
-        expect(resolveTernary({ angle: 45 })).toEqual({ angle: 45, spacing: 35, sumTo: 100 });
+        expect(resolveTernary({ angle: 45 })).toEqual({ enabled: true, angle: 45, spacing: 35, sumTo: 100 });
+    });
+
+    it('ignores enabled: true and still merges data fields', () => {
+        expect(resolveTernary({ enabled: true, angle: 45 })).toEqual({ enabled: true, angle: 45, spacing: 35, sumTo: 100 });
     });
 
     it('respects all options when fully specified', () => {
         expect(resolveTernary({ angle: 45, spacing: 20, sumTo: 1 }))
-            .toEqual({ angle: 45, spacing: 20, sumTo: 1 });
+            .toEqual({ enabled: true, angle: 45, spacing: 20, sumTo: 1 });
     });
 
 });
@@ -86,22 +77,24 @@ describe('resolveMedian', () => {
 
     it('returns defaults for true', () => {
         expect(resolveMedian(true)).toEqual({
-            color: '#d6d6d6',
-            width: 1,
-            dashStyle: 'Solid'
+            enabled: true, color: '#d6d6d6', width: 1, dashStyle: 'Solid'
+        });
+    });
+
+    it('returns defaults for empty object', () => {
+        expect(resolveMedian({})).toEqual({
+            enabled: true, color: '#d6d6d6', width: 1, dashStyle: 'Solid'
         });
     });
 
     it('respects all options when fully specified', () => {
         expect(resolveMedian({ color: 'red', width: 2, dashStyle: 'Dash' }))
-            .toEqual({ color: 'red', width: 2, dashStyle: 'Dash' });
+            .toEqual({ enabled: true, color: 'red', width: 2, dashStyle: 'Dash' });
     });
 
     it('merges partial options with defaults', () => {
         expect(resolveMedian({ color: 'blue' })).toEqual({
-            color: 'blue',
-            width: 1,
-            dashStyle: 'Solid'
+            enabled: true, color: 'blue', width: 1, dashStyle: 'Solid'
         });
     });
 

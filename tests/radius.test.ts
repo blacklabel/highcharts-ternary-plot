@@ -1,51 +1,41 @@
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
+import * as Highcharts from 'highcharts';
+import TernaryPlotPlugin from '../ts/ternary-plot';
 
-// Point.prototype.getRadius reads minSize/maxSize from this.series.options
-// and all totals from this.series.points. We test the math by calling it
-// on a minimal fake point object that satisfies exactly what the method reads.
+// Test the real Point.prototype.getRadius method from the ternaryscatter series.
+// We call it on a minimal fake point that carries only what the method reads:
+// this.total, this.series.options.{minSize,maxSize}, this.series.points[].total.
+
+const H = Highcharts as any;
+const PREC = 6;
 
 function makePoint(total: number, allTotals: number[], minSize: number, maxSize: number) {
-    return {
-        total,
-        series: {
-            options: { minSize, maxSize },
-            points: allTotals.map(t => ({ total: t }))
-        },
-        getRadius(): number {
-            const { minSize, maxSize } = this.series.options;
-            const allT    = this.series.points.map((p: any) => p.total);
-            const minValue = Math.min(...allT);
-            const maxValue = Math.max(...allT);
-
-            if (maxValue === minValue) return (minSize + maxSize) / 2;
-
-            const t    = (this.total - minValue) / (maxValue - minValue),
-                minA   = Math.PI * minSize * minSize,
-                maxA   = Math.PI * maxSize * maxSize,
-                A      = minA + t * (maxA - minA);
-
-            return Math.sqrt(A / Math.PI);
-        }
+    const pointProto = H.seriesTypes.ternaryscatter.prototype.pointClass.prototype;
+    const point = Object.create(pointProto);
+    point.total = total;
+    point.series = {
+        options: { minSize, maxSize },
+        points: allTotals.map(t => ({ total: t }))
     };
+    return point;
 }
 
-const PREC = 6;
+beforeAll(() => {
+    TernaryPlotPlugin(H);
+});
 
 describe('getRadius', () => {
 
     it('returns minSize for the minimum total', () => {
-        const r = makePoint(0, [0, 50, 100], 4, 20).getRadius();
-        expect(r).toBeCloseTo(4, PREC);
+        expect(makePoint(0, [0, 50, 100], 4, 20).getRadius()).toBeCloseTo(4, PREC);
     });
 
     it('returns maxSize for the maximum total', () => {
-        const r = makePoint(100, [0, 50, 100], 4, 20).getRadius();
-        expect(r).toBeCloseTo(20, PREC);
+        expect(makePoint(100, [0, 50, 100], 4, 20).getRadius()).toBeCloseTo(20, PREC);
     });
 
     it('returns midpoint when all totals are equal (no divide-by-zero)', () => {
-        const r = makePoint(50, [50, 50, 50], 4, 20).getRadius();
-        expect(r).toBeCloseTo(12, PREC);
+        expect(makePoint(50, [50, 50, 50], 4, 20).getRadius()).toBeCloseTo(12, PREC);
     });
 
     it('is monotonically increasing with total', () => {
@@ -62,6 +52,10 @@ describe('getRadius', () => {
         const expectedArea   = (Math.PI * minSize ** 2 + Math.PI * maxSize ** 2) / 2;
         const expectedRadius = Math.sqrt(expectedArea / Math.PI);
         expect(r).toBeCloseTo(expectedRadius, PREC);
+    });
+
+    it('returns minSize when minSize equals maxSize regardless of total', () => {
+        expect(makePoint(75, [0, 50, 100], 10, 10).getRadius()).toBeCloseTo(10, PREC);
     });
 
 });

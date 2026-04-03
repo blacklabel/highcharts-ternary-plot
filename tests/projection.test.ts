@@ -1,46 +1,34 @@
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
+import * as Highcharts from 'highcharts';
+import TernaryPlotPlugin from '../ts/ternary-plot';
 
-// Chart.prototype.ternaryToPlot requires a real Highcharts Chart instance
-// (renderer, plotWidth, plotHeight, clamp, pick, …). Instead of mocking the
-// entire HC runtime we test the projection math directly by replicating the
-// same formula used in the method body. If the implementation drifts the
-// visual output will change and the developer will notice — these tests guard
-// against regressions in the mathematical properties of the projection.
+// Test the real Chart.prototype.ternaryToPlot method.
+// We call it on a minimal fake chart that carries only what the method reads:
+// plotWidth, plotHeight, and ternaryOpts. No renderer or DOM needed.
 
 type TernaryOpts = { angle: number; spacing: number; sumTo: number };
 
-function project(a: number, b: number, opts: TernaryOpts, W: number, H: number): [number, number] {
-    const spacing     = opts.spacing * 2,
-        alpha         = Math.min(Math.max(opts.angle, 1), 89) * Math.PI / 180,
-        heightRatio   = Math.tan(alpha) / 2,
-        baseWidth     = Math.min(W, H / heightRatio),
-        width         = Math.max(baseWidth - spacing, 5),
-        x             = a * width / opts.sumTo,
-        y             = b * width / opts.sumTo,
-        centerX       = (W - width) / 2,
-        centerY       = (H - width * heightRatio) / 2;
+const H = Highcharts as any;
+const PREC = 2;
+const W = 600;
+const defaults: TernaryOpts = { angle: 60, spacing: 0, sumTo: 100 };
 
-    return [
-        x + y / 2 + centerX,
-        H - y * heightRatio - centerY
-    ];
+function project(a: number, b: number, opts: TernaryOpts, W: number, H_val: number): [number, number] {
+    const fakeChart = { plotWidth: W, plotHeight: H_val, ternaryOpts: opts };
+    // useSumTo=true so the method uses ternaryOpts.sumTo instead of the hardcoded 100
+    return H.Chart.prototype.ternaryToPlot.call(fakeChart, { a, b }, true);
 }
 
+beforeAll(() => {
+    TernaryPlotPlugin(H);
+});
+
 // Equilateral triangle (angle=60), no spacing, 600×600 plot, sumTo=100.
-//
-// With these settings:
-//   heightRatio = tan(60°)/2 = √3/2 ≈ 0.866
-//   width = 600 (no spacing)
-//   centerX = centerY offset from edges
 //
 // Corner coordinates:
 //   [0,  0]   → bottom-left
 //   [100, 0]  → bottom-right
 //   [0, 100]  → apex (top-centre)
-
-const PREC = 2;
-const W = 600;
-const defaults: TernaryOpts = { angle: 60, spacing: 0, sumTo: 100 };
 
 describe('ternaryToPlot projection — equilateral triangle (angle=60, 600×600, no spacing)', () => {
 
@@ -92,12 +80,57 @@ describe('ternaryToPlot projection — equilateral triangle (angle=60, 600×600,
         expect(y1).toBeCloseTo(y2, PREC);
     });
 
+    it('triangle height equals width × tan(60°)/2', () => {
+        const heightRatio = Math.tan(60 * Math.PI / 180) / 2;
+        const [, yApex]     = project(0, 100, defaults, W, W);
+        const [, yBaseline] = project(0,   0, defaults, W, W);
+        expect(yBaseline - yApex).toBeCloseTo(W * heightRatio, PREC);
+    });
+
     it('a larger angle produces a taller triangle (apex has lower y)', () => {
         const acute:  TernaryOpts = { angle: 45, spacing: 0, sumTo: 100 };
         const obtuse: TernaryOpts = { angle: 75, spacing: 0, sumTo: 100 };
         const [, y45] = project(0, 100, acute,  W, W);
         const [, y75] = project(0, 100, obtuse, W, W);
         expect(y75).toBeLessThan(y45);
+    });
+
+});
+
+describe('ternaryToPlot projection — non-square plot area', () => {
+
+    it('baseline corners still share the same y on a wide plot (800×400)', () => {
+        const [, y0] = project(0,   0, defaults, 800, 400);
+        const [, y1] = project(100, 0, defaults, 800, 400);
+        expect(y0).toBeCloseTo(y1, PREC);
+    });
+
+    it('apex still maps to horizontal centre on a wide plot (800×400)', () => {
+        const [x] = project(0, 100, defaults, 800, 400);
+        expect(x).toBeCloseTo(800 / 2, PREC);
+    });
+
+    it('baseline corners still share the same y on a tall plot (400×800)', () => {
+        const [, y0] = project(0,   0, defaults, 400, 800);
+        const [, y1] = project(100, 0, defaults, 400, 800);
+        expect(y0).toBeCloseTo(y1, PREC);
+    });
+
+    it('apex still maps to horizontal centre on a tall plot (400×800)', () => {
+        const [x] = project(0, 100, defaults, 400, 800);
+        expect(x).toBeCloseTo(400 / 2, PREC);
+    });
+
+});
+
+describe('ternaryToPlot projection — spacing clamped to minimum', () => {
+
+    it('spacing larger than baseWidth clamps triangle width to 5', () => {
+        // baseWidth for 600×600 at angle=60 is 600; spacing=500 doubled = 1000 > 600
+        const huge: TernaryOpts = { angle: 60, spacing: 500, sumTo: 100 };
+        const [x0] = project(0,   0, huge, W, W);
+        const [x1] = project(100, 0, huge, W, W);
+        expect(x1 - x0).toBeCloseTo(5, PREC);
     });
 
 });

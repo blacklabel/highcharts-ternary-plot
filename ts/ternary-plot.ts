@@ -10,7 +10,7 @@ type TernaryOptsInput = {
     enabled?: boolean;
     angle?: number;
     spacing?: number;
-    sumTo?: number
+    sumTo?: number;
 };
 type TernaryOpts = Required<TernaryOptsInput>;
 
@@ -18,7 +18,7 @@ type MedianOptsInput = {
     enabled?: boolean;
     color?: string;
     width?: number;
-    dashStyle?: string
+    dashStyle?: string;
 };
 type MedianOpts = Required<MedianOptsInput>;
 
@@ -130,7 +130,7 @@ type TernarySeries = Highcharts.Series & {
 // are valid inputs to ternaryToPlot
 type TernaryPlotInput = {
     a?: number;
-    b?: number
+    b?: number;
 } | number[];
 
 // Geometry for each of the 3 axes, computed from ternaryOpts.angle
@@ -380,11 +380,11 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                         p2[1] = p2[1] - heightRatio * gridLineExtension;
                 }
 
-                const { plotLeft, plotTop } = chart,
-                    path = [
-                        'M', plotLeft + p1[0], plotTop + p1[1],
-                        'L', plotLeft + p2[0], plotTop + p2[1]
-                    ];
+                const { plotLeft, plotTop } = chart;
+                const path = [
+                    'M', plotLeft + p1[0], plotTop + p1[1],
+                    'L', plotLeft + p2[0], plotTop + p2[1]
+                ];
 
                 gridLines[cursor] = renderLine(path);
             }
@@ -745,13 +745,13 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         this: TernarySeries,
         name: string
     ): PlotBoxTransform {
-        const { plotLeft, plotTop } = this.chart,
-            params = {
-                name,
-                scale: 1,
-                translateX: plotLeft,
-                translateY: plotTop
-            };
+        const { plotLeft, plotTop } = this.chart;
+        const params = {
+            name,
+            scale: 1,
+            translateX: plotLeft,
+            translateY: plotTop
+        };
 
         fireEvent(this, 'getPlotBox', params);
 
@@ -791,25 +791,26 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         const ternaryOpts = chart.ternaryOpts,
             ternaryAngle = clamp(ternaryOpts.angle, 1, 89),
             alpha = ternaryAngle * Math.PI / 180,
-            heightRatio = Math.tan(alpha) / 2,
-            axes: AxisDef[] = [{
-                // Horizontal
-                axisCenters: [[50, 0], [100, 0]],
-                rotationSign: 0,
-                // Two different positions (margin directions):
-                // perpendicular to the axis line, or purely horizontal
-                titleDirections: [[0, 1], [0, 1], [0, 1]]
-            }, {
-                // Vertical right
-                axisCenters: [[50, 50], [0, 100]],
-                rotationSign: 1,
-                titleDirections: [[-heightRatio, -1 / 2], [-1, 0], [0, -1]]
-            }, {
-                // Vertical left
-                axisCenters: [[0, 50], [0, 0]],
-                rotationSign: -1,
-                titleDirections: [[heightRatio, -1 / 2], [1, 0], [0, 1]]
-            }];
+            heightRatio = Math.tan(alpha) / 2;
+
+        const axes: AxisDef[] = [{
+            // Horizontal
+            axisCenters: [[50, 0], [100, 0]],
+            rotationSign: 0,
+            // Two different positions (margin directions):
+            // perpendicular to the axis line, or purely horizontal
+            titleDirections: [[0, 1], [0, 1], [0, 1]]
+        }, {
+            // Vertical right
+            axisCenters: [[50, 50], [0, 100]],
+            rotationSign: 1,
+            titleDirections: [[-heightRatio, -1 / 2], [-1, 0], [0, -1]]
+        }, {
+            // Vertical left
+            axisCenters: [[0, 50], [0, 0]],
+            rotationSign: -1,
+            titleDirections: [[heightRatio, -1 / 2], [1, 0], [0, 1]]
+        }];
 
         const axisKeys = ['a', 'b', 'c'] as const,
             userTernaryAxis = (chart.options as Highcharts.Options).ternaryAxis || {};

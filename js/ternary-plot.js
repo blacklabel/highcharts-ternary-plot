@@ -162,7 +162,8 @@ function TernaryPlotPlugin(H) {
                         p2[0] = p2[0] - gridLineExtension / 2;
                         p2[1] = p2[1] - heightRatio * gridLineExtension;
                 }
-                const { plotLeft, plotTop } = chart, path = [
+                const { plotLeft, plotTop } = chart;
+                const path = [
                     'M', plotLeft + p1[0], plotTop + p1[1],
                     'L', plotLeft + p2[0], plotTop + p2[1]
                 ];
@@ -389,7 +390,8 @@ function TernaryPlotPlugin(H) {
     }
     // Return the plot box of the ternary plot area
     function getPlotBox(name) {
-        const { plotLeft, plotTop } = this.chart, params = {
+        const { plotLeft, plotTop } = this.chart;
+        const params = {
             name,
             scale: 1,
             translateX: plotLeft,
@@ -416,7 +418,8 @@ function TernaryPlotPlugin(H) {
     // ---- Events ----
     // Initialize ternary axes before rendering the chart
     function buildTernaryAxis(chart) {
-        const ternaryOpts = chart.ternaryOpts, ternaryAngle = clamp(ternaryOpts.angle, 1, 89), alpha = ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, axes = [{
+        const ternaryOpts = chart.ternaryOpts, ternaryAngle = clamp(ternaryOpts.angle, 1, 89), alpha = ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
+        const axes = [{
                 // Horizontal
                 axisCenters: [[50, 0], [100, 0]],
                 rotationSign: 0,

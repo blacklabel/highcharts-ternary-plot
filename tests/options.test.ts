@@ -48,7 +48,7 @@ describe('resolveTernary', () => {
         expect(resolveTernary({ angle: 45 })).toEqual({ enabled: true, angle: 45, spacing: 35, sumTo: 100 });
     });
 
-    it('ignores enabled: true and still merges data fields', () => {
+    it('passes through enabled: true alongside data fields', () => {
         expect(resolveTernary({ enabled: true, angle: 45 })).toEqual({ enabled: true, angle: 45, spacing: 35, sumTo: 100 });
     });
 

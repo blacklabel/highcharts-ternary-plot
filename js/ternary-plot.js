@@ -357,8 +357,10 @@ function TernaryPlotPlugin(H) {
         // Alpha from the color string is intentionally ignored; use
         // componentColors.alpha to control opacity uniformly.
         const ca = color(componentColors.a).rgba, cb = color(componentColors.b).rgba, cc = color(componentColors.c).rgba;
-        // Return transparent if any color string was unparseable
-        if (!ca || !cb || !cc) {
+        // Return transparent if any color string was unparseable.
+        // H.color() always returns an rgba array, but invalid strings produce
+        // NaN values — isNumber(NaN) is false, so we check the red channel.
+        if (!isNumber(ca[0]) || !isNumber(cb[0]) || !isNumber(cc[0])) {
             return 'rgba(0,0,0,0)';
         }
         // Barycentric interpolation: each point color is a weighted blend

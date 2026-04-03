@@ -49,7 +49,8 @@ function TernaryPlotPlugin(H) {
             }
         }
     };
-    function resolveTernary(ternaryOpt) {
+    // ---- Chart prototype methods ----
+    Chart.prototype.resolveTernary = function (ternaryOpt) {
         var _a, _b, _c;
         if (!ternaryOpt)
             return null;
@@ -62,8 +63,8 @@ function TernaryPlotPlugin(H) {
             spacing: (_b = opts.spacing) !== null && _b !== void 0 ? _b : 35,
             sumTo: (_c = opts.sumTo) !== null && _c !== void 0 ? _c : 100
         };
-    }
-    function resolveMedian(medianOpt) {
+    };
+    Chart.prototype.resolveMedian = function (medianOpt) {
         var _a, _b, _c;
         if (!medianOpt)
             return null;
@@ -76,8 +77,7 @@ function TernaryPlotPlugin(H) {
             width: (_b = opts.width) !== null && _b !== void 0 ? _b : 1,
             dashStyle: (_c = opts.dashStyle) !== null && _c !== void 0 ? _c : 'Solid'
         };
-    }
-    // ---- Chart prototype methods ----
+    };
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (axis, index) {
         const gridLines = {};
@@ -86,7 +86,7 @@ function TernaryPlotPlugin(H) {
             return gridLines;
         const chart = this, ternaryOpts = chart.ternaryOpts, sumTo = ternaryOpts.sumTo;
         let p1 = [0, 0], p2 = [0, 0];
-        const medianOpts = resolveMedian(axis.median);
+        const medianOpts = chart.resolveMedian(axis.median);
         function renderLine(path, median) {
             const stroke = median ? median.color : axis.gridLineColor, strokeWidth = median ? median.width : axis.gridLineWidth, dashStyle = median ? median.dashStyle : axis.gridLineDashStyle;
             const attrs = {
@@ -104,14 +104,22 @@ function TernaryPlotPlugin(H) {
         }
         if (medianOpts) {
             const sidesAndMedians = [
-                // Sides
-                [[0, 100], [0, 0]],
-                [[0, 0], [100, 0]],
-                [[100, 0], [0, 100]],
-                // Medians: vertex -> midpoint of opposite side
-                [[100, 0], [0, 50]],
-                [[0, 100], [50, 0]],
-                [[0, 0], [50, 50]]
+                // // Sides
+                // [[0, 100], [0, 0]],
+                // [[0, 0], [100, 0]],
+                // [[100, 0], [0, 100]],
+                // // Medians: vertex -> midpoint of opposite side
+                // [[100, 0], [0, 50]],
+                // [[0, 100], [50, 0]],
+                // [[0, 0], [50, 50]]
+                // Sides: ordered to match axes (a=bottom, b=right, c=left)
+                [[0, 0], [100, 0]], // bottom side (axis a)
+                [[100, 0], [0, 100]], // right side  (axis b)
+                [[0, 100], [0, 0]], // left side   (axis c)
+                // Medians: opposite vertex → midpoint of axis side
+                [[0, 100], [50, 0]], // top → bottom midpoint   (axis a)
+                [[0, 0], [50, 50]], // bottom-left → right midpoint (axis b)
+                [[100, 0], [0, 50]] // bottom-right → left midpoint (axis c)
             ];
             for (let i = 0; i < 2; i++) {
                 const [from, to] = sidesAndMedians[index + i * 3];
@@ -201,19 +209,17 @@ function TernaryPlotPlugin(H) {
         }
         return labels;
     };
-    // Convert ternary (x, y) to plot coordinates
+    // Convert ternary (a, b) to plot coordinates
     // using 2D barycentric projection
     Chart.prototype.ternaryToPlot = function (point, useSumTo) {
         const chart = this, ternaryOpts = chart.ternaryOpts, spacing = ternaryOpts.spacing * 2, 
-        // α - angle between the triangle side and the base
-        // (0° < α < 90°)
+        // α — angle between the triangle side and the base (0° < α < 90°)
         alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, 
-        // Determine the length of the triangle's
-        // base based on the available space
+        // Determine the length of the triangle's base from available space
         baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio), 
-        // Then shrink by spacing to get the final width
-        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? ternaryOpts.sumTo : 100, x = pick(point.a, point[0]) * width / sumTo, y = pick(point.b, point[1]) * width / sumTo, 
-        // Center within plot area
+        // Shrink by spacing to get the final width
+        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? ternaryOpts.sumTo : 100, a = pick(point.a, point[0]), b = pick(point.b, point[1]), x = a * width / sumTo, y = b * width / sumTo, 
+        // Center within the plot area
         centerX = (chart.plotWidth - width) / 2, centerY = (chart.plotHeight - width * heightRatio) / 2;
         return [
             x + y / 2 + centerX,
@@ -334,7 +340,7 @@ function TernaryPlotPlugin(H) {
                 series.options.minSize &&
                 series.options.maxSize) {
                 point.marker = {
-                    radius: point.getRadius(series.options.minSize, series.options.maxSize)
+                    radius: point.getRadius()
                 };
             }
         }
@@ -389,12 +395,11 @@ function TernaryPlotPlugin(H) {
             scaleY: 1
         };
     }
-    function getRadius(minR, maxR) {
-        const series = this.series;
-        const allValues = series.points.map((p) => p.total), minValue = Math.min(...allValues), maxValue = Math.max(...allValues);
+    function getRadius() {
+        const series = this.series, minSize = series.options.minSize, maxSize = series.options.maxSize, allTotals = series.points.map((p) => p.total), minValue = Math.min(...allTotals), maxValue = Math.max(...allTotals);
         if (maxValue === minValue)
-            return (minR + maxR) / 2;
-        const t = (this.total - minValue) / (maxValue - minValue), minA = Math.PI * minR * minR, maxA = Math.PI * maxR * maxR, A = minA + t * (maxA - minA);
+            return (minSize + maxSize) / 2;
+        const t = (this.total - minValue) / (maxValue - minValue), minA = Math.PI * minSize * minSize, maxA = Math.PI * maxSize * maxSize, A = minA + t * (maxA - minA);
         return Math.sqrt(A / Math.PI);
     }
     // ---- Events ----
@@ -441,7 +446,7 @@ function TernaryPlotPlugin(H) {
         });
     }
     addEvent(Chart, 'beforeRender', function () {
-        const chart = this, ternaryOpts = resolveTernary(chart.options.chart.ternary);
+        const chart = this, ternaryOpts = chart.resolveTernary(chart.options.chart.ternary);
         if (!ternaryOpts)
             return;
         chart.ternaryOpts = ternaryOpts;
@@ -525,7 +530,7 @@ function TernaryPlotPlugin(H) {
     });
     // Rebuild ternary axis config when chart options change via chart.update()
     addEvent(Chart, 'afterUpdate', function () {
-        const chart = this, ternaryOpts = resolveTernary(chart.options.chart.ternary);
+        const chart = this, ternaryOpts = chart.resolveTernary(chart.options.chart.ternary);
         if (!ternaryOpts)
             return;
         // Destroy old SVG elements before rebuilding axis objects,

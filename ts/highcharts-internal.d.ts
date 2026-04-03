@@ -24,6 +24,16 @@ declare module 'highcharts' {
     }
 
     interface Chart {
+        resolveTernary(
+            opt: boolean |
+            { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number } |
+            undefined
+        ): { angle: number; spacing: number; sumTo: number } | null;
+        resolveMedian(
+            opt: boolean |
+            { enabled?: boolean; color?: string; width?: number; dashStyle?: string } |
+            undefined
+        ): { color: string; width: number; dashStyle: string } | null;
         getGridLines(
             axis: unknown,
             index: number

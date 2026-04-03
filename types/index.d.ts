@@ -45,9 +45,9 @@ declare module 'highcharts' {
          * Shared options applied to all three axes before per-axis overrides.
          */
         plotOptions?: _Highcharts.AxisOptions;
-        /** Options for the bottom-left axis (component A). */
+        /** Options for the bottom axis (component A). */
         a?: _Highcharts.AxisOptions;
-        /** Options for the bottom-right axis (component B). */
+        /** Options for the right axis (component B). */
         b?: _Highcharts.AxisOptions;
         /** Options for the left axis (component C). */
         c?: _Highcharts.AxisOptions;
@@ -119,6 +119,20 @@ declare module 'highcharts' {
     // ---- Chart prototype extensions ----
 
     interface Chart {
+        /**
+         * Resolve `chart.ternary` option into a normalized options object,
+         * or `null` if ternary mode is disabled.
+         */
+        resolveTernary(
+            opt: boolean | { enabled?: boolean; angle?: number; spacing?: number; sumTo?: number } | undefined
+        ): { angle: number; spacing: number; sumTo: number } | null;
+        /**
+         * Resolve a `median` axis option into a normalized options object,
+         * or `null` if medians are disabled.
+         */
+        resolveMedian(
+            opt: boolean | { enabled?: boolean; color?: string; width?: number; dashStyle?: string } | undefined
+        ): { color: string; width: number; dashStyle: string } | null;
         /** @internal */
         getGridLines(axis: unknown, index: number): Record<string, SVGElement | null>;
         /** @internal */

@@ -17,6 +17,7 @@
     "js",
     "css",
     "docs",
-    ".cache"
+    ".cache",
+    "tests"
   ]
 }

@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ternary Plot</title>
+
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+
+    <!-- TODO: self-host highcharts.js -->
+    <script src="lib/highcharts.js"></script>
+    <script src="js/ternary-plot.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="title-section">
+                    <h1 class="main-title">Ternary Plot</h1>
+                    <p class="subtitle">
+                        by <a href="https://blacklabel.net/highcharts/" target="_blank" rel="noopener noreferrer">Black Label</a>
+                    </p>
+                </div>
+                <div class="header-logo">
+                    <a href="https://blacklabel.net/highcharts/" target="_blank" rel="noopener noreferrer">
+                        <img src="assets/icons/blLogo.svg" alt="Black Label Logo" class="bl-logo">
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="chart-section">
+                <div class="chart-container">
+                    <div id="chart"></div>
+                    <div id="chart2"></div>
+                    <div id="chart3"></div>
+                </div>
+
+                <div class="requirements-content">
+                    <div class="requirement-card">
+                        <div class="requirement-card-header">
+                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Requirements</h3>
+                        </div>
+                        <ul>
+                            <li><span style="display: inline-block; width: 90px">Highcharts</span> 12.0.0 or newer</li>
+                        </ul>
+                    </div>
+                    <div class="requirement-card">
+                        <div class="requirement-card-header">
+                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Code</h3>
+                        </div>
+                        <ul>
+                            <li><span style="display: inline-block; width: 90px">Code</span><a href="https://github.com/blacklabel/highcharts-ternary-plot"
+                                    target="_blank">Source Code</a></li>
+                            <li><span style="display: inline-block; width: 90px">Issues</span><a href="https://github.com/blacklabel/highcharts-ternary-plot/issues"
+                                    target="_blank">Bug Reports</a></li>
+                        </ul>
+                    </div>
+                    <div class="requirement-card">
+                        <div class="requirement-card-header">
+                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Installation</h3>
+                        </div>
+                        <div class="install-methods">
+                            <div class="install-method">
+                                <span style="display: inline-block; width: 90px">NPM</span>
+                                <code>npm install highcharts-ternary-plot</code>
+                            </div>
+                            <div class="install-method">
+                                <span style="display: inline-block; width: 90px">CDN</span>
+                                <code>&lt;script src="https://blacklabel.github.io/highcharts-ternary-plot/js/ternary-plot.js"&gt;&lt;/script&gt;</code>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="requirement-card">
+                        <div class="requirement-card-header">
+                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Usage example</h3>
+                        </div>
+                        <div class="usage-example">
+                            <pre><code>// After loading Highcharts and the plugin
+Highcharts.chart('container', {
+    chart: {
+        ternary: true
+    },
+
+    title: {
+        text: 'Diet macronutrients'
+    },
+
+    ternaryAxis: {
+        a: { title: { text: 'Protein' } },
+        b: { title: { text: 'Fat' } },
+        c: { title: { text: 'Carbohydrates' } }
+    },
+
+    series: [{
+        type: 'ternaryscatter',
+        name: 'Diet macronutrients',
+        keys: ['a', 'b', 'c', 'name'],
+        tooltip: {
+            headerFormat: '',
+            pointFormat: `
+                &lt;strong>{point.name} diet:&lt;/strong&gt&lt;br&gt
+                Protein: {point.a}%&lt;br&gt
+                Fat: {point.b}%&lt;br&gt
+                Carbohydrates: {point.c}%
+            `
+        },
+        data: [
+            [20, 70, 10, 'Keto'],
+            [30, 40, 30, 'Paleo'],
+            [20, 35, 45, 'Mediterranean'],
+            [15, 35, 50, 'Standard Western'],
+            [20, 20, 60, 'High-carbohydrate'],
+            [0, 100, 0, 'Fat-only']
+        ]
+    }]
+});</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // const URLS = {
+        //     renewables: "https://ourworldindata.org/grapher/share-electricity-renewables.csv",
+        //     fossil: "https://ourworldindata.org/grapher/share-electricity-fossil-fuels.csv",
+        //     nuclear: "https://ourworldindata.org/grapher/share-electricity-nuclear.csv",
+        // };
+ 
+        // const TARGETS = new Set([
+        //     "World",
+        //     "United States",
+        //     "Europe (EI)",
+        //     "China",
+        //     "India",
+        // ]);
+
+        // function parseCSV(text) {
+        //     const [header, ...rows] = text.trim().split("\n");
+        //     const cols = header.split(",");
+        //     return rows.map(r => {
+        //         const vals = r.split(",");
+        //         return Object.fromEntries(cols.map((c, i) => [c, vals[i]]));
+        //     });
+        // }
+
+        // async function loadSeries(url, valueKey) {
+        //     const res = await fetch(url);
+        //     const csv = await res.text();
+        //     const rows = parseCSV(csv);
+
+        //     const valueCol = Object.keys(rows[0]).find(
+        //         k => !["Entity", "Code", "Year"].includes(k)
+        //     );
+
+        //     return rows.map(r => ({
+        //         entity: r.Entity,
+        //         year: Number(r.Year),
+        //         [valueKey]: Number(r[valueCol]),
+        //     }));
+        // }
+
+        async function getData() {
+            // const ren = await loadSeries(URLS.renewables, "renewables");
+            // const fos = await loadSeries(URLS.fossil, "fossil");
+            // const nuc = await loadSeries(URLS.nuclear, "nuclear");
+
+            // const map = new Map();
+            // for (const r of [...ren, ...fos, ...nuc]) {
+            //     if (!TARGETS.has(r.entity)) continue;
+            //     const key = `${r.entity}-${r.year}`;
+            //     map.set(key, { ...(map.get(key) || {}), ...r });
+            // }
+
+            // let data = [...map.values()]
+            //     .filter(d => d.renewables != null && d.fossil != null && d.nuclear != null)
+            //     .sort((a, b) => a.entity.localeCompare(b.entity) || a.year - b.year);
+
+            // // Last 10 years per entity
+            // data = Object.values(
+            //     data.reduce((acc, d) => {
+            //         acc[d.entity] ??= [];
+            //         acc[d.entity].push(d);
+            //         return acc;
+            //     }, {})
+            // ).flatMap(arr => arr.slice(-10));
+
+            // // Round and sanity check (≈100%)
+            // data = data.map(d => ({
+            //     entity: d.entity,
+            //     year: d.year,
+            //     renewables: +d.renewables.toFixed(2),
+            //     fossil: +d.fossil.toFixed(2),
+            //     nuclear: +d.nuclear.toFixed(2),
+            //     sum: +(d.renewables + d.fossil + d.nuclear).toFixed(2),
+            // }));
+
+            return;
+        }
+
+        async function init() {
+            //const rawData = await getData();
+
+            // const grouped = rawData.reduce((acc, d) => {
+            //     (acc[d.entity] ??= []).push(d);
+            //     return acc;
+            // }, {});
+
+            const SQRT3_OVER_2 = Math.sqrt(3) / 2;
+
+            // const data = [
+            //     // JS-dominant
+            //     [85, 10, 5, 18, 'callback'],
+            //     [80, 15, 5, 20, 'promise'],
+            //     [75, 20, 5, 22, 'async'],
+
+            //     // Python-dominant
+            //     [10, 85, 5, 21, 'numpy'],
+            //     [15, 80, 5, 19, 'pandas'],
+            //     [20, 75, 5, 17, 'django'],
+
+            //     // Rust-dominant
+            //     [5, 10, 85, 14, 'ownership'],
+            //     [5, 15, 80, 13, 'borrow'],
+            //     [5, 20, 75, 12, 'lifetimes'],
+
+            //     // Shared concepts (center-ish)
+            //     [40, 40, 20, 25, 'performance'],
+            //     [35, 35, 30, 23, 'memory'],
+            //     [33, 33, 34, 28, 'error'],
+
+            //     // JS + Python
+            //     [55, 40, 5, 24, 'api'],
+            //     [50, 45, 5, 26, 'json'],
+
+            //     // Python + Rust
+            //     [10, 55, 35, 16, 'typing'],
+            //     [15, 50, 35, 15, 'cli'],
+
+            //     // JS + Rust
+            //     [45, 5, 50, 14, 'wasm'],
+            //     [0, 0, 100, 13, 'out of plotArea'],
+            // ];
+
+            const data = [
+                {
+                    "term": "numpy",
+                    "counts": {
+                        "Python": 2165184,
+                        "JavaScript": 9472,
+                        "Rust": 2880
+                    },
+                    "shares": {
+                        "Python": 0.9943275335057606,
+                        "JavaScript": 0.004349870679520339,
+                        "Rust": 0.0013225958147190218
+                    }
+                },
+                {
+                    "term": "async",
+                    "counts": {
+                        "Python": 2293760,
+                        "JavaScript": 5008384,
+                        "Rust": 315776
+                    },
+                    "shares": {
+                        "Python": 0.3011005628833067,
+                        "JavaScript": 0.6574477022599344,
+                        "Rust": 0.0414517348567588
+                    }
+                },
+                {
+                    "term": "json",
+                    "counts": {
+                        "Python": 760624,
+                        "JavaScript": 3315712,
+                        "Rust": 127936
+                    },
+                    "shares": {
+                        "Python": 0.1809169340137841,
+                        "JavaScript": 0.7886530652631418,
+                        "Rust": 0.030430000723074054
+                    }
+                },
+                {
+                    "term": "borrow",
+                    "counts": {
+                        "Python": 63616,
+                        "JavaScript": 68416,
+                        "Rust": 278272
+                    },
+                    "shares": {
+                        "Python": 0.15504601466229917,
+                        "JavaScript": 0.1667446576197161,
+                        "Rust": 0.6782093277179847
+                    }
+                },
+                {
+                    "term": "ownership",
+                    "counts": {
+                        "Python": 161024,
+                        "JavaScript": 112384,
+                        "Rust": 60288
+                    },
+                    "shares": {
+                        "Python": 0.4825469888761028,
+                        "JavaScript": 0.3367855772919064,
+                        "Rust": 0.1806674338319908
+                    }
+                },
+                {
+                    "term": "callback",
+                    "counts": {
+                        "Python": 976896,
+                        "JavaScript": 1591296,
+                        "Rust": 184320
+                    },
+                    "shares": {
+                        "Python": 0.3549107142857143,
+                        "JavaScript": 0.578125,
+                        "Rust": 0.06696428571428571
+                    }
+                },
+                {
+                    "term": "promise",
+                    "counts": {
+                        "Python": 59136,
+                        "JavaScript": 1419264,
+                        "Rust": 12544
+                    },
+                    "shares": {
+                        "Python": 0.039663461538461536,
+                        "JavaScript": 0.9519230769230769,
+                        "Rust": 0.008413461538461538
+                    }
+                },
+                {
+                    "term": "pandas",
+                    "counts": {
+                        "Python": 1019200,
+                        "JavaScript": 14704,
+                        "Rust": 1576
+                    },
+                    "shares": {
+                        "Python": 0.9842778228454436,
+                        "JavaScript": 0.014200177695368332,
+                        "Rust": 0.0015219994591880095
+                    }
+                },
+                {
+                    "term": "django",
+                    "counts": {
+                        "Python": 1873920,
+                        "JavaScript": 48384,
+                        "Rust": 2080
+                    },
+                    "shares": {
+                        "Python": 0.9737765435588739,
+                        "JavaScript": 0.025142591083692236,
+                        "Rust": 0.0010808653574338593
+                    }
+                },
+                {
+                    "term": "lifetimes",
+                    "counts": {
+                        "Python": 4616,
+                        "JavaScript": 9152,
+                        "Rust": 13712
+                    },
+                    "shares": {
+                        "Python": 0.16797671033478895,
+                        "JavaScript": 0.33304221251819505,
+                        "Rust": 0.498981077147016
+                    }
+                },
+                {
+                    "term": "await",
+                    "counts": {
+                        "Python": 1531392,
+                        "JavaScript": 3538944,
+                        "Rust": 492288
+                    },
+                    "shares": {
+                        "Python": 0.27530028993510974,
+                        "JavaScript": 0.6362004694187491,
+                        "Rust": 0.0884992406461411
+                    }
+                },
+                {
+                    "term": "thread",
+                    "counts": {
+                        "Python": 1006592,
+                        "JavaScript": 206336,
+                        "Rust": 287744
+                    },
+                    "shares": {
+                        "Python": 0.6707608324803821,
+                        "JavaScript": 0.13749573524394404,
+                        "Rust": 0.19174343227567384
+                    }
+                },
+                {
+                    "term": "memory",
+                    "counts": {
+                        "Python": 913408,
+                        "JavaScript": 346368,
+                        "Rust": 124288
+                    },
+                    "shares": {
+                        "Python": 0.6599463608619255,
+                        "JavaScript": 0.25025432349949134,
+                        "Rust": 0.08979931563858319
+                    }
+                },
+                {
+                    "term": "pointer",
+                    "counts": {
+                        "Python": 260096,
+                        "JavaScript": 2205696,
+                        "Rust": 162432
+                    },
+                    "shares": {
+                        "Python": 0.09896264549749184,
+                        "JavaScript": 0.8392344031558954,
+                        "Rust": 0.06180295134661277
+                    }
+                },
+                {
+                    "term": "api",
+                    "counts": {
+                        "Python": 4691968,
+                        "JavaScript": 5251072,
+                        "Rust": 530048
+                    },
+                    "shares": {
+                        "Python": 0.4480023465858398,
+                        "JavaScript": 0.5013871744417693,
+                        "Rust": 0.05061047897239095
+                    }
+                },
+                {
+                    "term": "http",
+                    "counts": {
+                        "Python": 9469952,
+                        "JavaScript": 7131136,
+                        "Rust": 1264128
+                    },
+                    "shares": {
+                        "Python": 0.5300776660075087,
+                        "JavaScript": 0.39916315593385493,
+                        "Rust": 0.07075917805863641
+                    }
+                },
+                {
+                    "term": "websocket",
+                    "counts": {
+                        "Python": 198912,
+                        "JavaScript": 191360,
+                        "Rust": 6144
+                    },
+                    "shares": {
+                        "Python": 0.5017759121730707,
+                        "JavaScript": 0.4827252179528576,
+                        "Rust": 0.015498869874071682
+                    }
+                },
+                {
+                    "term": "serialize",
+                    "counts": {
+                        "Python": 335296,
+                        "JavaScript": 163744,
+                        "Rust": 545792
+                    },
+                    "shares": {
+                        "Python": 0.3209090073810909,
+                        "JavaScript": 0.15671801782487518,
+                        "Rust": 0.5223729747940339
+                    }
+                },
+                {
+                    "term": "deserialize",
+                    "counts": {
+                        "Python": 147712,
+                        "JavaScript": 150272,
+                        "Rust": 241888
+                    },
+                    "shares": {
+                        "Python": 0.2736055954003912,
+                        "JavaScript": 0.27834746013869954,
+                        "Rust": 0.44804694446090926
+                    }
+                },
+                {
+                    "term": "schema",
+                    "counts": {
+                        "Python": 952064,
+                        "JavaScript": 337792,
+                        "Rust": 71136
+                    },
+                    "shares": {
+                        "Python": 0.6995368084456044,
+                        "JavaScript": 0.24819543391878865,
+                        "Rust": 0.05226775763560697
+                    }
+                },
+                {
+                    "term": "type",
+                    "counts": {
+                        "Python": 9920000,
+                        "JavaScript": 14622720,
+                        "Rust": 1664000
+                    },
+                    "shares": {
+                        "Python": 0.3785288658786754,
+                        "JavaScript": 0.557975969522321,
+                        "Rust": 0.06349516459900362
+                    }
+                },
+                {
+                    "term": "generic",
+                    "counts": {
+                        "Python": 614400,
+                        "JavaScript": 188544,
+                        "Rust": 320000
+                    },
+                    "shares": {
+                        "Python": 0.5471332497435313,
+                        "JavaScript": 0.16790151601504616,
+                        "Rust": 0.28496523424142256
+                    }
+                },
+                {
+                    "term": "class",
+                    "counts": {
+                        "Python": 11689984,
+                        "JavaScript": 14098432,
+                        "Rust": 350976
+                    },
+                    "shares": {
+                        "Python": 0.44721713496626087,
+                        "JavaScript": 0.539355773845084,
+                        "Rust": 0.013427091188655038
+                    }
+                },
+                {
+                    "term": "module",
+                    "counts": {
+                        "Python": 4874240,
+                        "JavaScript": 5187584,
+                        "Rust": 283648
+                    },
+                    "shares": {
+                        "Python": 0.4711471840047511,
+                        "JavaScript": 0.5014352172621993,
+                        "Rust": 0.027417598733049588
+                    }
+                },
+                {
+                    "term": "function",
+                    "counts": {
+                        "Python": 4374528,
+                        "JavaScript": 8970240,
+                        "Rust": 606720
+                    },
+                    "shares": {
+                        "Python": 0.31355279092810745,
+                        "JavaScript": 0.6429593746559507,
+                        "Rust": 0.04348783441594187
+                    }
+                },
+                {
+                    "term": "cli",
+                    "counts": {
+                        "Python": 2914304,
+                        "JavaScript": 5812224,
+                        "Rust": 644608
+                    },
+                    "shares": {
+                        "Python": 0.31098726984647324,
+                        "JavaScript": 0.6202261924274709,
+                        "Rust": 0.06878653772605584
+                    }
+                },
+                {
+                    "term": "config",
+                    "counts": {
+                        "Python": 6309888,
+                        "JavaScript": 6406144,
+                        "Rust": 332032
+                    },
+                    "shares": {
+                        "Python": 0.48358806333261395,
+                        "JavaScript": 0.49096509643116404,
+                        "Rust": 0.025446840236222016
+                    }
+                },
+                {
+                    "term": "logger",
+                    "counts": {
+                        "Python": 3127296,
+                        "JavaScript": 549120,
+                        "Rust": 76416
+                    },
+                    "shares": {
+                        "Python": 0.8333162795456871,
+                        "JavaScript": 0.14632149800470684,
+                        "Rust": 0.020362222449606057
+                    }
+                },
+                {
+                    "term": "cache",
+                    "counts": {
+                        "Python": 1561600,
+                        "JavaScript": 389120,
+                        "Rust": 196608
+                    },
+                    "shares": {
+                        "Python": 0.7272293752980449,
+                        "JavaScript": 0.18121125417262757,
+                        "Rust": 0.09155937052932761
+                    }
+                },
+                {
+                    "term": "performance",
+                    "counts": {
+                        "Python": 1216256,
+                        "JavaScript": 575232,
+                        "Rust": 93184
+                    },
+                    "shares": {
+                        "Python": 0.6453409399619668,
+                        "JavaScript": 0.3052159739201304,
+                        "Rust": 0.04944308611790275
+                    }
+                },
+                {
+                    "term": "benchmark",
+                    "counts": {
+                        "Python": 512512,
+                        "JavaScript": 86656,
+                        "Rust": 91392
+                    },
+                    "shares": {
+                        "Python": 0.7421686746987952,
+                        "JavaScript": 0.12548656163113994,
+                        "Rust": 0.13234476367006487
+                    }
+                },
+                {
+                    "term": "wasm",
+                    "counts": {
+                        "Python": 12000,
+                        "JavaScript": 92160,
+                        "Rust": 74592
+                    },
+                    "shares": {
+                        "Python": 0.06713211600429646,
+                        "JavaScript": 0.5155746509129968,
+                        "Rust": 0.41729323308270677
+                    }
+                },
+                {
+                    "term": "iterator",
+                    "counts": {
+                        "Python": 315904,
+                        "JavaScript": 149376,
+                        "Rust": 323584
+                    },
+                    "shares": {
+                        "Python": 0.4004543241927633,
+                        "JavaScript": 0.1893558331981178,
+                        "Rust": 0.41018984260911895
+                    }
+                },
+                {
+                    "term": "decorator",
+                    "counts": {
+                        "Python": 296704,
+                        "JavaScript": 120128,
+                        "Rust": 7264
+                    },
+                    "shares": {
+                        "Python": 0.6996151814683468,
+                        "JavaScript": 0.28325662114238287,
+                        "Rust": 0.017128197389270353
+                    }
+                },
+                {
+                    "term": "macro",
+                    "counts": {
+                        "Python": 247808,
+                        "JavaScript": 155392,
+                        "Rust": 100064
+                    },
+                    "shares": {
+                        "Python": 0.49240160233992497,
+                        "JavaScript": 0.3087683601449736,
+                        "Rust": 0.19883003751510142
+                    }
+                },
+                {
+                    "term": "future",
+                    "counts": {
+                        "Python": 1025280,
+                        "JavaScript": 406272,
+                        "Rust": 223232
+                    },
+                    "shares": {
+                        "Python": 0.6195853960396039,
+                        "JavaScript": 0.24551361386138615,
+                        "Rust": 0.1349009900990099
+                    }
+                },
+                {
+                    "term": "spawn",
+                    "counts": {
+                        "Python": 195840,
+                        "JavaScript": 163328,
+                        "Rust": 212992
+                    },
+                    "shares": {
+                        "Python": 0.3422818791946309,
+                        "JavaScript": 0.2854586129753915,
+                        "Rust": 0.37225950782997763
+                    }
+                },
+                {
+                    "term": "select",
+                    "counts": {
+                        "Python": 3018752,
+                        "JavaScript": 16711680,
+                        "Rust": 377344
+                    },
+                    "shares": {
+                        "Python": 0.1501285870699972,
+                        "JavaScript": 0.8311053395462531,
+                        "Rust": 0.01876607338374965
+                    }
+                },
+                {
+                    "term": "poll",
+                    "counts": {
+                        "Python": 749568,
+                        "JavaScript": 270848,
+                        "Rust": 118528
+                    },
+                    "shares": {
+                        "Python": 0.6581254214430209,
+                        "JavaScript": 0.23780624859518992,
+                        "Rust": 0.10406832996178916
+                    }
+                },
+                {
+                    "term": "defer",
+                    "counts": {
+                        "Python": 91648,
+                        "JavaScript": 279040,
+                        "Rust": 25728
+                    },
+                    "shares": {
+                        "Python": 0.23119147562156925,
+                        "JavaScript": 0.7039070067807556,
+                        "Rust": 0.06490151759767517
+                    }
+                },
+                {
+                    "term": "axum",
+                    "counts": {
+                        "Python": 1504,
+                        "JavaScript": 1648,
+                        "Rust": 38128
+                    },
+                    "shares": {
+                        "Python": 0.03643410852713178,
+                        "JavaScript": 0.03992248062015504,
+                        "Rust": 0.9236434108527132
+                    }
+                },
+                {
+                    "term": "rocket",
+                    "counts": {
+                        "Python": 41856,
+                        "JavaScript": 53312,
+                        "Rust": 13312
+                    },
+                    "shares": {
+                        "Python": 0.3858407079646018,
+                        "JavaScript": 0.49144542772861355,
+                        "Rust": 0.12271386430678466
+                    }
+                },
+                {
+                    "term": "bevy",
+                    "counts": {
+                        "Python": 1200,
+                        "JavaScript": 1488,
+                        "Rust": 26152
+                    },
+                    "shares": {
+                        "Python": 0.04160887656033287,
+                        "JavaScript": 0.05159500693481276,
+                        "Rust": 0.9067961165048544
+                    }
+                },
+                {
+                    "term": "criterion",
+                    "counts": {
+                        "Python": 364544,
+                        "JavaScript": 17056,
+                        "Rust": 40832
+                    },
+                    "shares": {
+                        "Python": 0.8629649268994773,
+                        "JavaScript": 0.040375729111430954,
+                        "Rust": 0.09665934398909173
+                    }
+                },
+                {
+                    "term": "miri",
+                    "counts": {
+                        "Python": 20160,
+                        "JavaScript": 23552,
+                        "Rust": 8736
+                    },
+                    "shares": {
+                        "Python": 0.3843807199511898,
+                        "JavaScript": 0.44905430140329466,
+                        "Rust": 0.16656497864551556
+                    }
+                },
+                {
+                    "term": "option",
+                    "counts": {
+                        "Python": 2000640,
+                        "JavaScript": 5846016,
+                        "Rust": 1482752
+                    },
+                    "shares": {
+                        "Python": 0.21444447493345772,
+                        "JavaScript": 0.6266223966193782,
+                        "Rust": 0.15893312844716406
+                    }
+                },
+                {
+                    "term": "result",
+                    "counts": {
+                        "Python": 3436544,
+                        "JavaScript": 2664448,
+                        "Rust": 575936
+                    },
+                    "shares": {
+                        "Python": 0.5146893900907723,
+                        "JavaScript": 0.39905297765679065,
+                        "Rust": 0.08625763225243704
+                    }
+                },
+                {
+                    "term": "some",
+                    "counts": {
+                        "Python": 1520128,
+                        "JavaScript": 1528576,
+                        "Rust": 1626112
+                    },
+                    "shares": {
+                        "Python": 0.3251738678057062,
+                        "JavaScript": 0.32698099775477796,
+                        "Rust": 0.3478451344395159
+                    }
+                },
+                {
+                    "term": "none",
+                    "counts": {
+                        "Python": 7337984,
+                        "JavaScript": 2865152,
+                        "Rust": 1338368
+                    },
+                    "shares": {
+                        "Python": 0.6357909679708987,
+                        "JavaScript": 0.24824771537574306,
+                        "Rust": 0.11596131665335818
+                    }
+                },
+                {
+                    "term": "ok",
+                    "counts": {
+                        "Python": 6959104,
+                        "JavaScript": 8601600,
+                        "Rust": 1491968
+                    },
+                    "shares": {
+                        "Python": 0.4080946376028343,
+                        "JavaScript": 0.5044136191677175,
+                        "Rust": 0.08749174322944815
+                    }
+                },
+                {
+                    "term": "clone",
+                    "counts": {
+                        "Python": 481792,
+                        "JavaScript": 328832,
+                        "Rust": 1527808
+                    },
+                    "shares": {
+                        "Python": 0.20603207619464667,
+                        "JavaScript": 0.14062072363019323,
+                        "Rust": 0.6533472001751601
+                    }
+                },
+                {
+                    "term": "copy",
+                    "counts": {
+                        "Python": 3366912,
+                        "JavaScript": 1674240,
+                        "Rust": 682240
+                    },
+                    "shares": {
+                        "Python": 0.588272129534374,
+                        "JavaScript": 0.29252583083597977,
+                        "Rust": 0.11920203962964619
+                    }
+                },
+                {
+                    "term": "default",
+                    "counts": {
+                        "Python": 4607488,
+                        "JavaScript": 14475264,
+                        "Rust": 833280
+                    },
+                    "shares": {
+                        "Python": 0.23134568171009165,
+                        "JavaScript": 0.7268146586629305,
+                        "Rust": 0.0418396596269779
+                    }
+                },
+                {
+                    "term": "debug",
+                    "counts": {
+                        "Python": 2043392,
+                        "JavaScript": 982528,
+                        "Rust": 1294336
+                    },
+                    "shares": {
+                        "Python": 0.472979378999763,
+                        "JavaScript": 0.22742356008532827,
+                        "Rust": 0.29959706091490873
+                    }
+                },
+                {
+                    "term": "debugger",
+                    "counts": {
+                        "Python": 50752,
+                        "JavaScript": 140288,
+                        "Rust": 8032
+                    },
+                    "shares": {
+                        "Python": 0.2549429352194181,
+                        "JavaScript": 0.7047098537212667,
+                        "Rust": 0.04034721105931522
+                    }
+                },
+                {
+                    "term": "formatter",
+                    "counts": {
+                        "Python": 355840,
+                        "JavaScript": 326144,
+                        "Rust": 415232
+                    },
+                    "shares": {
+                        "Python": 0.3243117125524965,
+                        "JavaScript": 0.297246850209986,
+                        "Rust": 0.3784414372375175
+                    }
+                },
+                {
+                    "term": "cow",
+                    "counts": {
+                        "Python": 93696,
+                        "JavaScript": 79104,
+                        "Rust": 64784
+                    },
+                    "shares": {
+                        "Python": 0.3943699912452017,
+                        "JavaScript": 0.3329517139201293,
+                        "Rust": 0.272678294834669
+                    }
+                },
+                {
+                    "term": "vec",
+                    "counts": {
+                        "Python": 2879488,
+                        "JavaScript": 2478080,
+                        "Rust": 1230336
+                    },
+                    "shares": {
+                        "Python": 0.4370871220952825,
+                        "JavaScript": 0.37615605813320896,
+                        "Rust": 0.18675681977150851
+                    }
+                },
+                {
+                    "term": "err",
+                    "counts": {
+                        "Python": 8411136,
+                        "JavaScript": 7442432,
+                        "Rust": 1894400
+                    },
+                    "shares": {
+                        "Python": 0.47392107085160395,
+                        "JavaScript": 0.41933994922686363,
+                        "Rust": 0.10673897992153243
+                    }
+                },
+                {
+                    "term": "drop",
+                    "counts": {
+                        "Python": 2390016,
+                        "JavaScript": 1028096,
+                        "Rust": 91328
+                    },
+                    "shares": {
+                        "Python": 0.6810248928603994,
+                        "JavaScript": 0.29295158201878363,
+                        "Rust": 0.026023525120816998
+                    },
+                },
+                {
+                    "term": "fn",
+                    "counts": {
+                        "Python": 2105344,
+                        "JavaScript": 1153024,
+                        "Rust": 2202368
+                    },
+                    "shares": {
+                        "Python": 0.3855421686746988,
+                        "JavaScript": 0.21114809432281656,
+                        "Rust": 0.4033097370024846
+                    }
+                },
+                {
+                    "term": "let",
+                    "counts": {
+                        "Python": 4041472,
+                        "JavaScript": 5427200,
+                        "Rust": 2110208
+                    },
+                    "shares": {
+                        "Python": 0.34903824894981206,
+                        "JavaScript": 0.46871545434446166,
+                        "Rust": 0.18224629670572629
+                    }
+                },
+                {
+                    "term": "mut",
+                    "counts": {
+                        "Python": 1462272,
+                        "JavaScript": 1622016,
+                        "Rust": 1796096
+                    },
+                    "shares": {
+                        "Python": 0.2996223248006714,
+                        "JavaScript": 0.33235417540914813,
+                        "Rust": 0.36802349979018045
+                    }
+                },
+                {
+                    "term": "impl",
+                    "counts": {
+                        "Python": 5092864,
+                        "JavaScript": 2174976,
+                        "Rust": 1792000
+                    },
+                    "shares": {
+                        "Python": 0.5621361966657248,
+                        "JavaScript": 0.24006781576716588,
+                        "Rust": 0.19779598756710937
+                    }
+                },
+                {
+                    "term": "pub",
+                    "counts": {
+                        "Python": 2007040,
+                        "JavaScript": 2514944,
+                        "Rust": 2516992
+                    },
+                    "shares": {
+                        "Python": 0.285132382892057,
+                        "JavaScript": 0.3572883328484143,
+                        "Rust": 0.3575792842595287
+                    }
+                },
+                {
+                    "term": "struct",
+                    "counts": {
+                        "Python": 2132992,
+                        "JavaScript": 4352000,
+                        "Rust": 1814528
+                    },
+                    "shares": {
+                        "Python": 0.2570018507094386,
+                        "JavaScript": 0.5243676742751388,
+                        "Rust": 0.21863047501542257
+                    }
+                },
+                {
+                    "term": "enum",
+                    "counts": {
+                        "Python": 3132928,
+                        "JavaScript": 2099200,
+                        "Rust": 1330176
+                    },
+                    "shares": {
+                        "Python": 0.4774128111102442,
+                        "JavaScript": 0.31988764921588514,
+                        "Rust": 0.20269953967387064
+                    }
+                },
+                {
+                    "term": "match",
+                    "counts": {
+                        "Python": 3397632,
+                        "JavaScript": 1537792,
+                        "Rust": 1484800
+                    },
+                    "shares": {
+                        "Python": 0.5292077036564456,
+                        "JavaScript": 0.23952310698193707,
+                        "Rust": 0.23126918936161728
+                    }
+                },
+                {
+                    "term": "Self",
+                    "counts": {
+                        "Python": 7245824,
+                        "JavaScript": 479744,
+                        "Rust": 1394688
+                    },
+                    "shares": {
+                        "Python": 0.7944759445348902,
+                        "JavaScript": 0.05260203222365688,
+                        "Rust": 0.15292202324145288
+                    }
+                },
+                {
+                    "term": "use",
+                    "counts": {
+                        "Python": 17293312,
+                        "JavaScript": 14843904,
+                        "Rust": 3039232
+                    },
+                    "shares": {
+                        "Python": 0.49161620866325106,
+                        "JavaScript": 0.42198416394969723,
+                        "Rust": 0.0863996273870517
+                    }
+                }
+            ];
+
+            const words = [
+                // 'numpy',
+                // 'async',
+                'json',
+                'borrow',
+                'ownership',
+                // 'callback',
+                'promise',
+                // 'pandas',
+                'django',
+                'lifetimes',
+                // 'await',
+                'thread',
+                // 'memory',
+                'pointer',
+                // 'api',
+                'http',
+                //'websocket',
+                'serialize',
+                'deserialize',
+                'schema',
+                // 'type',
+                'generic',
+                'class',
+                // 'module',
+                'function',
+                // 'cli',
+                // 'config',
+                // 'logger',
+                // 'cache',
+                // 'performance',
+                // 'benchmark',
+                // 'wasm',
+                // 'iterator',
+                // 'decorator',
+                // 'macro',
+                // 'future',
+                // 'spawn',
+                // 'select',
+                // 'poll',
+                // 'defer',
+                // 'axum',
+                // 'rocket',
+                // 'bevy',
+                // 'criterion',
+                // 'miri',
+                // 'option',
+                // 'result',
+                // 'some',
+                // 'none',
+                // 'ok',
+                // 'clone',
+                // 'copy',
+                // 'default',
+                // 'debug',
+                // 'debugger',
+                // 'formatter',
+                // 'cow',
+                // 'vec',
+                // 'err',
+                // 'drop',
+                // 'fn',
+                // 'let',
+                // 'mut',
+                // 'impl',
+                // 'pub',
+                // 'struct',
+                // 'enum',
+                // 'match',
+                // 'Self',
+                // 'use'
+            ];
+
+            const allowed = new Set(words);
+
+            for (let i = data.length - 1; i >= 0; i--) {
+                if (!allowed.has(data[i].term)) {
+                    data.splice(i, 1);
+                }
+            }
+
+            const result = data.map(d => {
+                // TODO: consider normalizing so the rounding sums to 100
+                // (not 99 or 101)
+                const a = Math.round(d.shares.JavaScript * 100),
+                    b = Math.round(d.shares.Python * 100),
+                    c = Math.round(d.shares.Rust * 100),
+                    total = d.counts.Python +
+                        d.counts.JavaScript +
+                        d.counts.Rust;
+
+                return [a, b, c, total, d.term];
+            });
+
+            const radii = result.map(d => d[3]);
+
+            const points = result.map(([
+                a,
+                b,
+                c,
+                total,
+                name
+            ]) => ({
+                a,
+                b,
+                c,
+                total,
+                name,
+                marker: {
+                    //radius: 4,
+                    //lineColor: 'red',
+                    //lineWidth: 1
+                }
+            }));
+
+            Highcharts.chart('chart', {
+
+                chart: {
+                    type: 'ternaryscatter',
+                    ternary: {
+                        angle: 60,
+                        spacing: 80,
+                        sumTo: 100
+                    },
+                    //spacingLeft: 180,
+                    height: 700,
+                    //plotBorderWidth: 1,
+                    plotBorderColor: 'red',
+                    //borderWidth: 3,
+                    borderColor: 'black',
+                    backgroundColor: '#0E1117'
+                    // 0F172A
+                },
+
+                credits: {
+                    enabled: false
+                },
+
+                title: {
+                    //text: 'Changes in Electricity Generation Mix (%)<br/>2015-2024',
+                    text: 'Programming Language Vocabulary Landscape',
+                    //align: 'left',
+                    style: {
+                        fontSize: '30px',
+                        fontFamily: 'Inter',
+                        fontWeight: 500,
+                        color: 'rgba(255,255,255,0.85)'
+                    }
+                },
+
+                subtitle: {
+                    text: `How technical terms distribute between JavaScript, Python, and Rust — position shows relative usage, bubble size shows frequency<br/>
+                        <span style="font-size: 10px;">Data source: Our World in Data<span>`,
+                    //align: 'left',
+                    style: {
+                        fontSize: '16px',
+                        //opacity: 0.6,
+                        fontFamily: 'Inter',
+                        fontWeight: 500,
+                        color: 'rgba(255,255,255,0.55)'
+                    }
+                },
+
+                legend: {
+                    enabled: false
+                },
+
+                ternaryAxis: {
+                    plotOptions: {
+                        tickInterval: 10,
+                        median: {
+                            color: 'rgba(255,255,255,0.08)'
+                        },
+                        gridLineWidth: 1,
+                        //gridLineColor: 'rgba(255,255,255,0.35)',
+                        gridLineColor: 'rgba(255,255,255,1)',
+                        gridLineExtension: 0,
+                        title: {
+                            titlePosition: 'corner',
+                            margin: 26,
+                        },
+                        labels: {
+                            align: 'center',
+                            distance: 6,
+                            style: {
+                                color: '#9c9c9c',
+                                fontSize: 16
+                            },
+                            enabled: false
+                        }
+                    },
+                    a: {
+                        title: {
+                            useHTML: true,
+                            text: 'JS',
+                            style: {
+                                fontWeight: '500',
+                                fontSize: '40px',
+                                color: '#fcdc00'
+                            }
+                        }
+                    },
+                    b: {
+                        title: {
+                            text: 'Python',
+                            style: {
+                                fontWeight: '500',
+                                fontSize: '40px',
+                                color: '#3776ab'
+                            }
+                        }
+                    },
+                    c: {
+                        title: {
+                            text: 'Rust',
+                            style: {
+                                fontWeight: '500',
+                                fontSize: '40px',
+                                color: '#a72145'
+                            }
+                        }
+                    }
+                },
+
+                // series: [...TARGETS]
+                //     .filter(entity => grouped[entity])
+                //     .map(entity => ({
+                //         type: 'ternaryscatter',
+                //         name: entity,
+                //         keys: ['x', 'y', 'z', 'entity', 'year', 'marker'],
+                //         data: grouped[entity].map(d => ([
+                //             d.renewables,
+                //             d.fossil,
+                //             d.nuclear,
+                //             d.entity,
+                //             d.year,
+                //             d.year === 2024 ? { radius: 6 } : undefined
+                //         ])),
+                //         tooltip: {
+                //             pointFormat: '<b>{point.entity} ({point.year}):</b><br/>' +
+                //                 'Renewables share: {point.x}%<br/>' +
+                //                 'Fossil: {point.y}%<br/>' +
+                //                 'Nuclear: {point.z}%'
+                //         },
+                //         marker: {
+                //             radius: 3,
+                //             symbol: 'circle',
+                //             lineWidth: 0.5
+                //         },
+                //         lineWidth: 0.5
+                //     }))
+
+                series: [
+                //     {
+                //     type: 'ternaryscatter',
+                //     keys: ['x', 'y', 'z', 'color'],
+                //     data: [
+                //         [100, 0, 0, 'red'],
+                //         [0, 100, 0, 'green'],
+                //         [0, 0, 100, 'blue'],
+                //         [50, 25, 25, 'orange'],
+                //         [25, 50, 25, 'purple'],
+                //         [25, 25, 50, 'cyan'],
+                //         [0, 50],
+                //         [20, 0],
+                //         [10, 20, 70, 'red'],
+                //         [60, 30, 10],
+                //         [30, 60, 10],
+                //         [70, 90, 423423, 'blue'],
+                //         [100 / 3, 100 / 3, 100 / 3, 'red']
+                //     ],
+                //     dataLabels: {
+                //         enabled: true,
+                //         crop: false,
+                //         format: 'aaa',
+                //         allowOverlap: true,
+                //         overflow: 'allow'
+                //     },
+                //     marker: {
+                //         radius: 6,
+                //         symbol: 'circle',
+                //         lineWidth: 0.5
+                //     }
+                // }
+                //   {
+                //     name: 'Taylor Swift',
+                //     data: [
+                //     [22, 38, 40, 'All Too Well'],
+                //     [30, 45, 25, 'Anti-Hero'],
+                //     [18, 32, 50, 'Cardigan'],
+                //     [35, 50, 15, 'Shake It Off']
+                //     ]
+                // },
+                // {
+                //     name: 'Drake',
+                //     data: [
+                //     [45, 45, 10, 'God’s Plan'],
+                //     [40, 50, 10, 'One Dance'],
+                //     [55, 35, 10, 'Started From The Bottom'],
+                //     [48, 42, 10, 'Hotline Bling']
+                //     ]
+                // },
+                // {
+                //     name: 'Daft Punk',
+                //     data: [
+                //     [50, 47, 3, 'Get Lucky'],
+                //     [60, 35, 5, 'Harder Better Faster Stronger'],
+                //     [42, 40, 18, 'Instant Crush'],
+                //     [55, 40, 5, 'Around the World']
+                //     ]
+                // }
+                {
+                    name: 'Programming Languages',
+                    //keys: ['x', 'y', 'z', 'marker', 'name'],
+                    data: points,
+                    componentColors: {
+                        a: 'rgb(253, 220, 0)',    // JS
+                        b: 'rgb(55, 118, 171)',   // Python
+                        c: 'rgb(167, 33, 69)',     // Rust
+                        alpha: 0.15
+                    },
+                    // componentColors: {
+                    //     a: '#fcdc00', // JS
+                    //     b: '#3776ab', // Python
+                    //     c: '#a72145', // Rust
+                    //     alpha: 0.15
+                    // },
+                    minSize: 6,
+                    maxSize: 48,
+                    tooltip: {
+                        headerFormat: '',
+                        pointFormat: '<b>{point.name}:</b><br/>' +
+                            'JS: {point.a}%<br/>' +
+                            'Python: {point.b}%<br/>' +
+                            'Rust: {point.c}%'
+                    },
+                    states: {
+                        hover: {
+                            halo: {
+                                size: 0
+                            }
+                        }
+                    },
+                    marker: {
+                        lineWidth: 1,
+                        radius: 4
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        crop: false,
+                        //format: '{point.name}',
+                        //allowOverlap: true,
+                        overflow: 'allow',
+                        formatter() {
+                            return '<span style="color: ' + this.ternaryColor + '">' + this.name + '</span>';
+                        },
+                        style: {
+                            fontSize: '16px',
+                            fontWeight: '400',
+                            textOutline: 'none'
+                        },
+                    },
+                }]
+            });
+            // After loading Highcharts and the plugin
+            Highcharts.chart('chart2', {
+                chart: {
+                    ternary: {
+                        angle: 60
+                    }
+                },
+
+                title: {
+                    text: 'Diet macronutrients'
+                },
+
+                ternaryAxis: {
+                    a: {
+                        //gridLineExtension: 0,
+                        title: {
+                            text: 'Protein',
+                            // x: -45,
+                            // y: 40
+                        },
+                        labels: {
+                            //distance: 10
+                        }
+                    },
+                    b: {
+                        //gridLineExtension: 0,
+                        title: {
+                            text: 'Fat'
+                        },
+                        labels: {
+                            //distance: 0
+                        }
+                    },
+                    c: {
+                        //gridLineExtension: 0,
+                        title: {
+                            text: 'Carbohydrates'
+                        },
+                        labels: {
+                            //distance: 0
+                        }
+                    }
+                },
+
+                series: [{
+                    type: 'ternaryscatter',
+                    name: 'Diet macronutrients',
+                    keys: ['a', 'b', 'c', 'name'],
+                    tooltip: {
+                        headerFormat: '',
+                        pointFormat: `
+                            <strong>{point.name} diet:</strong><br>
+                            Protein: {point.a}%<br>
+                            Fat: {point.b}%<br>
+                            Carbohydrates: {point.c}%
+                        `
+                    },
+                    data: [
+                        [20, 70, 10, 'Keto'],
+                        [30, 40, 30, 'Paleo'],
+                        [20, 35, 45, 'Mediterranean'],
+                        [15, 35, 50, 'Standard Western'],
+                        [20, 20, 60, 'High-carbohydrate'],
+                        [0, 100, 0, 'Fat-only']
+                    ]
+                }]
+            });
+
+        const URLS = {
+            renewables: "https://ourworldindata.org/grapher/share-electricity-renewables.csv",
+            fossil: "https://ourworldindata.org/grapher/share-electricity-fossil-fuels.csv",
+            nuclear: "https://ourworldindata.org/grapher/share-electricity-nuclear.csv",
+        };
+ 
+        const TARGETS = new Set([
+            "World",
+            "United States",
+            "Europe (EI)",
+            "China",
+            "India",
+        ]);
+
+        function parseCSV(text) {
+            const [header, ...rows] = text.trim().split("\n");
+            const cols = header.split(",");
+            return rows.map(r => {
+                const vals = r.split(",");
+                return Object.fromEntries(cols.map((c, i) => [c, vals[i]]));
+            });
+        }
+
+        async function loadSeries(url, valueKey) {
+            const res = await fetch(url);
+            const csv = await res.text();
+            const rows = parseCSV(csv);
+
+            const valueCol = Object.keys(rows[0]).find(
+                k => !["Entity", "Code", "Year"].includes(k)
+            );
+
+            return rows.map(r => ({
+                entity: r.Entity,
+                year: Number(r.Year),
+                [valueKey]: Number(r[valueCol]),
+            }));
+        }
+
+        async function getData() {
+            const ren = await loadSeries(URLS.renewables, "renewables");
+            const fos = await loadSeries(URLS.fossil, "fossil");
+            const nuc = await loadSeries(URLS.nuclear, "nuclear");
+
+            const map = new Map();
+            for (const r of [...ren, ...fos, ...nuc]) {
+                if (!TARGETS.has(r.entity)) continue;
+                const key = `${r.entity}-${r.year}`;
+                map.set(key, { ...(map.get(key) || {}), ...r });
+            }
+
+            let data = [...map.values()]
+                .filter(d => d.renewables != null && d.fossil != null && d.nuclear != null)
+                .sort((a, b) => a.entity.localeCompare(b.entity) || a.year - b.year);
+
+            // Last 10 years per entity
+            data = Object.values(
+                data.reduce((acc, d) => {
+                    acc[d.entity] ??= [];
+                    acc[d.entity].push(d);
+                    return acc;
+                }, {})
+            ).flatMap(arr => arr.slice(-10));
+
+            // Round and sanity check (≈100%)
+            data = data.map(d => ({
+                entity: d.entity,
+                year: d.year,
+                renewables: +d.renewables.toFixed(2),
+                fossil: +d.fossil.toFixed(2),
+                nuclear: +d.nuclear.toFixed(2),
+                sum: +(d.renewables + d.fossil + d.nuclear).toFixed(2),
+            }));
+
+            return data;
+        }
+
+            const rawData = await getData();
+
+            const grouped = rawData.reduce((acc, d) => {
+                (acc[d.entity] ??= []).push(d);
+                return acc;
+            }, {});
+
+            Highcharts.chart('chart3', {
+
+                chart: {
+                    ternary: true,
+                    height: 600
+                },
+
+                credits: {
+                    enabled: false
+                },
+
+                title: {
+                    text: 'Changes in Electricity Generation Mix (%)<br/>2015-2024',
+                    style: {
+                        fontSize: '30px',
+                        fontFamily: 'Inter',
+                        fontWeight: 500
+                    }
+                },
+
+                subtitle: {
+                    text: `Each sequence shows annual progression from 2015 to 2024.<br/>
+                        <span style="font-size: 10px;">Data source: Our World in Data<span>`,
+                    style: {
+                        fontSize: '16px',
+                        opacity: 0.6,
+                        fontFamily: 'Inter',
+                        fontWeight: 500
+                    }
+                },
+
+                ternaryAxis: {
+                    plotOptions: {
+                        tickInterval: 10,
+                        labels: {
+                            style: {
+                                color: '#9c9c9c'
+                            }
+                        }
+                    },
+                    a: {
+                        title: {
+                            useHTML: true,
+                            text: 'Higher renewables share (%)',
+                            style: {
+                                fontWeight: '500',
+                            }
+                        }
+                    },
+                    b: {
+                        title: {
+                            text: 'Higher fossil share (%)',
+                            style: {
+                                fontWeight: '500',
+                            }
+                        }
+                    },
+                    c: {
+                        title: {
+                            text: 'Higher nuclear share (%)',
+                            style: {
+                                fontWeight: '500',
+                            }
+                        }
+                    }
+                },
+
+                series: [...TARGETS]
+                    .filter(entity => grouped[entity])
+                    .map(entity => ({
+                        type: 'ternaryscatter',
+                        name: entity,
+                        keys: ['a', 'b', 'c', 'entity', 'year', 'marker'],
+                        data: grouped[entity].map(d => ([
+                            d.renewables,
+                            d.fossil,
+                            d.nuclear,
+                            d.entity,
+                            d.year,
+                            d.year === 2024 ? { radius: 6 } : undefined
+                        ])),
+                        tooltip: {
+                            pointFormat: '<b>{point.entity} ({point.year}):</b><br/>' +
+                                'Renewables share: {point.a}%<br/>' +
+                                'Fossil: {point.b}%<br/>' +
+                                'Nuclear: {point.c}%'
+                        },
+                        marker: {
+                            radius: 3,
+                            symbol: 'circle',
+                            lineWidth: 0.5
+                        },
+                        lineWidth: 0.5
+                    }))
+
+            });
+        }
+
+
+        init();
+
+    </script>
+</body>
+
+</html>

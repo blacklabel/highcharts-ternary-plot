@@ -83,21 +83,61 @@ Highcharts.chart('container', {
 ```
 
 ## Available Options
-| Option                 | Type      | Description                              |
-| ---------------------- | --------- | ---------------------------------------- |
-| `chart.ternary`        | `Boolean` | Whether to enable ternary chart mode.    |
-| `chart.ternarySpacing` | `Number`  | The spacing around the ternary plot.     |
-| `ternaryAxis`          | `Array`   | An array of ternary axis configurations. |
-<!-- | `chart.sumTo`          | `number`  | .... |, default 100 -->
-<!-- change sumTo to ternarySumTo or consider moving it from chart to series -->
-<!-- add default value -->
-<!-- In 1.0.0(++) development 25 changed to 35 -->
-<!-- title.moveXOnly -->
-<!-- changelog
-added
-chart: {
-  ternaryProjection: 'cartesian' | 'equilateral'
-} -->
+
+### `chart.ternary`
+
+`boolean | object` — Enable and configure the ternary coordinate system. Set to `true` to use all defaults, or pass an options object.
+
+| Option                  | Type      | Default | Description                                                                                     |
+| ----------------------- | --------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `chart.ternary`         | `boolean \| TernaryOptions` | — | Enable ternary mode. |
+| `chart.ternary.enabled` | `boolean` | `true`  | Set to `false` to disable while keeping the configuration object.                               |
+| `chart.ternary.angle`   | `number`  | `60`    | Angle in degrees between the base and sides of the triangle. `60` produces an equilateral shape. Must be in the range (0, 90). |
+| `chart.ternary.spacing` | `number`  | `35`    | Pixel padding applied uniformly around the triangle. Increase to make room for axis labels.     |
+| `chart.ternary.sumTo`   | `number`  | `100`   | The value that the three components must sum to. Use `1` for fractions, `100` for percentages.  |
+
+---
+
+### `ternaryAxis`
+
+`object` — Configure the three axes. `plotOptions` applies to all axes; `a`, `b`, `c` allow per-axis overrides. Accepts standard Highcharts `AxisOptions`.
+
+| Option                    | Description                                  |
+| ------------------------- | -------------------------------------------- |
+| `ternaryAxis.plotOptions` | Shared options applied to all three axes.    |
+| `ternaryAxis.a`           | Options for the bottom axis (A).  |
+| `ternaryAxis.b`           | Options for the right axis (B).   |
+| `ternaryAxis.c`           | Options for the left axis (C).    |
+
+Each axis supports standard Highcharts axis options, plus the following plugin-specific extensions:
+
+| Option                          | Type                  | Description                                                                                 |
+| ------------------------------- | --------------------- | ------------------------------------------------------------------------------------------- |
+| `title.titlePosition`           | `'corner' \| 'side'`  | Position of the axis title relative to the triangle.                                        |
+| `title.offsetDirection`         | `'horizontal' \| 'perpendicular'` | Direction the title offsets from its axis edge.                                           |
+| `title.margin`                  | `number`              | Distance between the title and the triangle edge, in pixels.                                |
+| `labels.margin`                 | `number`              | Distance between tick labels and the triangle edge, in pixels.                              |
+| `plotOptions.median`            | `boolean \| object`   | Show or configure the median lines (lines from each vertex to the midpoint of the opposite side). |
+| `plotOptions.median.color`      | `string`              | Color of the median lines.                                                                  |
+| `plotOptions.median.width`      | `number`              | Width of the median lines in pixels.                                                        |
+| `plotOptions.median.dashStyle`  | `string`              | Dash style of the median lines (any Highcharts `DashStyleValue`).                           |
+| `plotOptions.gridLineDashStyle` | `string`              | Dash style for grid lines.                                                                  |
+
+---
+
+### Series: `ternaryscatter`
+
+Set `series.type` to `'ternaryscatter'`. Data points accept `[a, b, c]` arrays or objects with `a`, `b`, `c` properties. The `c` value may be omitted — it is derived as `sumTo - a - b`.
+
+| Option                      | Type                     | Description                                                                                                    |
+| --------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `series.minSize`            | `number`                 | Minimum marker radius in pixels for bubble sizing. Requires `maxSize`.                                         |
+| `series.maxSize`            | `number`                 | Maximum marker radius in pixels for bubble sizing. Requires `minSize`.                                         |
+| `series.componentColors`    | `object`                 | Barycentric color blending — each point's color is interpolated from the three corner colors by its a/b/c values. |
+| `componentColors.a`         | `string`                 | Color at the A vertex.                                                                                         |
+| `componentColors.b`         | `string`                 | Color at the B vertex.                                                                                         |
+| `componentColors.c`         | `string`                 | Color at the C vertex.                                                                                         |
+| `componentColors.alpha`     | `number`                 | Opacity applied to all points (`0`–`1`). Overrides any alpha in the color strings.                            |
 
 ## Development Setup
 

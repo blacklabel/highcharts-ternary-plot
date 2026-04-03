@@ -16,8 +16,9 @@ This module is the result of our long-standing collaboration with Highsoft, wher
 - [Getting Started](#getting-started)
   - [Compatibility](#compatibility)
   - [Installation](#installation)
-- [Usage](#usage)
+- [Minimal Code](#usage)
 - [Available Options](#available-options)
+- [Migrating from v1 to v2](#migrating-from-v1-to-v2)
 - [Development Setup](#development-setup)
 - [Using the Plugin Locally in index.html](#using-the-plugin-locally-in-indexhtml)
 
@@ -27,7 +28,11 @@ This module is the result of our long-standing collaboration with Highsoft, wher
 
 | Ternary Plot Version | Highcharts Version |
 | -------------------- | ------------------ |
-| **1.0.0**            | `>= 12.0.0`        |
+| **2.0.0**            | `12.0.0+`          |
+
+### Browser Support
+
+All modern evergreen browsers are supported: Chrome, Firefox, Safari, Edge. Internet Explorer is not supported.
 
 ## Installation
 
@@ -55,10 +60,14 @@ Or include via a `<script>` tag after loading Highcharts:
 <script src="https://blacklabel.github.io/highcharts-ternary-plot/js/ternary-plot.js"></script>
 ```
 
-## Usage
+## Minimal Code
 
 Enable `chart.ternary` and add a `ternaryscatter` series with three-dimensional data:
 ```js
+// After loading Highcharts and the plugin:
+// <script src="highcharts.js"></script>
+// <script src="ternary-plot.js"></script>
+
 Highcharts.chart('container', {
 
   chart: {
@@ -78,8 +87,6 @@ Highcharts.chart('container', {
   }]
 
 });
-
-// TODO: add info that data can be 2dim (the 3rd always sums up to chart.sumTo)
 ```
 
 ## Available Options
@@ -138,6 +145,70 @@ Set `series.type` to `'ternaryscatter'`. Data points accept `[a, b, c]` arrays o
 | `componentColors.b`         | `string`                 | Color at the B vertex.                                                                                         |
 | `componentColors.c`         | `string`                 | Color at the C vertex.                                                                                         |
 | `componentColors.alpha`     | `number`                 | Opacity applied to all points (`0`–`1`). Overrides any alpha in the color strings.                            |
+
+## Migrating from v1 to v2
+
+v2.0.0 introduces three breaking changes.
+
+### 1. Data keys renamed: `x`, `y`, `z` → `a`, `b`, `c`
+
+Series data and tooltip point references use the new key names.
+
+```js
+// v1
+data: [[10, 60, 30], [20, 50, 30]]
+// tooltip: point.x, point.y, point.z
+
+// v2
+data: [[10, 60, 30], [20, 50, 30]]  // array order unchanged
+// tooltip: point.a, point.b, point.c
+```
+
+Object notation also changed:
+
+```js
+// v1
+{ x: 10, y: 60, z: 30 }
+
+// v2
+{ a: 10, b: 60, c: 30 }
+```
+
+### 2. `ternaryAxis` changed from an array to an object
+
+```js
+// v1
+ternaryAxis: [
+  { tickInterval: 10, title: { text: 'A' } },
+  { tickInterval: 10, title: { text: 'B' } },
+  { tickInterval: 10, title: { text: 'C' } }
+]
+
+// v2
+ternaryAxis: {
+  plotOptions: { tickInterval: 10 },  // shared options (optional)
+  a: { title: { text: 'A' } },
+  b: { title: { text: 'B' } },
+  c: { title: { text: 'C' } }
+}
+```
+
+### 3. `chart.ternarySpacing` moved into `chart.ternary`
+
+```js
+// v1
+chart: {
+  ternary: true,
+  ternarySpacing: 35
+}
+
+// v2
+chart: {
+  ternary: {
+    spacing: 35
+  }
+}
+```
 
 ## Development Setup
 

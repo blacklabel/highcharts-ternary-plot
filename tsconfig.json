@@ -2,8 +2,9 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "es6",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "outDir": ".cache/tmp",
+    "rootDir": "./ts",
     "strict": false,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

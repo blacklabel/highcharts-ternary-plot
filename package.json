@@ -28,6 +28,7 @@
     "black-label"
   ],
   "author": "Black Label <start@blacklabel.pl> (http://blacklabel.net)",
+  "contributors": ["Rafał Sebestjański"],
   "license": "SEE LICENSE IN LICENSE.txt",
   "bugs": {
     "url": "https://github.com/blacklabel/highcharts-ternary-plot/issues"

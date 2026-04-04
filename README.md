@@ -142,29 +142,62 @@ Highcharts.chart('container', {
 
 ### `ternaryAxis`
 
-`object` — Configure the three axes. `plotOptions` applies to all axes; `a`, `b`, `c` allow per-axis overrides. Accepts standard Highcharts `AxisOptions`.
+`object` — Configure the three axes. `plotOptions` applies to all axes; `a`, `b`, `c` allow per-axis overrides.
 
-| Option                    | Description                                  |
-| ------------------------- | -------------------------------------------- |
-| `ternaryAxis.plotOptions` | Shared options applied to all three axes.    |
-| `ternaryAxis.a`           | Options for the bottom axis (A).  |
-| `ternaryAxis.b`           | Options for the right axis (B).   |
-| `ternaryAxis.c`           | Options for the left axis (C).    |
+#### Structure
 
-Each axis supports standard Highcharts axis options, plus the following plugin-specific extensions:
+| Option                    | Description                               |
+| ------------------------- | ----------------------------------------- |
+| `ternaryAxis.plotOptions` | Shared options applied to all three axes. |
+| `ternaryAxis.a`           | Options for the bottom axis (A).          |
+| `ternaryAxis.b`           | Options for the right axis (B).           |
+| `ternaryAxis.c`           | Options for the left axis (C).            |
 
-| Option                          | Type                  | Description                                                                                 |
-| ------------------------------- | --------------------- | ------------------------------------------------------------------------------------------- |
-| `title.titlePosition`           | `'corner' \| 'side'`  | Position of the axis title relative to the triangle.                                        |
-| `title.offsetDirection`         | `'horizontal' \| 'perpendicular'` | Direction the title offsets from its axis edge.                                           |
-| `title.margin`                  | `number`              | Distance between the title and the triangle edge, in pixels.                                |
-| `labels.margin`                 | `number`              | Distance between tick labels and the triangle edge, in pixels.                              |
-| `plotOptions.median`            | `boolean \| object`   | Show or configure the median lines (lines from each vertex to the midpoint of the opposite side). |
-| `plotOptions.median.color`      | `string`              | Color of the median lines.                                                                  |
-| `plotOptions.median.width`      | `number`              | Width of the median lines in pixels.                                                        |
-| `plotOptions.median.dashStyle`  | `string`              | Dash style of the median lines (any Highcharts `DashStyleValue`).                           |
-| `plotOptions.gridLineDashStyle` | `string`              | Dash style for grid lines.                                                                  |
-| `plotOptions.gridLineExtension` | `number`              | Extends grid lines beyond the triangle edges, in pixels.                                    |
+#### Grid lines
+
+| Option                  | Type     | Default    | Description                                                    |
+| ----------------------- | -------- | ---------- | -------------------------------------------------------------- |
+| `tickInterval`          | `number` | `50`       | Interval between grid lines.                                   |
+| `gridLineColor`         | `string` | `#d6d6d6`  | Color of the internal grid lines.                              |
+| `gridLineWidth`         | `number` | `1`        | Width of the internal grid lines in pixels.                    |
+| `gridLineDashStyle`     | `string` | `'Solid'`  | Dash style of the internal grid lines (`DashStyleValue`).      |
+| `gridLineExtension`     | `number` | `0`        | Extends grid lines beyond the triangle edges, in pixels.       |
+
+#### Triangle sides (axis lines)
+
+| Option          | Type     | Default   | Description                                             |
+| --------------- | -------- | --------- | ------------------------------------------------------- |
+| `lineColor`     | `string` | `#d6d6d6` | Color of the triangle sides.                            |
+| `lineWidth`     | `number` | `1`       | Width of the triangle sides in pixels.                  |
+| `lineDashStyle` | `string` | `'Solid'` | Dash style of the triangle sides (`DashStyleValue`).    |
+
+#### Median lines
+
+| Option               | Type                | Default   | Description                                                                            |
+| -------------------- | ------------------- | --------- | -------------------------------------------------------------------------------------- |
+| `median`             | `boolean \| object` | —         | Show or configure median lines (vertex → midpoint of opposite side).                   |
+| `median.color`       | `string`            | `#d6d6d6` | Color of the median lines.                                                             |
+| `median.width`       | `number`            | `1`       | Width of the median lines in pixels.                                                   |
+| `median.dashStyle`   | `string`            | `'Solid'` | Dash style of the median lines (`DashStyleValue`).                                     |
+
+#### Labels
+
+| Option           | Type      | Description                                              |
+| ---------------- | --------- | -------------------------------------------------------- |
+| `labels.enabled` | `boolean` | Show or hide tick labels.                                |
+| `labels.style`   | `object`  | CSS style object applied to label text.                  |
+| `labels.margin`  | `number`  | Distance between labels and the triangle edge, in pixels.|
+
+#### Title
+
+| Option                  | Type                          | Description                                                       |
+| ----------------------- | ----------------------------- | ----------------------------------------------------------------- |
+| `title.text`            | `string`                      | Axis title text.                                                  |
+| `title.style`           | `object`                      | CSS style object applied to the title.                            |
+| `title.margin`          | `number`                      | Distance between the title and the triangle edge, in pixels.      |
+| `title.titlePosition`   | `'corner' \| 'side'`          | Position of the title relative to the triangle.                   |
+| `title.offsetDirection` | `'horizontal' \| 'perpendicular'` | Direction the title offsets from its axis edge.               |
+| `title.rotation`        | `number`                      | Title rotation in degrees. Overrides the automatic rotation.      |
 
 ---
 

@@ -302,6 +302,7 @@ const langChart = Highcharts.chart('chart-languages', {
             median: {
                 color: '#1C1F25'
             },
+            lineColor: '#3E4145',
             gridLineWidth: 1,
             gridLineColor: '#3E4145',
             gridLineExtension: 0,

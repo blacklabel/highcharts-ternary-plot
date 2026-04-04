@@ -25,6 +25,9 @@ type MedianOpts = Required<MedianOptsInput>;
 // User-configurable axis options (mirrors chart.ternaryAxis.a / .b / .c)
 type TernaryAxisOptions = {
     tickInterval: number;
+    lineWidth: number;
+    lineColor: string;
+    lineDashStyle?: string;
     gridLineWidth: number;
     gridLineColor: string;
     gridLineDashStyle?: string;
@@ -196,6 +199,8 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
     const defaultTernary = {
         tickInterval: 50,
+        lineWidth: 1,
+        lineColor: '#d6d6d6',
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
         title: {
@@ -286,11 +291,15 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
         function renderLine(
             path: (string | number)[],
-            median?: MedianOpts
+            median?: MedianOpts,
+            isAxisLine?: boolean
         ): Highcharts.SVGElement {
-            const stroke = median ? median.color : axis.gridLineColor,
-                strokeWidth = median ? median.width : axis.gridLineWidth,
-                dashStyle = median ? median.dashStyle : axis.gridLineDashStyle;
+            const stroke = median ? median.color
+                    : (isAxisLine ? axis.lineColor : axis.gridLineColor),
+                strokeWidth = median ? median.width
+                    : (isAxisLine ? axis.lineWidth : axis.gridLineWidth),
+                dashStyle = median ? median.dashStyle
+                    : (isAxisLine ? axis.lineDashStyle : axis.gridLineDashStyle);
 
             const attrs: Record<string, unknown> = {
                 'stroke-width': strokeWidth,
@@ -298,7 +307,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                 zIndex: 2
             };
 
-            if (median) {
+            if (median || (isAxisLine && dashStyle && dashStyle !== 'Solid')) {
                 attrs['shape-rendering'] = 'geometricPrecision';
             }
 
@@ -345,7 +354,11 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                     'L', chart.plotLeft + p2[0], p2[1] + chart.plotTop
                 ];
 
-                gridLines[i] = renderLine(path, i % 2 === 1 ? medianOpts : undefined);
+                gridLines[i] = renderLine(
+                    path,
+                    i % 2 === 1 ? medianOpts : undefined,
+                    i % 2 === 0
+                );
             }
         } else {
             for (let cursor = 0; cursor <= sumTo; cursor += interval) {
@@ -387,7 +400,11 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                     'L', plotLeft + p2[0], plotTop + p2[1]
                 ];
 
-                gridLines[cursor] = renderLine(path);
+                gridLines[cursor] = renderLine(
+                    path,
+                    undefined,
+                    cursor === 0 || cursor === sumTo
+                );
             }
         }
 
@@ -928,9 +945,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
             // Recreate
             if (axis.gridLineWidth >= 1) {
-                // TODO: if a TernaryAxis class is introduced, move getGridLines
-                // and getLabels onto it so each axis manages its own rendering.
-                // Requires passing chart/renderer reference in the constructor.
                 axis.gridlineTicks = chart.getGridLines(axis, i);
             }
 
@@ -1068,7 +1082,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         },
         // Series proto
         {
-            // TODO: consider stickyTracking
             directTouch: true,
             isCartesian: false,
             noSharedTooltip: true,

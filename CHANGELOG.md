@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.0.0] — 2026-04-03
+## [2.0.0] — 2026-04-04
 
 ### Breaking changes
 
@@ -21,6 +21,7 @@
 - **`title.margin`** / **`labels.margin`** — fine-tune spacing between titles, labels, and the triangle
 - **`gridLineDashStyle`** — dash style support for grid lines
 - **`chart.sumTo`** — normalize data to a sum other than 100
+- **`lineColor` / `lineWidth` / `lineDashStyle`** — style the triangle sides (axis lines) independently from internal grid lines; previously both used `gridLineColor` / `gridLineWidth`
 
 ---
 

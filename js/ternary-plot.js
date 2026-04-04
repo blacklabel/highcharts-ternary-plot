@@ -23,6 +23,8 @@ function TernaryPlotPlugin(H) {
     // ---- Defaults ----
     const defaultTernary = {
         tickInterval: 50,
+        lineWidth: 1,
+        lineColor: '#d6d6d6',
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
         title: {
@@ -88,14 +90,17 @@ function TernaryPlotPlugin(H) {
         const chart = this, ternaryOpts = chart.ternaryOpts, sumTo = ternaryOpts.sumTo;
         let p1, p2;
         const medianOpts = chart.resolveMedian(axis.median);
-        function renderLine(path, median) {
-            const stroke = median ? median.color : axis.gridLineColor, strokeWidth = median ? median.width : axis.gridLineWidth, dashStyle = median ? median.dashStyle : axis.gridLineDashStyle;
+        function renderLine(path, median, isAxisLine) {
+            const stroke = median ? median.color
+                : (isAxisLine ? axis.lineColor : axis.gridLineColor), strokeWidth = median ? median.width
+                : (isAxisLine ? axis.lineWidth : axis.gridLineWidth), dashStyle = median ? median.dashStyle
+                : (isAxisLine ? axis.lineDashStyle : axis.gridLineDashStyle);
             const attrs = {
                 'stroke-width': strokeWidth,
                 stroke,
                 zIndex: 2
             };
-            if (median) {
+            if (median || (isAxisLine && dashStyle && dashStyle !== 'Solid')) {
                 attrs['shape-rendering'] = 'geometricPrecision';
             }
             if (dashStyle && dashStyle !== 'Solid') {
@@ -135,7 +140,7 @@ function TernaryPlotPlugin(H) {
                     'M', chart.plotLeft + p1[0], p1[1] + chart.plotTop,
                     'L', chart.plotLeft + p2[0], p2[1] + chart.plotTop
                 ];
-                gridLines[i] = renderLine(path, i % 2 === 1 ? medianOpts : undefined);
+                gridLines[i] = renderLine(path, i % 2 === 1 ? medianOpts : undefined, i % 2 === 0);
             }
         }
         else {
@@ -168,7 +173,7 @@ function TernaryPlotPlugin(H) {
                     'M', plotLeft + p1[0], plotTop + p1[1],
                     'L', plotLeft + p2[0], plotTop + p2[1]
                 ];
-                gridLines[cursor] = renderLine(path);
+                gridLines[cursor] = renderLine(path, undefined, cursor === 0 || cursor === sumTo);
             }
         }
         return gridLines;
@@ -512,9 +517,6 @@ function TernaryPlotPlugin(H) {
             destroyCollection(axis.gridlineLabels);
             // Recreate
             if (axis.gridLineWidth >= 1) {
-                // TODO: if a TernaryAxis class is introduced, move getGridLines
-                // and getLabels onto it so each axis manages its own rendering.
-                // Requires passing chart/renderer reference in the constructor.
                 axis.gridlineTicks = chart.getGridLines(axis, i);
             }
             if (axis.labels.enabled !== false) {
@@ -598,7 +600,6 @@ function TernaryPlotPlugin(H) {
     }, 
     // Series proto
     {
-        // TODO: consider stickyTracking
         directTouch: true,
         isCartesian: false,
         noSharedTooltip: true,

@@ -67,6 +67,7 @@ const HC_LIGHT = {
     },
     ternaryAxis: {
         plotOptions: {
+            lineColor: '#d6d6d6',
             gridLineColor: '#d6d6d6',
             title: {
                 style: {
@@ -143,6 +144,7 @@ const HC_DARK = {
     },
     ternaryAxis: {
         plotOptions: {
+            lineColor: '#30363D',
             gridLineColor: '#30363D',
             title: {
                 style: {

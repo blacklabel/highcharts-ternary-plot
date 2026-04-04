@@ -16,8 +16,8 @@ const HC_LIGHT = {
         style: { color: '#6B6B68' }
     },
     legend: {
-        itemStyle: { color: '#333330' },
-        itemHoverStyle: { color: '#000000' }
+        itemStyle: { color: '#6B6B68', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: '500' },
+        itemHoverStyle: { color: '#1A1A18' }
     },
     credits: {
         style: { color: '#999994' }
@@ -72,8 +72,8 @@ const HC_DARK = {
         style: { color: 'rgba(255,255,255,0.45)' }
     },
     legend: {
-        itemStyle: { color: '#C8C8C6' },
-        itemHoverStyle: { color: '#FFFFFF' }
+        itemStyle: { color: 'rgba(255,255,255,0.45)', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: '500' },
+        itemHoverStyle: { color: 'rgba(255,255,255,0.78)' }
     },
     credits: {
         style: { color: '#555551' }

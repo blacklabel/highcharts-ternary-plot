@@ -133,7 +133,6 @@ Highcharts.chart('chart-electricity', {
     ternaryAxis: {
         plotOptions: {
             tickInterval: 20,
-            gridLineColor: '#d6d6d6',
             title: {
                 margin: 34
             },
@@ -187,10 +186,10 @@ Highcharts.chart('chart-electricity', {
             d.nuclear,
             entity,
             d.year,
-            d.year === 2024 ? { radius: 9 } : undefined
+            d.year === 2024 ? { radius: 7 } : undefined
         ])),
         marker: {
-            radius: 4,
+            radius: 3,
             symbol: 'circle',
             //lineWidth: 1
         },

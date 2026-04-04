@@ -113,16 +113,6 @@ function TernaryPlotPlugin(H) {
         }
         if (medianOpts) {
             const sidesAndMedians = [
-                // TODO in the future:
-                // Consider changing the order to match with gridLines (or axis line)
-                // // Sides
-                // [[0, 100], [0, 0]],
-                // [[0, 0], [100, 0]],
-                // [[100, 0], [0, 100]],
-                // // Medians: vertex -> midpoint of opposite side
-                // [[100, 0], [0, 50]],
-                // [[0, 100], [50, 0]],
-                // [[0, 0], [50, 50]]
                 // Sides: ordered to match axes (a=bottom, b=right, c=left)
                 [[0, 0], [100, 0]], // bottom side (axis a)
                 [[100, 0], [0, 100]], // right side  (axis b)

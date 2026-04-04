@@ -184,9 +184,9 @@ Highcharts.chart('container', {
 
 | Option           | Type      | Description                                              |
 | ---------------- | --------- | -------------------------------------------------------- |
-| `labels.enabled` | `boolean` | Show or hide tick labels.                                |
-| `labels.style`   | `object`  | CSS style object applied to label text.                  |
-| `labels.margin`  | `number`  | Distance between labels and the triangle edge, in pixels.|
+| `labels.enabled`   | `boolean` | Show or hide tick labels.                                |
+| `labels.style`     | `object`  | CSS style object applied to label text.                  |
+| `labels.distance`  | `number`  | Distance between labels and the triangle edge, in pixels.|
 
 #### Title
 

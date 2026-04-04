@@ -40,17 +40,76 @@ declare module 'highcharts' {
         ternary?: boolean | TernaryOptions;
     }
 
+    interface TernaryPerAxisOptions {
+        /** Interval between grid lines. @default 50 */
+        tickInterval?: number;
+
+        /** Color of the triangle sides. @default '#d6d6d6' */
+        lineColor?: string;
+        /** Width of the triangle sides in pixels. @default 1 */
+        lineWidth?: number;
+        /** Dash style of the triangle sides. @default 'Solid' */
+        lineDashStyle?: string;
+
+        /** Color of the internal grid lines. @default '#d6d6d6' */
+        gridLineColor?: string;
+        /** Width of the internal grid lines in pixels. @default 1 */
+        gridLineWidth?: number;
+        /** Dash style of the internal grid lines. @default 'Solid' */
+        gridLineDashStyle?: string;
+        /** Extends grid lines beyond the triangle edges, in pixels. @default 0 */
+        gridLineExtension?: number;
+
+        /**
+         * Show or configure median lines (vertex → midpoint of opposite side).
+         * Pass `true` to enable with defaults, or an object to customize.
+         */
+        median?: boolean | {
+            enabled?: boolean;
+            /** @default '#d6d6d6' */
+            color?: string;
+            /** @default 1 */
+            width?: number;
+            /** @default 'Solid' */
+            dashStyle?: string;
+        };
+
+        labels?: {
+            /** Show or hide tick labels. */
+            enabled?: boolean;
+            /** CSS style object applied to label text. */
+            style?: Record<string, string | number>;
+            /** Distance between labels and the triangle edge, in pixels. */
+            distance?: number;
+        };
+
+        title?: {
+            /** Axis title text. */
+            text?: string;
+            /** CSS style object applied to the title. */
+            style?: Record<string, string | number>;
+            /** Distance between the title and the triangle edge, in pixels. */
+            margin?: number;
+            /** Position of the title relative to the triangle. */
+            titlePosition?: 'side' | 'corner';
+            /** Direction the title offsets from its axis edge. */
+            offsetDirection?: 'perpendicular' | 'horizontal';
+            /** Title rotation in degrees. Overrides automatic rotation. */
+            rotation?: number;
+        };
+    }
+
     interface TernaryAxisGroupOptions {
         /**
          * Shared options applied to all three axes before per-axis overrides.
          */
-        plotOptions?: _Highcharts.AxisOptions;
+        plotOptions?: TernaryPerAxisOptions;
         /** Options for the bottom axis (component A). */
-        a?: _Highcharts.AxisOptions;
+        a?: TernaryPerAxisOptions;
         /** Options for the right axis (component B). */
-        b?: _Highcharts.AxisOptions;
+        b?: TernaryPerAxisOptions;
         /** Options for the left axis (component C). */
-        c?: _Highcharts.AxisOptions;
+        c?: TernaryPerAxisOptions;
     }
 
     interface Options {

@@ -73,6 +73,12 @@ const allData = [
     [42, 49, 9, 35176448, 'use']
 ];
 
+const LANG_COLORS = {
+    js: '#E8C830',
+    python: '#3776AB',
+    rust: '#CE412B'
+};
+
 const defaultTerms = new Set([
     'json', 'borrow', 'ownership', 'promise', 'django', 'lifetimes',
     'thread', 'pointer', 'http', 'serialize', 'deserialize', 'schema',
@@ -127,6 +133,46 @@ const presets = {
 
 let activeTerms = new Set(defaultTerms),
     activeLanguages = new Set(); // which language presets are currently toggled on
+
+function buildPointTooltipHTML(p) {
+    const row = (color, label, val) =>
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;">' +
+            '<span style="display:flex;align-items:center;gap:7px;">' +
+                '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + color + ';"></span>' +
+                '<span style="color:rgba(255,255,255,0.5);">' + label + '</span>' +
+            '</span>' +
+            '<span style="font-weight:500;">' + val + '%</span>' +
+        '</div>';
+
+    return '<div style="min-width:148px;font-family:Inter,system-ui,sans-serif;">' +
+        '<div style="font-size:13px;font-weight:500;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.1);">' + p.name + '</div>' +
+        row(LANG_COLORS.js, 'JS', p.a) +
+        row(LANG_COLORS.python, 'Python', p.b) +
+        row(LANG_COLORS.rust, 'Rust', p.c) +
+        '<div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:rgba(255,255,255,0.28);display:flex;justify-content:space-between;">' +
+            '<span>#' + rankByTotal[p.name] + ' of ' + allData.length + '</span>' +
+            '<span>' + formatHits(p.total) + ' hits</span>' +
+        '</div>' +
+    '</div>';
+}
+
+function buildChipTooltipHTML(a, b, c, total, name) {
+    const row = (color, label, val) =>
+        '<div class="chip-tooltip-row">' +
+            '<span class="chip-tooltip-dot" style="background:' + color + '"></span>' +
+            '<span class="chip-tooltip-lang">' + label + '</span>' +
+            '<span class="chip-tooltip-val">' + val + '%</span>' +
+        '</div>';
+
+    return '<div class="chip-tooltip-name">' + name + '</div>' +
+        row(LANG_COLORS.js, 'JS', a) +
+        row(LANG_COLORS.python, 'Python', b) +
+        row(LANG_COLORS.rust, 'Rust', c) +
+        '<div class="chip-tooltip-hits">' +
+            '<span>#' + rankByTotal[name] + ' of ' + allData.length + '</span>' +
+            '<span>' + formatHits(total) + ' hits</span>' +
+        '</div>';
+}
 
 function toPoints(terms) {
     return sortedData
@@ -215,36 +261,7 @@ const langChart = Highcharts.chart('chart-languages', {
             fontSize: '12px'
         },
         formatter: function () {
-            const p = this.point;
-
-            return '<div style="min-width:148px;font-family:Inter,system-ui,sans-serif;">' +
-                '<div style="font-size:13px;font-weight:500;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.1);">' + p.name + '</div>' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;">' +
-                    '<span style="display:flex;align-items:center;gap:7px;">' +
-                        '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#E8C830;"></span>' +
-                        '<span style="color:rgba(255,255,255,0.5);">JS</span>' +
-                    '</span>' +
-                    '<span style="font-weight:500;">' + p.a + '%</span>' +
-                '</div>' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;">' +
-                    '<span style="display:flex;align-items:center;gap:7px;">' +
-                        '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#3776AB;"></span>' +
-                        '<span style="color:rgba(255,255,255,0.5);">Python</span>' +
-                    '</span>' +
-                    '<span style="font-weight:500;">' + p.b + '%</span>' +
-                '</div>' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;">' +
-                    '<span style="display:flex;align-items:center;gap:7px;">' +
-                        '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#CE412B;"></span>' +
-                        '<span style="color:rgba(255,255,255,0.5);">Rust</span>' +
-                    '</span>' +
-                    '<span style="font-weight:500;">' + p.c + '%</span>' +
-                '</div>' +
-                '<div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:rgba(255,255,255,0.28);display:flex;justify-content:space-between;">' +
-                    '<span>#' + rankByTotal[p.name] + ' of ' + allData.length + '</span>' +
-                    '<span>' + formatHits(p.total) + ' hits</span>' +
-                '</div>' +
-            '</div>';
+            return buildPointTooltipHTML(this.point);
         }
     },
 
@@ -302,7 +319,7 @@ const langChart = Highcharts.chart('chart-languages', {
                 style: {
                     fontWeight: '400',
                     fontSize: '36px',
-                    color: '#E8C830'
+                    color: LANG_COLORS.js
                 }
             }
         },
@@ -312,7 +329,7 @@ const langChart = Highcharts.chart('chart-languages', {
                 style: {
                     fontWeight: '400',
                     fontSize: '36px',
-                    color: '#3776AB'
+                    color: LANG_COLORS.python
                 }
             }
         },
@@ -322,7 +339,7 @@ const langChart = Highcharts.chart('chart-languages', {
                 style: {
                     fontWeight: '400',
                     fontSize: '36px',
-                    color: '#CE412B'
+                    color: LANG_COLORS.rust
                 }
             }
         }
@@ -332,9 +349,9 @@ const langChart = Highcharts.chart('chart-languages', {
         name: 'Programming languages',
         data: toPoints(activeTerms),
         componentColors: {
-            a: 'rgb(232, 200, 48)',
-            b: 'rgb(55, 118, 171)',
-            c: 'rgb(206, 65, 43)',
+            a: LANG_COLORS.js,
+            b: LANG_COLORS.python,
+            c: LANG_COLORS.rust,
             alpha: 0.15,
             strokeAlpha: 0.65
         },
@@ -533,7 +550,7 @@ initLangFilter();
 
 // ── Chip tooltip ──────────────────────────────────────────────────
 
-(function () {
+function initChipTooltip() {
     const tip = document.createElement('div');
 
     tip.className = 'chip-tooltip';
@@ -554,27 +571,7 @@ initLangFilter();
 
         const [a, b, c, total, name] = d;
 
-        tip.innerHTML =
-            '<div class="chip-tooltip-name">' + name + '</div>' +
-            '<div class="chip-tooltip-row">' +
-                '<span class="chip-tooltip-dot" style="background:#E8C830"></span>' +
-                '<span class="chip-tooltip-lang">JS</span>' +
-                '<span class="chip-tooltip-val">' + a + '%</span>' +
-            '</div>' +
-            '<div class="chip-tooltip-row">' +
-                '<span class="chip-tooltip-dot" style="background:#3776AB"></span>' +
-                '<span class="chip-tooltip-lang">Python</span>' +
-                '<span class="chip-tooltip-val">' + b + '%</span>' +
-            '</div>' +
-            '<div class="chip-tooltip-row">' +
-                '<span class="chip-tooltip-dot" style="background:#CE412B"></span>' +
-                '<span class="chip-tooltip-lang">Rust</span>' +
-                '<span class="chip-tooltip-val">' + c + '%</span>' +
-            '</div>' +
-            '<div class="chip-tooltip-hits">' +
-                '<span>#' + rankByTotal[name] + ' of ' + allData.length + '</span>' +
-                '<span>' + formatHits(total) + ' hits</span>' +
-            '</div>';
+        tip.innerHTML = buildChipTooltipHTML(a, b, c, total, name);
 
         tip.style.display = 'block';
 
@@ -602,4 +599,6 @@ initLangFilter();
         tip.style.left = left + 'px';
         tip.style.top = (rect.top + window.scrollY - tip.offsetHeight - 10) + 'px';
     }
-}());
+}
+
+initChipTooltip();

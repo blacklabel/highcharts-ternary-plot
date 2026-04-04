@@ -600,6 +600,7 @@ function TernaryPlotPlugin(H) {
     }, 
     // Series proto
     {
+        // TODO: consider stickyTracking
         directTouch: true,
         isCartesian: false,
         noSharedTooltip: true,

@@ -139,12 +139,6 @@ function toPoints(terms) {
         }));
 }
 
-// TODO: when clicked All, all language buttons should be marked tottled.
-// TODO: when showed all 3 languages, then clicked All - languages are not marked anymore.
-// Perhaps when click All, all languages should be marked or hidden (toggle).
-// TODO: for mobile: increase chart.spacing (below ~650px)
-// TODO: replace the CDN URL to jsdelivr on demo page
-// TODO: the chips tooltip doesn't have #n of 70
 const langChart = Highcharts.chart('chart-languages', {
     chart: {
         type: 'ternaryscatter',
@@ -153,6 +147,58 @@ const langChart = Highcharts.chart('chart-languages', {
         },
         spacingTop: 25,
         height: 700
+    },
+
+    responsive: {
+        rules: [{
+            condition: {
+                maxWidth: 650
+            },
+            chartOptions: {
+                chart: {
+                    height: 700,
+                    ternary: {
+                        spacing: 65
+                    }
+                }
+            }
+        }, {
+            condition: {
+                maxWidth: 550
+            },
+            chartOptions: {
+                chart: {
+                    height: 620,
+                    ternary: {
+                        spacing: 65
+                    }
+                },
+                ternaryAxis: {
+                    plotOptions: {
+                        title: {
+                            margin: 15
+                        }
+                    },
+                    b: {
+                        title: {
+                            margin: 30
+                        }
+                    }
+                }
+            }
+        }, {
+            condition: {
+                maxWidth: 480
+            },
+            chartOptions: {
+                chart: {
+                    height: 550,
+                    ternary: {
+                        spacing: 60
+                    }
+                }
+            }
+        }]
     },
 
     credits: {
@@ -412,8 +458,18 @@ function initLangFilter() {
                     presets[key].forEach(name => activeTerms.add(name));
                     activeLanguages.add(key);
                 }
+            } else if (key === 'all') {
+                if (activeTerms.size === allData.length) {
+                    // Already all selected — toggle to None
+                    activeTerms = new Set();
+                    activeLanguages.clear();
+                } else {
+                    // Select all and light up all language buttons
+                    activeTerms = new Set(presets.all);
+                    activeLanguages = new Set(['js', 'python', 'rust']);
+                }
             } else {
-                // Defaults / All: set exactly, back to neutral
+                // Defaults: set exactly, back to neutral
                 activeTerms = new Set(presets[key]);
                 activeLanguages.clear();
             }
@@ -515,7 +571,10 @@ initLangFilter();
                 '<span class="chip-tooltip-lang">Rust</span>' +
                 '<span class="chip-tooltip-val">' + c + '%</span>' +
             '</div>' +
-            '<div class="chip-tooltip-hits">' + formatHits(total) + ' hits</div>';
+            '<div class="chip-tooltip-hits">' +
+                '<span>#' + rankByTotal[name] + ' of ' + allData.length + '</span>' +
+                '<span>' + formatHits(total) + ' hits</span>' +
+            '</div>';
 
         tip.style.display = 'block';
 

@@ -22,22 +22,37 @@
     <!-- Set Highcharts global theme before charts are created -->
     <script>
         (function () {
-            const theme = document.documentElement.getAttribute('data-theme');
-            const isDark = theme === 'dark';
+            const theme = document.documentElement.getAttribute('data-theme'),
+                isDark = theme === 'dark';
             Highcharts.setOptions({
-                chart: { backgroundColor: null },
+                chart: {
+                    backgroundColor: null
+                },
                 title: {
-                    style: { color: isDark ? 'rgba(255,255,255,0.78)' : '#1A1A18' }
+                    style: {
+                        color: isDark ? 'rgba(255,255,255,0.78)' : '#1A1A18'
+                    }
                 },
                 subtitle: {
-                    style: { color: isDark ? 'rgba(255,255,255,0.45)' : '#6B6B68' }
+                    style: {
+                        color: isDark ? 'rgba(255,255,255,0.45)' : '#6B6B68'
+                    }
                 },
                 legend: {
-                    itemStyle: { color: isDark ? 'rgba(255,255,255,0.45)' : '#6B6B68', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: '500' },
-                    itemHoverStyle: { color: isDark ? 'rgba(255,255,255,0.78)' : '#1A1A18' }
+                    itemStyle: {
+                        color: isDark ? 'rgba(255,255,255,0.62)' : '#6B6B68',
+                        fontFamily: 'Inter, system-ui, sans-serif',
+                        fontSize: '13px',
+                        fontWeight: '500'
+                    },
+                    itemHoverStyle: {
+                        color: isDark ? 'rgba(255,255,255,0.78)' : '#1A1A18'
+                    }
                 },
                 credits: {
-                    style: { color: isDark ? '#555551' : '#999994' }
+                    style: {
+                        color: isDark ? '#555551' : '#999994'
+                    }
                 },
                 tooltip: {
                     backgroundColor: isDark ? '#1C2129' : '#FFFFFF',
@@ -71,10 +86,15 @@
                     plotOptions: {
                         gridLineColor: isDark ? '#30363D' : '#d6d6d6',
                         title: {
-                            style: { color: isDark ? 'rgba(255,255,255,0.45)' : '#6B6B68' }
+                            style: {
+                                color: isDark ? 'rgba(255,255,255,0.62)' : '#6B6B68',
+                                fontWeight: '400'
+                            }
                         },
                         labels: {
-                            style: { color: isDark ? 'rgba(255,255,255,0.4)' : '#6B6B68' }
+                            style: {
+                                color: isDark ? 'rgba(255,255,255,0.55)' : '#6B6B68'
+                            }
                         }
                     }
                 }
@@ -108,7 +128,7 @@
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                         </svg>
                     </button>
-                    <a href="https://blacklabel.net/highcharts/" target="_blank" rel="noopener noreferrer">
+                    <a href="https://blacklabel.net/" target="_blank" rel="noopener noreferrer">
                         <img src="assets/icons/blLogo.svg" alt="Black Label" class="bl-logo">
                     </a>
                 </div>
@@ -116,8 +136,8 @@
             <nav class="demo-nav" aria-label="Demo sections">
                 <a href="#section-languages" class="nav-link">Vocabulary Chart</a>
                 <a href="#section-info" class="nav-link">Get Started</a>
-                <a href="#section-electricity" class="nav-link">Electricity</a>
-                <a href="#section-usage" class="nav-link">Usage</a>
+                <a href="#section-electricity" class="nav-link">Electricity Chart</a>
+                <a href="#section-usage" class="nav-link">Minimal Usage</a>
             </nav>
         </div>
     </header>
@@ -130,6 +150,7 @@
                 <div class="chart-container chart-container--languages">
                     <div id="chart-languages"></div>
                 </div>
+                <div class="lang-filter" id="lang-filter"></div>
             </div>
         </section>
 

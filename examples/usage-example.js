@@ -18,13 +18,19 @@ Highcharts.chart('chart-usage', {
 
     ternaryAxis: {
         a: {
-            title: { text: 'Protein' }
+            title: {
+                text: 'Protein'
+            }
         },
         b: {
-            title: { text: 'Fat' }
+            title: {
+                text: 'Fat'
+            }
         },
         c: {
-            title: { text: 'Carbohydrates' }
+            title: {
+                text: 'Carbohydrates'
+            }
         }
     },
 

@@ -5,15 +5,15 @@ const energyMixData = {
         { year: 2017, renewables: 24.47, fossil: 65.34, nuclear: 10.2 },
         { year: 2018, renewables: 25.09, fossil: 64.86, nuclear: 10.05 },
         { year: 2019, renewables: 26.09, fossil: 63.65, nuclear: 10.26 },
-        { year: 2020, renewables: 28,    fossil: 62.09, nuclear: 9.91 },
-        { year: 2021, renewables: 28.1,  fossil: 62.12, nuclear: 9.78 },
+        { year: 2020, renewables: 28, fossil: 62.09, nuclear: 9.91 },
+        { year: 2021, renewables: 28.1, fossil: 62.12, nuclear: 9.78 },
         { year: 2022, renewables: 29.45, fossil: 61.42, nuclear: 9.13 },
         { year: 2023, renewables: 30.26, fossil: 60.64, nuclear: 9.1 },
-        { year: 2024, renewables: 31.82, fossil: 59.2,  nuclear: 8.98 }
+        { year: 2024, renewables: 31.82, fossil: 59.2, nuclear: 8.98 }
     ],
     'United States': [
         { year: 2015, renewables: 13.63, fossil: 66.85, nuclear: 19.52 },
-        { year: 2016, renewables: 15.29, fossil: 65,    nuclear: 19.71 },
+        { year: 2016, renewables: 15.29, fossil: 65, nuclear: 19.71 },
         { year: 2017, renewables: 17.45, fossil: 62.68, nuclear: 19.86 },
         { year: 2018, renewables: 17.45, fossil: 63.34, nuclear: 19.21 },
         { year: 2019, renewables: 18.29, fossil: 62.24, nuclear: 19.46 },
@@ -30,22 +30,22 @@ const energyMixData = {
         { year: 2018, renewables: 34.52, fossil: 40.45, nuclear: 23.02 },
         { year: 2019, renewables: 36.64, fossil: 38.13, nuclear: 23.25 },
         { year: 2020, renewables: 40.79, fossil: 35.73, nuclear: 21.46 },
-        { year: 2021, renewables: 39.6,  fossil: 36.66, nuclear: 21.83 },
+        { year: 2021, renewables: 39.6, fossil: 36.66, nuclear: 21.83 },
         { year: 2022, renewables: 41.25, fossil: 37.58, nuclear: 19.01 },
-        { year: 2023, renewables: 46.64, fossil: 31.9,  nuclear: 19.27 },
+        { year: 2023, renewables: 46.64, fossil: 31.9, nuclear: 19.27 },
         { year: 2024, renewables: 49.17, fossil: 28.92, nuclear: 19.71 }
     ],
     'China': [
         { year: 2015, renewables: 23.97, fossil: 73.08, nuclear: 2.95 },
-        { year: 2016, renewables: 24.83, fossil: 71.7,  nuclear: 3.48 },
-        { year: 2017, renewables: 25.24, fossil: 71,    nuclear: 3.76 },
+        { year: 2016, renewables: 24.83, fossil: 71.7, nuclear: 3.48 },
+        { year: 2017, renewables: 25.24, fossil: 71, nuclear: 3.76 },
         { year: 2018, renewables: 25.61, fossil: 70.27, nuclear: 4.12 },
-        { year: 2019, renewables: 26.85, fossil: 68.5,  nuclear: 4.65 },
-        { year: 2020, renewables: 28.09, fossil: 67.2,  nuclear: 4.71 },
+        { year: 2019, renewables: 26.85, fossil: 68.5, nuclear: 4.65 },
+        { year: 2020, renewables: 28.09, fossil: 67.2, nuclear: 4.71 },
         { year: 2021, renewables: 28.69, fossil: 66.53, nuclear: 4.77 },
-        { year: 2022, renewables: 30.18, fossil: 65.1,  nuclear: 4.72 },
-        { year: 2023, renewables: 30.61, fossil: 64.8,  nuclear: 4.6 },
-        { year: 2024, renewables: 33.7,  fossil: 61.83, nuclear: 4.47 }
+        { year: 2022, renewables: 30.18, fossil: 65.1, nuclear: 4.72 },
+        { year: 2023, renewables: 30.61, fossil: 64.8, nuclear: 4.6 },
+        { year: 2024, renewables: 33.7, fossil: 61.83, nuclear: 4.47 }
     ],
     'India': [
         { year: 2015, renewables: 14.63, fossil: 82.45, nuclear: 2.92 },
@@ -53,7 +53,7 @@ const energyMixData = {
         { year: 2017, renewables: 15.45, fossil: 81.99, nuclear: 2.56 },
         { year: 2018, renewables: 16.29, fossil: 81.22, nuclear: 2.48 },
         { year: 2019, renewables: 18.14, fossil: 79.06, nuclear: 2.8 },
-        { year: 2020, renewables: 19.4,  fossil: 77.76, nuclear: 2.84 },
+        { year: 2020, renewables: 19.4, fossil: 77.76, nuclear: 2.84 },
         { year: 2021, renewables: 19.01, fossil: 78.38, nuclear: 2.61 },
         { year: 2022, renewables: 20.26, fossil: 77.19, nuclear: 2.56 },
         { year: 2023, renewables: 19.32, fossil: 78.17, nuclear: 2.51 },
@@ -190,8 +190,7 @@ Highcharts.chart('chart-electricity', {
         ])),
         marker: {
             radius: 3,
-            symbol: 'circle',
-            //lineWidth: 1
+            symbol: 'circle'
         },
         lineWidth: 2
     }))

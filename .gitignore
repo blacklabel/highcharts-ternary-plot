@@ -2,3 +2,4 @@ node_modules/
 .cache/
 js/tmp/dev.html
 .claude/
+CODESTYLE.md

@@ -195,6 +195,7 @@ body {
 }
 
 .bl-logo {
+    display: block;
     width: 36px;
     height: auto;
     opacity: 0.85;
@@ -595,6 +596,188 @@ body {
     color: var(--color-text-code);
     white-space: pre;
     transition: color var(--transition);
+}
+
+/* ===================================================
+   Languages — Term Filter
+   =================================================== */
+
+/* Container sits on the always-dark languages section background */
+.lang-filter {
+    padding: 8px 0 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.lang-filter-presets {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.lang-filter-label {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(255, 255, 255, 0.25);
+    margin-right: 4px;
+    flex-shrink: 0;
+}
+
+.lang-filter-count {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.22);
+    margin-left: auto;
+    padding-right: 2px;
+    white-space: nowrap;
+}
+
+/* Preset buttons */
+.lang-preset {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.38);
+    cursor: pointer;
+    transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+    line-height: 1;
+}
+.lang-preset:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.65);
+}
+.lang-preset.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Language-colored preset buttons */
+.lang-preset--js.active {
+    background: rgba(232, 200, 48, 0.14);
+    border-color: rgba(232, 200, 48, 0.45);
+    color: #E8C830;
+}
+.lang-preset--python.active {
+    background: rgba(55, 118, 171, 0.18);
+    border-color: rgba(55, 118, 171, 0.5);
+    color: #5FA8D8;
+}
+.lang-preset--rust.active {
+    background: rgba(206, 65, 43, 0.14);
+    border-color: rgba(206, 65, 43, 0.45);
+    color: #E06A52;
+}
+
+/* Term chips */
+.lang-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.lang-chip {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.22);
+    cursor: pointer;
+    transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+    line-height: 1.4;
+}
+.lang-chip:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.lang-chip.active[data-lang="js"] {
+    background: rgba(232, 200, 48, 0.12);
+    border-color: rgba(232, 200, 48, 0.35);
+    color: #E8C830;
+}
+.lang-chip.active[data-lang="python"] {
+    background: rgba(55, 118, 171, 0.15);
+    border-color: rgba(55, 118, 171, 0.4);
+    color: #5FA8D8;
+}
+.lang-chip.active[data-lang="rust"] {
+    background: rgba(206, 65, 43, 0.12);
+    border-color: rgba(206, 65, 43, 0.38);
+    color: #E06A52;
+}
+
+/* Chip hover tooltip */
+.chip-tooltip {
+    display: none;
+    position: absolute;
+    z-index: 9999;
+    background: #1C2129;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-width: 148px;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.chip-tooltip-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chip-tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 2px 0;
+}
+
+.chip-tooltip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.chip-tooltip-lang {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    flex: 1;
+}
+
+.chip-tooltip-val {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.chip-tooltip-hits {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.28);
+    margin-top: 7px;
+    padding-top: 7px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    text-align: right;
 }
 
 /* ===================================================

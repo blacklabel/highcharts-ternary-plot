@@ -8,19 +8,34 @@ window.addEventListener('resize', updateHeaderHeight);
 
 // ── Theme management ──────────────────────────────────────────────
 const HC_LIGHT = {
-    chart: { backgroundColor: null },
+    chart: {
+        backgroundColor: null
+    },
     title: {
-        style: { color: '#1A1A18' }
+        style: {
+            color: '#1A1A18'
+        }
     },
     subtitle: {
-        style: { color: '#6B6B68' }
+        style: {
+            color: '#6B6B68'
+        }
     },
     legend: {
-        itemStyle: { color: '#6B6B68', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: '500' },
-        itemHoverStyle: { color: '#1A1A18' }
+        itemStyle: {
+            color: '#6B6B68',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontSize: '13px',
+            fontWeight: '500'
+        },
+        itemHoverStyle: {
+            color: '#1A1A18'
+        }
     },
     credits: {
-        style: { color: '#999994' }
+        style: {
+            color: '#999994'
+        }
     },
     tooltip: {
         backgroundColor: '#FFFFFF',
@@ -54,29 +69,49 @@ const HC_LIGHT = {
         plotOptions: {
             gridLineColor: '#d6d6d6',
             title: {
-                style: { color: '#6B6B68' }
+                style: {
+                    color: '#6B6B68',
+                    fontWeight: '400'
+                }
             },
             labels: {
-                style: { color: '#6B6B68' }
+                style: {
+                    color: '#6B6B68'
+                }
             }
         }
     }
 };
 
 const HC_DARK = {
-    chart: { backgroundColor: null },
+    chart: {
+        backgroundColor: null
+    },
     title: {
-        style: { color: 'rgba(255,255,255,0.78)' }
+        style: {
+            color: 'rgba(255,255,255,0.78)'
+        }
     },
     subtitle: {
-        style: { color: 'rgba(255,255,255,0.45)' }
+        style: {
+            color: 'rgba(255,255,255,0.45)'
+        }
     },
     legend: {
-        itemStyle: { color: 'rgba(255,255,255,0.45)', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '13px', fontWeight: '500' },
-        itemHoverStyle: { color: 'rgba(255,255,255,0.78)' }
+        itemStyle: {
+            color: 'rgba(255,255,255,0.62)',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontSize: '13px',
+            fontWeight: '500'
+        },
+        itemHoverStyle: {
+            color: 'rgba(255,255,255,0.78)'
+        }
     },
     credits: {
-        style: { color: '#555551' }
+        style: {
+            color: '#555551'
+        }
     },
     tooltip: {
         backgroundColor: '#1C2129',
@@ -110,10 +145,15 @@ const HC_DARK = {
         plotOptions: {
             gridLineColor: '#30363D',
             title: {
-                style: { color: 'rgba(255,255,255,0.45)' }
+                style: {
+                    color: 'rgba(255,255,255,0.62)',
+                    fontWeight: '400'
+                }
             },
             labels: {
-                style: { color: 'rgba(255,255,255,0.4)' }
+                style: {
+                    color: 'rgba(255,255,255,0.55)'
+                }
             }
         }
     }

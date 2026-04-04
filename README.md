@@ -182,19 +182,19 @@ Highcharts.chart('container', {
 
 #### Labels
 
-| Option           | Type      | Description                                              |
-| ---------------- | --------- | -------------------------------------------------------- |
-| `labels.enabled`   | `boolean` | Show or hide tick labels.                                |
-| `labels.style`     | `object`  | CSS style object applied to label text.                  |
-| `labels.distance`  | `number`  | Distance between labels and the triangle edge, in pixels.|
+| Option             | Type      | Default | Description                                              |
+| ------------------ | --------- | ------- | -------------------------------------------------------- |
+| `labels.enabled`   | `boolean` | —       | Show or hide tick labels.                                |
+| `labels.style`     | `object`  | —       | CSS style object applied to label text.                  |
+| `labels.distance`  | `number`  | `6`     | Distance between labels and the triangle edge, in pixels.|
 
 #### Title
 
-| Option                  | Type                          | Description                                                       |
-| ----------------------- | ----------------------------- | ----------------------------------------------------------------- |
-| `title.text`            | `string`                      | Axis title text.                                                  |
-| `title.style`           | `object`                      | CSS style object applied to the title.                            |
-| `title.margin`          | `number`                      | Distance between the title and the triangle edge, in pixels.      |
+| Option                  | Type                              | Default | Description                                                  |
+| ----------------------- | --------------------------------- | ------- | ------------------------------------------------------------ |
+| `title.text`            | `string`                          | —       | Axis title text.                                             |
+| `title.style`           | `object`                          | —       | CSS style object applied to the title.                       |
+| `title.margin`          | `number`                          | `30`    | Distance between the title and the triangle edge, in pixels. |
 | `title.titlePosition`   | `'corner' \| 'side'`          | Position of the title relative to the triangle.                   |
 | `title.offsetDirection` | `'horizontal' \| 'perpendicular'` | Direction the title offsets from its axis edge.               |
 | `title.rotation`        | `number`                      | Title rotation in degrees. Overrides the automatic rotation.      |

@@ -25,8 +25,10 @@ function TernaryPlotPlugin(H) {
         tickInterval: 50,
         lineWidth: 1,
         lineColor: '#d6d6d6',
+        lineDashStyle: 'Solid',
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
+        gridLineDashStyle: 'Solid',
         title: {
             text: 'Axis',
             margin: 30,

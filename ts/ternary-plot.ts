@@ -27,10 +27,10 @@ type TernaryAxisOptions = {
     tickInterval: number;
     lineWidth: number;
     lineColor: string;
-    lineDashStyle?: string;
+    lineDashStyle: string;
     gridLineWidth: number;
     gridLineColor: string;
-    gridLineDashStyle?: string;
+    gridLineDashStyle: string;
     gridLineExtension?: number;
     median?: boolean | {
         enabled?: boolean;
@@ -201,8 +201,10 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         tickInterval: 50,
         lineWidth: 1,
         lineColor: '#d6d6d6',
+        lineDashStyle: 'Solid',
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
+        gridLineDashStyle: 'Solid',
         title: {
             text: 'Axis',
             margin: 30,

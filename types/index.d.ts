@@ -79,7 +79,7 @@ declare module 'highcharts' {
             enabled?: boolean;
             /** CSS style object applied to label text. */
             style?: Record<string, string | number>;
-            /** Distance between labels and the triangle edge, in pixels. */
+            /** Distance between labels and the triangle edge, in pixels. @default 6 */
             distance?: number;
         };
 
@@ -88,7 +88,7 @@ declare module 'highcharts' {
             text?: string;
             /** CSS style object applied to the title. */
             style?: Record<string, string | number>;
-            /** Distance between the title and the triangle edge, in pixels. */
+            /** Distance between the title and the triangle edge, in pixels. @default 30 */
             margin?: number;
             /** Position of the title relative to the triangle. */
             titlePosition?: 'side' | 'corner';

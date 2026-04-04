@@ -279,8 +279,8 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             ternaryOpts = chart.ternaryOpts,
             sumTo = ternaryOpts.sumTo;
 
-        let p1: Vec2 = [0, 0],
-            p2: Vec2 = [0, 0];
+        let p1: Vec2,
+            p2: Vec2;
 
         const medianOpts = chart.resolveMedian(axis.median);
 
@@ -314,7 +314,8 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
         if (medianOpts) {
             const sidesAndMedians = [
-                // TODO: Consider changing the order to match with gridLines (or axis line)
+                // TODO in the future:
+                // Consider changing the order to match with gridLines (or axis line)
                 // // Sides
                 // [[0, 100], [0, 0]],
                 // [[0, 0], [100, 0]],
@@ -425,7 +426,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             const fm = chart.renderer.fontMetrics(label),
                 bb = label.getBBox();
 
-            let pos: Vec2 = [0, 0],
+            let pos: Vec2,
                 offsetX = 0,
                 offsetY = 0;
 
@@ -1032,7 +1033,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         );
     });
 
-    // TODO: decide on a dataLabel placement
     addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
         if (!(this.options.minSize && this.options.maxSize)) {
             return;
@@ -1049,8 +1049,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
             dataLabel[dataLabel.placed ? 'animate' : 'attr']({
                 y: dataLabel.y - point.marker.radius + 5
-                //y: dataLabel.y - 5
-                //y: dataLabel.y + dataLabel.height / 2
             });
         });
     });

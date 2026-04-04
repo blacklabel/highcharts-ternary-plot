@@ -1,9 +1,9 @@
 /**
 ----
 *
-* Highcharts Ternary Plot v1.0.0
+* Highcharts Ternary Plot v2.0.0
 *
-* (c) 2012-2025 Black Label, Rafał Sebestjański
+* (c) 2012-2026 Black Label, Rafał Sebestjański
 *
 * License: Creative Commons Attribution (CC)
 */
@@ -86,7 +86,7 @@ function TernaryPlotPlugin(H) {
         if (!interval || interval <= 0)
             return gridLines;
         const chart = this, ternaryOpts = chart.ternaryOpts, sumTo = ternaryOpts.sumTo;
-        let p1 = [0, 0], p2 = [0, 0];
+        let p1, p2;
         const medianOpts = chart.resolveMedian(axis.median);
         function renderLine(path, median) {
             const stroke = median ? median.color : axis.gridLineColor, strokeWidth = median ? median.width : axis.gridLineWidth, dashStyle = median ? median.dashStyle : axis.gridLineDashStyle;
@@ -108,7 +108,8 @@ function TernaryPlotPlugin(H) {
         }
         if (medianOpts) {
             const sidesAndMedians = [
-                // TODO: Consider changing the order to match with gridLines (or axis line)
+                // TODO in the future:
+                // Consider changing the order to match with gridLines (or axis line)
                 // // Sides
                 // [[0, 100], [0, 0]],
                 // [[0, 0], [100, 0]],
@@ -185,7 +186,7 @@ function TernaryPlotPlugin(H) {
                 .css(style)
                 .add();
             const fm = chart.renderer.fontMetrics(label), bb = label.getBBox();
-            let pos = [0, 0], offsetX = 0, offsetY = 0;
+            let pos, offsetX = 0, offsetY = 0;
             switch (index) {
                 case 0: // horizontal
                     pos = chart.ternaryToPlot([tick, 0], true);
@@ -573,7 +574,6 @@ function TernaryPlotPlugin(H) {
         const [Ax, Ay] = chart.ternaryToPlot([0, 0]), [Bx, By] = chart.ternaryToPlot([100, 0]), [Cx, Cy] = chart.ternaryToPlot([0, 100]), px = e.x, py = e.y;
         e.isInsidePlot = pointInTriangle(px, py, Ax, Ay, Bx, By, Cx, Cy);
     });
-    // TODO: decide on a dataLabel placement
     addEvent(Series, 'afterDrawDataLabels', function () {
         if (!(this.options.minSize && this.options.maxSize)) {
             return;
@@ -583,8 +583,6 @@ function TernaryPlotPlugin(H) {
             const dataLabel = point.dataLabel;
             dataLabel[dataLabel.placed ? 'animate' : 'attr']({
                 y: dataLabel.y - point.marker.radius + 5
-                //y: dataLabel.y - 5
-                //y: dataLabel.y + dataLabel.height / 2
             });
         });
     });

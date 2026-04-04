@@ -22,7 +22,7 @@ const decorator = [
   '*',
   `* Highcharts Ternary Plot v${version}`,
   '*',
-  '* (c) 2012-2025 Black Label, Rafał Sebestjański',
+  '* (c) 2012-2026 Black Label, Rafał Sebestjański',
   '*',
   '* License: Creative Commons Attribution (CC)',
   '*/',

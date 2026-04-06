@@ -1,7 +1,7 @@
 {
   "name": "highcharts-ternary-plot",
   "version": "2.0.0",
-  "description": "Ternary Plot plugin for Highcharts by Black Label",
+  "description": "Ternary / triangular plot plugin for Highcharts. Visualize three-component composition data with barycentric diagrams. TypeScript support included.",
   "main": "js/ternary-plot.js",
   "types": "types/index.d.ts",
   "exports": {
@@ -23,6 +23,12 @@
     "ternary",
     "ternary-plot",
     "ternary-chart",
+    "triangular-chart",
+    "triangle-diagram",
+    "barycentric",
+    "composition-chart",
+    "data-visualization",
+    "visualization",
     "highcharts-plugin",
     "highcharts-addon",
     "black-label"

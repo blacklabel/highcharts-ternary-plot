@@ -1,0 +1,50 @@
+# Highcharts Ternary Plot
+
+> Ternary / triangular plot plugin for Highcharts. Visualize three-component composition data with barycentric diagrams. TypeScript support included.
+
+Official [Black Label](https://blacklabel.net/highcharts/) plugin for [Highcharts](https://www.highcharts.com/) that adds support for ternary (triangular / barycentric) charts — used to visualize data where three components sum to a constant (typically 100%).
+
+- Version: 2.0.0
+- Requires: Highcharts 12.0.0+
+- License: MIT
+- TypeScript: bundled type definitions included
+- Author: Black Label (blacklabel.net)
+
+## Use cases
+
+Ternary charts are used in geology (soil composition), chemistry (phase diagrams), materials science, nutrition (macronutrient ratios), and market research (share of three competing options).
+
+## Installation
+
+```bash
+npm install highcharts-ternary-plot
+```
+
+## Minimal usage
+
+```js
+import Highcharts from 'highcharts';
+import 'highcharts-ternary-plot';
+
+Highcharts.chart('container', {
+    chart: { type: 'ternaryscatter' },
+    ternaryAxis: {
+        a: { title: { text: 'A' } },
+        b: { title: { text: 'B' } },
+        c: { title: { text: 'C' } }
+    },
+    series: [{
+        data: [
+            { a: 50, b: 30, c: 20 },
+            { a: 10, b: 60, c: 30 }
+        ]
+    }]
+});
+```
+
+## Links
+
+- Live demo: https://blacklabel.github.io/highcharts-ternary-plot/
+- GitHub: https://github.com/blacklabel/highcharts-ternary-plot
+- npm: https://www.npmjs.com/package/highcharts-ternary-plot
+- Changelog: https://github.com/blacklabel/highcharts-ternary-plot/blob/main/CHANGELOG.md

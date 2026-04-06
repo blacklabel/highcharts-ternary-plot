@@ -80,9 +80,11 @@ const LANG_COLORS = {
 };
 
 const defaultTerms = new Set([
-    'json', 'borrow', 'ownership', 'promise', 'django', 'lifetimes',
-    'thread', 'pointer', 'http', 'serialize', 'deserialize', 'schema',
-    'generic', 'class', 'function'
+    'Self', 'async', 'benchmark', 'bevy', 'borrow', 'class', 'clone', 'cow',
+    'criterion', 'debug', 'default', 'deserialize', 'django', 'drop', 'generic',
+    'iterator', 'json', 'lifetimes', 'logger', 'option',
+    'pointer', 'promise', 'serialize', 'spawn', 'struct',
+    'thread', 'use', 'vec', 'wasm'
 ]);
 
 function getLang(d) {
@@ -104,8 +106,8 @@ const dataByName = Object.fromEntries(allData.map(d => [d[4], d]));
 // Fixed global scale — mirrors the plugin's getRadius() formula with global min/max
 const GLOBAL_Z_MIN = Math.min(...allData.map(d => d[3])),
     GLOBAL_Z_MAX = Math.max(...allData.map(d => d[3]));
-const _minA = Math.PI * 8 * 8, // minSize = 8
-    _maxA = Math.PI * 48 * 48; // maxSize = 48
+const _minA = Math.PI * 10 * 10, // minSize = 10
+    _maxA = Math.PI * 60 * 60; // maxSize = 60
 
 function calcRadius(total) {
     const t = (total - GLOBAL_Z_MIN) / (GLOBAL_Z_MAX - GLOBAL_Z_MIN);
@@ -191,7 +193,6 @@ const langChart = Highcharts.chart('chart-languages', {
         ternary: {
             spacing: 80
         },
-        spacingTop: 25,
         height: 700
     },
 
@@ -356,8 +357,8 @@ const langChart = Highcharts.chart('chart-languages', {
             alpha: 0.15,
             strokeAlpha: 0.65
         },
-        minSize: 8,
-        maxSize: 48,
+        minSize: 10,
+        maxSize: 60,
         states: {
             hover: {
                 halo: {

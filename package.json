@@ -35,7 +35,7 @@
   ],
   "author": "Black Label <start@blacklabel.pl> (http://blacklabel.net)",
   "contributors": ["Rafał Sebestjański"],
-  "license": "SEE LICENSE IN LICENSE.txt",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/blacklabel/highcharts-ternary-plot/issues"
   },

@@ -6,10 +6,12 @@
 
 **Ternary Plot** is an official [Black Label](https://blacklabel.net/highcharts/) plugin for [Highcharts](https://www.highcharts.com/) that adds a `ternaryscatter` series type — enabling triangular / barycentric diagrams for three-component compositional data. Drop it into any Highcharts project to get interactive ternary charts with full TypeScript support, no extra dependencies.
 
+If you're looking for how to create a ternary chart in Highcharts, this plugin is the ready-to-use solution: it extends Highcharts with a native ternary coordinate system and a dedicated series type.
+
 ➖ [Live demo](https://blacklabel.github.io/highcharts-ternary-plot/)  
 ➖ [GitHub repository](https://github.com/blacklabel/highcharts-ternary-plot)
 
-![Ternary Plot – Programming Language Vocabulary Landscape](assets/docs/readme.png)
+![Ternary Plot – Programming Language Vocabulary Landscape](https://raw.githubusercontent.com/blacklabel/highcharts-ternary-plot/main/assets/docs/readme.png)
 
 ---
 
@@ -102,10 +104,8 @@ Or include via a `<script>` tag after loading Highcharts:
 
 ## Minimal Code
 
-Enable `chart.ternary` and add a `ternaryscatter` series with three-dimensional data:
 ```js
 Highcharts.chart('container', {
-
   chart: {
     ternary: true
   },
@@ -115,13 +115,9 @@ Highcharts.chart('container', {
     data: [
       [20, 70, 10],
       [30, 40, 30],
-      [20, 35, 45],
-      [15, 35, 50],
-      [20, 20, 60],
-      [0, 100, 0]
+      [20, 35, 45]
     ]
   }]
-
 });
 ```
 
@@ -316,8 +312,11 @@ chart: {
 
 ## FAQ
 
-**How do I add a ternary chart to a Highcharts project?**  
-Install the package (`npm install highcharts-ternary-plot`), import and call `HighchartsTernaryPlot(Highcharts)`, then set `chart.type` or `series.type` to `'ternaryscatter'`.
+**How to create a ternary chart in Highcharts?**  
+Install the package (`npm install highcharts-ternary-plot`), import and call `HighchartsTernaryPlot(Highcharts)`, then set `chart.ternary: true` and `series.type: 'ternaryscatter'`. See [Minimal Code](#minimal-code) for a working example.
+
+**Does Highcharts support ternary plots natively?**  
+No — Highcharts does not include a ternary chart type out of the box. This plugin adds it as a first-class series type with a native API.
 
 **Does this plugin work with TypeScript?**  
 Yes. Type definitions are bundled — no separate `@types` package needed. Importing the plugin augments the Highcharts module automatically.
@@ -336,6 +335,14 @@ Yes. Set `minSize` and `maxSize` on the series, and provide a `total` (or any nu
 
 **Can I color points based on their position in the triangle?**  
 Yes — use `componentColors` to define a color per vertex. Each point's fill is automatically blended by its `a`, `b`, `c` values.
+
+---
+
+## Alternatives
+
+If you need a ternary chart in Highcharts, this plugin is the only native solution — Highcharts itself does not include one.
+
+Other JavaScript ternary chart libraries exist (e.g. Plotly, D3-ternary), but they don't integrate with the Highcharts ecosystem, themes, or responsive rules. If your project already uses Highcharts, this plugin gives you a consistent API with no additional dependencies.
 
 ---
 

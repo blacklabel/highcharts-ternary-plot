@@ -5,7 +5,7 @@
 *
 * (c) 2012-2026 Black Label, Rafał Sebestjański
 *
-* License: Creative Commons Attribution (CC)
+* License: MIT
 */
 (function (factory) {
   if (typeof module === 'object' && module.exports) {
@@ -292,6 +292,14 @@ function TernaryPlotPlugin(H) {
         const series = this, chart = series.chart, xAxis = series.xAxis, points = series.points, dataLength = points.length, sumTo = chart.ternaryOpts.sumTo, pointPlacement = series.pointPlacementToXValue(), // #7860
         dynamicallyPlaced = Boolean(pointPlacement);
         let i, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
+        // Pre-compute min/max totals once per translate pass for getRadius()
+        if (series.options.minSize && series.options.maxSize) {
+            const allTotals = points.map((p) => p.total);
+            series._radiusCache = {
+                min: Math.min(...allTotals),
+                max: Math.max(...allTotals)
+            };
+        }
         // Translate each point
         for (i = 0; i < dataLength; i++) {
             const point = points[i], xValue = point.a;
@@ -407,7 +415,7 @@ function TernaryPlotPlugin(H) {
         };
     }
     function getRadius() {
-        const series = this.series, minSize = series.options.minSize, maxSize = series.options.maxSize, allTotals = series.points.map((p) => p.total), minValue = Math.min(...allTotals), maxValue = Math.max(...allTotals);
+        const series = this.series, minSize = series.options.minSize, maxSize = series.options.maxSize, cache = series._radiusCache, allTotals = cache ? null : series.points.map((p) => p.total), minValue = cache ? cache.min : Math.min(...allTotals), maxValue = cache ? cache.max : Math.max(...allTotals);
         if (maxValue === minValue)
             return (minSize + maxSize) / 2;
         const t = (this.total - minValue) / (maxValue - minValue), minA = Math.PI * minSize * minSize, maxA = Math.PI * maxSize * maxSize, A = minA + t * (maxA - minA);

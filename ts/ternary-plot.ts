@@ -121,6 +121,7 @@ type TernarySeries = Highcharts.Series & {
     options: TernarySeriesOptions;
     points: TernaryPoint[];
     chart: TernaryChart;
+    _radiusCache?: { min: number; max: number };
     getTernaryColor(
         a: number,
         b: number,
@@ -589,6 +590,16 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             lastPlotX: number,
             closestPointRangePx = Number.MAX_VALUE;
 
+        // Pre-compute min/max totals once per translate pass for getRadius()
+        if (series.options.minSize && series.options.maxSize) {
+            const allTotals = points.map((p: TernaryPoint) => p.total);
+
+            series._radiusCache = {
+                min: Math.min(...allTotals),
+                max: Math.max(...allTotals)
+            };
+        }
+
         // Translate each point
         for (i = 0; i < dataLength; i++) {
             const point = points[i],
@@ -780,9 +791,10 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         const series = this.series as TernarySeries,
             minSize = series.options.minSize!,
             maxSize = series.options.maxSize!,
-            allTotals = series.points.map((p: TernaryPoint) => p.total),
-            minValue = Math.min(...allTotals),
-            maxValue = Math.max(...allTotals);
+            cache = series._radiusCache,
+            allTotals = cache ? null : series.points.map((p: TernaryPoint) => p.total),
+            minValue = cache ? cache.min : Math.min(...allTotals),
+            maxValue = cache ? cache.max : Math.max(...allTotals);
 
         if (maxValue === minValue) return (minSize + maxSize) / 2;
 

@@ -4,42 +4,141 @@
 
 Official [Black Label](https://blacklabel.net/highcharts/) plugin for [Highcharts](https://www.highcharts.com/) that adds support for ternary (triangular / barycentric) charts — used to visualize data where three components sum to a constant (typically 100%).
 
+Highcharts does not include a ternary chart type natively. This plugin is the standard solution for creating a ternary chart in Highcharts.
+
 - Version: 2.0.0
 - Requires: Highcharts 12.0.0+
 - License: MIT
-- TypeScript: bundled type definitions included
+- TypeScript: bundled type definitions included, no @types install needed
 - Author: Black Label (blacklabel.net)
+- Series type: `ternaryscatter`
+
+## What it does
+
+Adds a `ternaryscatter` series type and a ternary coordinate system to Highcharts. Data points are placed on an equilateral triangle where each corner represents 100% of one component (A, B, or C). A point's position is determined by its three proportional values.
+
+Also known as: triangular diagram, barycentric plot, trilinear chart, simplex plot, ternary diagram.
 
 ## Use cases
 
-Ternary charts are used in geology (soil composition), chemistry (phase diagrams), materials science, nutrition (macronutrient ratios), and market research (share of three competing options).
+Ternary charts are ideal for any data where three variables are interdependent and always sum to a constant:
+
+- **Geology**: soil composition (sand, silt, clay)
+- **Chemistry**: phase diagrams, alloy composition
+- **Nutrition**: macronutrient ratios (protein, fat, carbohydrates)
+- **Market research**: three-way brand preference or market share
+- **Linguistics**: vocabulary distribution across languages
+- **Finance**: portfolio allocation across three asset classes
 
 ## Installation
 
 ```bash
-npm install highcharts-ternary-plot
+npm install highcharts highcharts-ternary-plot
+```
+
+## Initialization
+
+```js
+import Highcharts from 'highcharts';
+import HighchartsTernaryPlot from 'highcharts-ternary-plot';
+
+HighchartsTernaryPlot(Highcharts);
+```
+
+Or via script tag:
+
+```html
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highcharts-ternary-plot@2.0.0/js/ternary-plot.js"></script>
 ```
 
 ## Minimal usage
 
 ```js
-import Highcharts from 'highcharts';
-import 'highcharts-ternary-plot';
-
 Highcharts.chart('container', {
-    chart: { type: 'ternaryscatter' },
-    ternaryAxis: {
-        a: { title: { text: 'A' } },
-        b: { title: { text: 'B' } },
-        c: { title: { text: 'C' } }
-    },
-    series: [{
-        data: [
-            { a: 50, b: 30, c: 20 },
-            { a: 10, b: 60, c: 30 }
-        ]
-    }]
+  chart: { ternary: true },
+  series: [{ type: 'ternaryscatter', data: [[30, 40, 30], [10, 20, 70]] }]
 });
+```
+
+## Full example with axis titles and component colors
+
+```js
+Highcharts.chart('container', {
+  chart: {
+    ternary: {
+      angle: 60,
+      spacing: 40,
+      sumTo: 100
+    }
+  },
+  ternaryAxis: {
+    a: { title: { text: 'Sand' } },
+    b: { title: { text: 'Silt' } },
+    c: { title: { text: 'Clay' } }
+  },
+  series: [{
+    type: 'ternaryscatter',
+    componentColors: {
+      a: '#e74c3c',
+      b: '#2ecc71',
+      c: '#3498db'
+    },
+    data: [
+      { a: 60, b: 30, c: 10 },
+      { a: 20, b: 50, c: 30 },
+      { a: 10, b: 10, c: 80 }
+    ]
+  }]
+});
+```
+
+## Key options
+
+### chart.ternary
+
+| Option                  | Type                        | Default | Description                                      |
+| ----------------------- | --------------------------- | ------- | ------------------------------------------------ |
+| `chart.ternary`         | `boolean \| TernaryOptions` | —       | Enable ternary mode. Set `true` for all defaults.|
+| `chart.ternary.angle`   | `number`                    | `60`    | Triangle angle in degrees. 60 = equilateral.     |
+| `chart.ternary.spacing` | `number`                    | `35`    | Pixel padding around the triangle.               |
+| `chart.ternary.sumTo`   | `number`                    | `100`   | What the three components must sum to.           |
+
+### ternaryAxis
+
+Configure axes individually (`a`, `b`, `c`) or via `plotOptions` for shared settings.
+
+Supports: `tickInterval`, `gridLineColor`, `gridLineWidth`, `gridLineDashStyle`, `lineColor`, `lineWidth`, `lineDashStyle`, `median`, `labels`, `title`.
+
+### series (ternaryscatter)
+
+| Option               | Description                                                                 |
+| -------------------- | --------------------------------------------------------------------------- |
+| `minSize`, `maxSize` | Bubble sizing — scales marker radius by `point.total` value.                |
+| `componentColors`    | Barycentric color blending. Define a color per vertex (a, b, c).            |
+| `data`               | Array of `[a, b, c]` or `{ a, b, c }`. The `c` can be omitted (auto-derived as `sumTo - a - b`). |
+
+## Data format
+
+Both formats are valid:
+
+```js
+// Array form
+data: [[20, 70, 10], [30, 40, 30]]
+
+// Object form (c is optional)
+data: [{ a: 20, b: 70, c: 10 }, { a: 30, b: 40 }]
+```
+
+## TypeScript
+
+```ts
+import Highcharts from 'highcharts';
+import HighchartsTernaryPlot from 'highcharts-ternary-plot';
+// Importing automatically augments Highcharts types with TernaryOptions,
+// SeriesTernaryScatterOptions, TernaryPointOptions, etc.
+
+HighchartsTernaryPlot(Highcharts);
 ```
 
 ## Links

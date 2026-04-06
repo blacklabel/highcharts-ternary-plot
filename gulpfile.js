@@ -24,7 +24,7 @@ const decorator = [
   '*',
   '* (c) 2012-2026 Black Label, Rafał Sebestjański',
   '*',
-  '* License: Creative Commons Attribution (CC)',
+  '* License: MIT',
   '*/',
   ''
 ];

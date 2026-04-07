@@ -16,7 +16,7 @@ declare module 'highcharts' {
 
     interface Options {
         ternaryAxis?: {
-            plotOptions?: AxisOptions;
+            common?: AxisOptions;
             a?: AxisOptions;
             b?: AxisOptions;
             c?: AxisOptions;

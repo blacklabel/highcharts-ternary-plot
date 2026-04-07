@@ -131,7 +131,7 @@ Highcharts.chart('chart-electricity', {
     // TODO: check if title common options can be applied to ternaryAxis titles as well,
     // to avoid repeating the style
     ternaryAxis: {
-        plotOptions: {
+        common: {
             tickInterval: 20,
             title: {
                 margin: 34

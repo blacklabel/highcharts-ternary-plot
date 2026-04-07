@@ -52,7 +52,7 @@ type TernaryAxisOptions = {
         margin: number;
         x: number;
         y: number;
-        titlePosition?: 'side' | 'corner';
+        position?: 'side' | 'corner';
         offsetDirection?: 'perpendicular' | 'horizontal';
         rotation?: number;
         style: Record<string, string | number>;
@@ -844,14 +844,14 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         }, i) => {
             const axis = merge(
                     defaultTernary,
-                    userTernaryAxis.plotOptions ?? {},
+                    userTernaryAxis.common ?? {},
                     userTernaryAxis[axisKeys[i]] ?? {}
                 ) as TernaryAxisConfig;
 
             let rotation = 0,
                 axisCenter: Vec2;
 
-            if (axis.title.titlePosition === 'corner') {
+            if (axis.title.position === 'corner') {
                 axisCenter = axisCenters[1];
             } else {
                 axisCenter = axisCenters[0];
@@ -867,7 +867,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             axis.title.style['rotation'] = rotation;
 
             axis.titleDirection =
-                titleDirections[axis.title.titlePosition === 'corner' ?
+                titleDirections[axis.title.position === 'corner' ?
                     2 :
                     (axis.title.offsetDirection === 'horizontal' ? 1 : 0)];
 
@@ -929,7 +929,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                 // Move one or two bottom titles down to avoid overlapping
                 // with gridLines
                 let offsetY = 0;
-                if (i !== 1 && (title.titlePosition === 'corner' || i === 0)) {
+                if (i !== 1 && (title.position === 'corner' || i === 0)) {
                     // Font metrics baseline is better than bbox.height
                     // for better baseline alignment
                     const fm = chart.renderer.fontMetrics(axis.titleElem!);

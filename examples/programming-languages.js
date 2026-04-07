@@ -221,7 +221,7 @@ const langChart = Highcharts.chart('chart-languages', {
                     }
                 },
                 ternaryAxis: {
-                    plotOptions: {
+                    common: {
                         title: {
                             margin: 15
                         }
@@ -298,7 +298,7 @@ const langChart = Highcharts.chart('chart-languages', {
     },
 
     ternaryAxis: {
-        plotOptions: {
+        common: {
             tickInterval: 10,
             median: {
                 color: '#1C1F25'
@@ -308,7 +308,7 @@ const langChart = Highcharts.chart('chart-languages', {
             gridLineColor: '#3E4145',
             gridLineExtension: 0,
             title: {
-                titlePosition: 'corner',
+                position: 'corner',
                 margin: 26
             },
             labels: {

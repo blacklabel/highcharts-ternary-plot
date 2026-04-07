@@ -91,7 +91,7 @@ declare module 'highcharts' {
             /** Distance between the title and the triangle edge, in pixels. @default 30 */
             margin?: number;
             /** Position of the title relative to the triangle. */
-            titlePosition?: 'side' | 'corner';
+            position?: 'side' | 'corner';
             /** Direction the title offsets from its axis edge. */
             offsetDirection?: 'perpendicular' | 'horizontal';
             /** Title rotation in degrees. Overrides automatic rotation. */
@@ -103,7 +103,7 @@ declare module 'highcharts' {
         /**
          * Shared options applied to all three axes before per-axis overrides.
          */
-        plotOptions?: TernaryPerAxisOptions;
+        common?: TernaryPerAxisOptions;
         /** Options for the bottom axis (component A). */
         a?: TernaryPerAxisOptions;
         /** Options for the right axis (component B). */
@@ -129,6 +129,13 @@ declare module 'highcharts' {
          * @default 1
          */
         alpha?: number;
+        /**
+         * Opacity applied to the stroke (border) of each point.
+         * When set, the stroke color is the same barycentric blend as the
+         * fill but with this alpha value. When omitted, the stroke uses
+         * the full-opacity ternary color.
+         */
+        strokeAlpha?: number;
     }
 
     interface TernaryPointOptions extends PointOptionsObject {

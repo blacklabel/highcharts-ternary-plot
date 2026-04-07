@@ -16,7 +16,7 @@
 - **`minSize` / `maxSize`** — control bubble size range for scatter series (replaces ad-hoc sizing)
 - **`median`** — configure the median lines as `boolean` or an object with style options (`color`, `width`, `dashStyle`)
 - **`ternaryAngle`** — control the projection angle of the triangle
-- **`title.titlePosition`** — set axis title position (`corner`, `side`, or custom)
+- **`title.position`** — set axis title position (`corner` or `side`)
 - **`title.offsetDirection`** — control which direction the axis title offsets from the axis
 - **`title.margin`** / **`labels.margin`** — fine-tune spacing between titles, labels, and the triangle
 - **`gridLineDashStyle`** — dash style support for grid lines

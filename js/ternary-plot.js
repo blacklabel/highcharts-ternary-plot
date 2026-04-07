@@ -446,9 +446,9 @@ function TernaryPlotPlugin(H) {
         const axisKeys = ['a', 'b', 'c'], userTernaryAxis = chart.options.ternaryAxis || {};
         chart.ternaryAxis = axes.map(({ axisCenters, rotationSign, titleDirections }, i) => {
             var _a, _b, _c, _d;
-            const axis = merge(defaultTernary, (_a = userTernaryAxis.plotOptions) !== null && _a !== void 0 ? _a : {}, (_b = userTernaryAxis[axisKeys[i]]) !== null && _b !== void 0 ? _b : {});
+            const axis = merge(defaultTernary, (_a = userTernaryAxis.common) !== null && _a !== void 0 ? _a : {}, (_b = userTernaryAxis[axisKeys[i]]) !== null && _b !== void 0 ? _b : {});
             let rotation = 0, axisCenter;
-            if (axis.title.titlePosition === 'corner') {
+            if (axis.title.position === 'corner') {
                 axisCenter = axisCenters[1];
             }
             else {
@@ -458,7 +458,7 @@ function TernaryPlotPlugin(H) {
             axis.axisCenter = axisCenter;
             axis.title.style['rotation'] = rotation;
             axis.titleDirection =
-                titleDirections[axis.title.titlePosition === 'corner' ?
+                titleDirections[axis.title.position === 'corner' ?
                     2 :
                     (axis.title.offsetDirection === 'horizontal' ? 1 : 0)];
             axis.gridlineTicks = {};
@@ -504,7 +504,7 @@ function TernaryPlotPlugin(H) {
                 // Move one or two bottom titles down to avoid overlapping
                 // with gridLines
                 let offsetY = 0;
-                if (i !== 1 && (title.titlePosition === 'corner' || i === 0)) {
+                if (i !== 1 && (title.position === 'corner' || i === 0)) {
                     // Font metrics baseline is better than bbox.height
                     // for better baseline alignment
                     const fm = chart.renderer.fontMetrics(axis.titleElem);

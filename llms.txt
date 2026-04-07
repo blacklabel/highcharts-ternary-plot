@@ -106,7 +106,7 @@ Highcharts.chart('container', {
 
 ### ternaryAxis
 
-Configure axes individually (`a`, `b`, `c`) or via `plotOptions` for shared settings.
+Configure axes individually (`a`, `b`, `c`) or via `common` for shared settings.
 
 Supports: `tickInterval`, `gridLineColor`, `gridLineWidth`, `gridLineDashStyle`, `lineColor`, `lineWidth`, `lineDashStyle`, `median`, `labels`, `title`.
 

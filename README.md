@@ -54,7 +54,7 @@ If your data has three parts that sum to a constant and you want to see clusteri
 
 - `ternaryscatter` series type — scatter plot on triangular axes
 - Barycentric color blending via `componentColors` — each point's color interpolated from three corner colors
-- Per-axis configuration (`a`, `b`, `c`) with shared `plotOptions`
+- Per-axis configuration (`a`, `b`, `c`) with shared `common` options
 - Separate styling for triangle sides (`lineColor`, `lineWidth`, `lineDashStyle`) and grid lines (`gridLineColor`, `gridLineWidth`, `gridLineDashStyle`)
 - Median lines (vertex to midpoint of opposite side)
 - Bubble sizing via `minSize` / `maxSize` with area-proportional scaling
@@ -173,13 +173,13 @@ Highcharts.chart('container', {
 
 ### `ternaryAxis`
 
-`object` — Configure the three axes. `plotOptions` applies to all axes; `a`, `b`, `c` allow per-axis overrides.
+`object` — Configure the three axes. `common` applies to all axes; `a`, `b`, `c` allow per-axis overrides.
 
 #### Structure
 
-| Option                    | Description                               |
-| ------------------------- | ----------------------------------------- |
-| `ternaryAxis.plotOptions` | Shared options applied to all three axes. |
+| Option                 | Description                               |
+| ---------------------- | ----------------------------------------- |
+| `ternaryAxis.common`   | Shared options applied to all three axes. |
 | `ternaryAxis.a`           | Options for the bottom axis (A).          |
 | `ternaryAxis.b`           | Options for the right axis (B).           |
 | `ternaryAxis.c`           | Options for the left axis (C).            |
@@ -226,7 +226,7 @@ Highcharts.chart('container', {
 | `title.text`            | `string`                          | —          | Axis title text.                                             |
 | `title.style`           | `object`                          | —          | CSS style object applied to the title.                       |
 | `title.margin`          | `number`                          | `30`       | Distance between the title and the triangle edge, in pixels. |
-| `title.titlePosition`   | `'corner' \| 'side'`              | `'corner'` | Position of the title relative to the triangle.              |
+| `title.position`        | `'corner' \| 'side'`              | `'corner'` | Position of the title relative to the triangle.              |
 | `title.offsetDirection` | `'horizontal' \| 'perpendicular'` | —          | Direction the title offsets from its axis edge.              |
 | `title.rotation`        | `number`                          |            | Title rotation in degrees. Overrides the automatic rotation. |
 
@@ -245,6 +245,7 @@ Set `series.type` to `'ternaryscatter'`. Data points accept `[a, b, c]` arrays o
 | `componentColors.b`         | `string`                 | Color at the B vertex.                                                                                         |
 | `componentColors.c`         | `string`                 | Color at the C vertex.                                                                                         |
 | `componentColors.alpha`     | `number`                 | Opacity applied to all points (`0`–`1`). Overrides any alpha in the color strings.                            |
+| `componentColors.strokeAlpha` | `number`               | Opacity for the point stroke (border). When set, the stroke uses the same barycentric blend as the fill but with this alpha. |
 
 ## Migrating from v1 to v2
 
@@ -286,7 +287,7 @@ ternaryAxis: [
 
 // v2
 ternaryAxis: {
-  plotOptions: { tickInterval: 10 },  // shared options (optional)
+  common: { tickInterval: 10 },  // shared options (optional)
   a: { title: { text: 'A' } },
   b: { title: { text: 'B' } },
   c: { title: { text: 'C' } }

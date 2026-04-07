@@ -14,22 +14,24 @@ const fs = require('fs');
 // TypeScript project (reads tsconfig.json)
 const tsProject = gulpTypescript.createProject('tsconfig.json');
 
+const { version } = require('./package.json');
+
 const decorator = [
   '/**',
   '----',
   '*',
-  '* Highcharts Ternary Plot v0.1.0',
+  `* Highcharts Ternary Plot v${version}`,
   '*',
-  '* (c) 2012-2025 Black Label, Rafał Sebestjański',
+  '* (c) 2012-2026 Black Label, Rafał Sebestjański',
   '*',
-  '* License: Creative Commons Attribution (CC)',
+  '* License: MIT',
   '*/',
   ''
 ];
 
 // Step 1: Compile TS → JS (no wrapping yet)
 gulp.task('tsc', () => {
-  return gulp.src('ts/ternary-plot.ts')
+  return gulp.src('ts/**/*.ts')
     .pipe(tsProject())
     .js
     .pipe(rename('ternary-plot.js'))

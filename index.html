@@ -1,84 +1,331 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ternary Plot</title>
+    <title>Highcharts Ternary Plot — Triangular / Barycentric Diagram Plugin</title>
+    <meta name="description" content="Ternary plot plugin for Highcharts. Create triangular and barycentric diagrams to visualize three-component composition data. TypeScript support, zero dependencies.">
+    <link rel="canonical" href="https://blacklabel.github.io/highcharts-ternary-plot/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://blacklabel.github.io/highcharts-ternary-plot/">
+    <meta property="og:title" content="Highcharts Ternary Plot — Triangular / Barycentric Diagram Plugin">
+    <meta property="og:description" content="Ternary plot plugin for Highcharts. Create triangular and barycentric diagrams to visualize three-component composition data. TypeScript support, zero dependencies.">
+    <meta property="og:site_name" content="Highcharts Ternary Plot by Black Label">
+    <meta property="og:image" content="https://blacklabel.github.io/highcharts-ternary-plot/assets/docs/og-image.png">
+    <meta property="og:image:width" content="2400">
+    <meta property="og:image:height" content="1800">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Highcharts Ternary Plot — Triangular / Barycentric Diagram Plugin">
+    <meta name="twitter:description" content="Ternary plot plugin for Highcharts. Create triangular and barycentric diagrams to visualize three-component composition data. TypeScript support, zero dependencies.">
+    <meta name="twitter:image" content="https://blacklabel.github.io/highcharts-ternary-plot/assets/docs/og-image.png">
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Highcharts Ternary Plot",
+        "description": "Ternary / triangular plot plugin for Highcharts. Visualize three-component composition data with barycentric diagrams. TypeScript support included.",
+        "url": "https://blacklabel.github.io/highcharts-ternary-plot/",
+        "downloadUrl": "https://www.npmjs.com/package/highcharts-ternary-plot",
+        "softwareVersion": "2.0.0",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "Black Label",
+            "url": "https://blacklabel.net/highcharts/"
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "codeRepository": "https://github.com/blacklabel/highcharts-ternary-plot",
+        "keywords": "ternary plot, triangular chart, barycentric diagram, Highcharts plugin, data visualization, three-component composition"
+    }
+    </script>
+
+    <!-- Prevent flash of wrong theme: detect preference before CSS renders -->
+    <script>
+        (function () {
+            const saved = localStorage.getItem('ternary-theme');
+            const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', saved || system);
+        }());
+    </script>
 
     <link rel="stylesheet" type="text/css" href="css/styles.css">
 
-    <script src="js/highcharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@12.5.0/highcharts.js"></script>
+
+    <!-- Set Highcharts global theme before charts are created -->
+    <script>
+        (function () {
+            const theme = document.documentElement.getAttribute('data-theme'),
+                isDark = theme === 'dark';
+
+            Highcharts.setOptions({
+                chart: {
+                    backgroundColor: null
+                },
+                title: {
+                    style: {
+                        color: isDark ? 'rgba(255,255,255,0.78)' : '#1A1A18'
+                    }
+                },
+                subtitle: {
+                    style: {
+                        color: isDark ? 'rgba(255,255,255,0.45)' : '#6B6B68'
+                    }
+                },
+                legend: {
+                    itemStyle: {
+                        color: isDark ? 'rgba(255,255,255,0.62)' : '#6B6B68',
+                        fontFamily: 'Inter, system-ui, sans-serif',
+                        fontSize: '13px',
+                        fontWeight: '500'
+                    },
+                    itemHoverStyle: {
+                        color: isDark ? 'rgba(255,255,255,0.78)' : '#1A1A18'
+                    }
+                },
+                credits: {
+                    style: {
+                        color: isDark ? '#555551' : '#999994'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: isDark ? '#1C2129' : '#FFFFFF',
+                    style: {
+                        color: isDark ? '#E6E6E4' : '#1A1A18',
+                        fontSize: '13px'
+                    },
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    padding: 14,
+                    shadow: {
+                        color: 'rgba(0,0,0,0.08)',
+                        offsetX: 0,
+                        offsetY: 4,
+                        opacity: 1,
+                        width: 20
+                    }
+                },
+                plotOptions: {
+                    series: {
+                        dataLabels: {
+                            style: {
+                                color: isDark ? '#E6E6E4' : '#1A1A18',
+                                textOutline: 'none'
+                            }
+                        }
+                    }
+                },
+                ternaryAxis: {
+                    common: {
+                        lineColor: isDark ? '#30363D' : '#d6d6d6',
+                        gridLineColor: isDark ? '#30363D' : '#d6d6d6',
+                        title: {
+                            style: {
+                                color: isDark ? 'rgba(255,255,255,0.62)' : '#6B6B68',
+                                fontWeight: '400'
+                            }
+                        },
+                        labels: {
+                            style: {
+                                color: isDark ? 'rgba(255,255,255,0.55)' : '#6B6B68'
+                            }
+                        }
+                    }
+                }
+            });
+        }());
+    </script>
+
     <script src="js/ternary-plot.js"></script>
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
+
+    <!-- Fixed site header -->
+    <header class="site-header" id="site-header">
+        <div class="container">
             <div class="header-content">
                 <div class="title-section">
                     <h1 class="main-title">Ternary Plot</h1>
-                    <p class="subtitle">
-                        by <a href="https://blacklabel.net/highcharts/" target="_blank" rel="noopener noreferrer">Black Label</a>
-                    </p>
+                    <p class="subtitle">Ternary / triangular diagrams for Highcharts &mdash; by <a href="https://blacklabel.net/highcharts/" target="_blank" rel="noopener noreferrer">Black Label</a></p>
                 </div>
-                <div class="header-logo">
-                    <a href="https://blacklabel.net/highcharts/" target="_blank" rel="noopener noreferrer">
-                        <img src="assets/icons/blLogo.svg" alt="Black Label Logo" class="bl-logo">
+                <div class="header-right">
+                    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme">
+                        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </button>
+                    <a href="https://blacklabel.net/" target="_blank" rel="noopener noreferrer">
+                        <img src="assets/icons/blLogo.svg" alt="Black Label" class="bl-logo">
                     </a>
                 </div>
             </div>
+            <nav class="demo-nav" aria-label="Demo sections">
+                <a href="#section-languages" class="nav-link">Vocabulary Chart</a>
+                <a href="#section-info" class="nav-link">Get Started</a>
+                <a href="#section-electricity" class="nav-link">Electricity Chart</a>
+                <a href="#section-usage" class="nav-link">Minimal Usage</a>
+            </nav>
         </div>
+    </header>
 
-        <div class="content">
-            <div class="chart-section">
-                <div class="chart-container">
-                    <div id="chart"></div>
+    <main class="page-body">
+
+        <!-- 1. Languages bubble chart -->
+        <section class="page-section page-section--languages" id="section-languages">
+            <div class="container">
+                <div class="chart-container chart-container--languages">
+                    <div id="chart-languages"></div>
                 </div>
+                <div class="lang-filter" id="lang-filter"></div>
+            </div>
+        </section>
 
-                <div class="requirements-content">
-                    <div class="requirement-card">
-                        <div class="requirement-card-header">
-                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Requirements</h3>
-                        </div>
-                        <ul>
-                            <li><span style="display: inline-block; width: 90px">Highcharts</span> 12.0.0 or newer</li>
-                        </ul>
-                    </div>
-                    <div class="requirement-card">
-                        <div class="requirement-card-header">
-                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Code</h3>
-                        </div>
-                        <ul>
-                            <li><span style="display: inline-block; width: 90px">Code</span><a href="https://github.com/blacklabel/highcharts-ternary-plot"
-                                    target="_blank">Source Code</a></li>
-                            <li><span style="display: inline-block; width: 90px">Issues</span><a href="https://github.com/blacklabel/highcharts-ternary-plot/issues"
-                                    target="_blank">Bug Reports</a></li>
-                        </ul>
-                    </div>
-                    <div class="requirement-card">
-                        <div class="requirement-card-header">
-                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Installation</h3>
-                        </div>
-                        <div class="install-methods">
-                            <div class="install-method">
-                                <span style="display: inline-block; width: 90px">NPM</span>
+        <!-- 2. Get started / info -->
+        <section class="page-section page-section--info" id="section-info">
+            <div class="container">
+                <div class="info-grid">
+
+                    <div class="info-card info-card--wide">
+                        <h3 class="info-card-title">
+                            <img src="assets/icons/Arrow.svg" alt="" class="h3-arrow">
+                            Installation
+                        </h3>
+                        <div class="install-block">
+                            <span class="install-label">NPM</span>
+                            <div class="copy-wrapper">
                                 <code>npm install highcharts-ternary-plot</code>
-                            </div>
-                            <div class="install-method">
-                                <span style="display: inline-block; width: 90px">CDN</span>
-                                <code>&lt;script src="https://unpkg.com/highcharts-ternary-plot@latest/dist/ternary-plot.js"&gt;&lt;/script&gt;</code>
+                                <button class="copy-btn" data-copy="npm install highcharts-ternary-plot" aria-label="Copy NPM command">
+                                    <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                    </svg>
+                                    <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
-
+                        <div class="install-block">
+                            <span class="install-label">CDN</span>
+                            <div class="copy-wrapper">
+                                <code>&lt;script src="https://cdn.jsdelivr.net/<wbr>npm/highcharts-ternary-plot@2.0.0/<wbr>js/ternary-plot.js"&gt;&lt;/script&gt;</code>
+                                <button class="copy-btn" data-copy='<script src="https://cdn.jsdelivr.net/npm/highcharts-ternary-plot@2.0.0/js/ternary-plot.js"></script>' aria-label="Copy CDN script tag">
+                                    <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                    </svg>
+                                    <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="requirement-card">
-                        <div class="requirement-card-header">
-                            <h3><img src="assets/icons/Arrow.svg" alt="Arrow" class="h3-arrow">Usage example</h3>
-                        </div>
-                        <div class="usage-example">
-                            <pre><code>// After loading Highcharts and the plugin
+                    <div class="info-card">
+                        <h3 class="info-card-title">
+                            <img src="assets/icons/Arrow.svg" alt="" class="h3-arrow">
+                            Info
+                        </h3>
+                        <ul class="info-list">
+                            <li><span class="info-label">Version</span> <a href="https://github.com/blacklabel/highcharts-ternary-plot/releases" target="_blank" rel="noopener noreferrer">v2.0.0</a></li>
+                            <li><span class="info-label">Requires</span> <a href="https://www.highcharts.com/products/highcharts/" target="_blank" rel="noopener noreferrer">Highcharts 12.0.0+</a></li>
+                            <li><span class="info-label">TypeScript</span> Included</li>
+                            <li><span class="info-label">Browser</span> All modern browsers</li>
+                            <li><span class="info-label">License</span> <a href="https://github.com/blacklabel/highcharts-ternary-plot/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a></li>
+                            <li><span class="info-label">Changelog</span> <a href="https://github.com/blacklabel/highcharts-ternary-plot/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">View changelog</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3 class="info-card-title">
+                            <img src="assets/icons/Arrow.svg" alt="" class="h3-arrow">
+                            Links
+                        </h3>
+                        <ul class="info-list">
+                            <li>
+                                <span class="info-label">Source</span>
+                                <a href="https://github.com/blacklabel/highcharts-ternary-plot" target="_blank" rel="noopener noreferrer">GitHub repository</a>
+                            </li>
+                            <li>
+                                <span class="info-label">NPM</span>
+                                <a href="https://www.npmjs.com/package/highcharts-ternary-plot" target="_blank" rel="noopener noreferrer">npm package</a>
+                            </li>
+                            <li>
+                                <span class="info-label">Author</span>
+                                <a href="http://blacklabel.net" target="_blank" rel="noopener noreferrer">Black Label</a>
+                            </li>
+                            <li>
+                                <span class="info-label">Feedback</span>
+                                <a href="https://github.com/blacklabel/highcharts-ternary-plot/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Electricity chart -->
+        <section class="page-section" id="section-electricity">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Electricity mix by region</h2>
+                    <p class="section-description">Shifts in renewable, fossil, and nuclear energy share from 2015 to 2024. Larger markers indicate the most recent year.</p>
+                </div>
+                <div class="chart-container">
+                    <div id="chart-electricity"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Minimal usage chart + code example -->
+        <section class="page-section" id="section-usage">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Minimal usage</h2>
+                    <p class="section-description">A simple ternary scatter plot — three axes, one series, six data points. The starting point for your own chart.</p>
+                </div>
+                <div class="chart-container">
+                    <div id="chart-usage"></div>
+                </div>
+                <div class="usage-example">
+                    <div class="usage-example-header">
+                        <h3 class="usage-example-title">Usage example</h3>
+                        <button class="copy-btn copy-btn--code" id="copy-usage" aria-label="Copy usage example">
+                            <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="code-block">
+                        <code id="usage-code">// After loading Highcharts and the plugin:
+// &lt;script src="highcharts.js"&gt;&lt;/script&gt;
+// &lt;script src="ternary-plot.js"&gt;&lt;/script&gt;
+
 Highcharts.chart('container', {
     chart: {
         ternary: true
@@ -88,33 +335,16 @@ Highcharts.chart('container', {
         text: 'Diet macronutrients'
     },
 
-    ternaryAxis: [{
-        title: {
-            text: 'Protein'
-        }
-    }, {
-        title: {
-            text: 'Fat'
-        }
-    }, {
-        title: {
-            text: 'Carbohydrates'
-        }
-    }],
+    ternaryAxis: {
+        a: { title: { text: 'Protein' } },
+        b: { title: { text: 'Fat' } },
+        c: { title: { text: 'Carbohydrates' } }
+    },
 
     series: [{
         type: 'ternaryscatter',
         name: 'Diet macronutrients',
-        keys: ['x', 'y', 'z', 'name'],
-        tooltip: {
-            headerFormat: '',
-            pointFormat: `
-                &lt;strong>{point.name} diet:&lt;/strong&gt&lt;br&gt
-                Protein: {point.x}%&lt;br&gt
-                Fat: {point.y}%&lt;br&gt
-                Carbohydrates: {point.z}%
-            `
-        },
+        keys: ['a', 'b', 'c', 'name'],
         data: [
             [20, 70, 10, 'Keto'],
             [30, 40, 30, 'Paleo'],
@@ -124,438 +354,19 @@ Highcharts.chart('container', {
             [0, 100, 0, 'Fat-only']
         ]
     }]
-});</code></pre>
-                        </div>
+});</code>
                     </div>
                 </div>
-
             </div>
-        </div>
-    </div>
+        </section>
 
-    <script>
-        const energyMixData = {
-            "World": [
-                {
-                    "year": 2015,
-                    "renewables": 22.97,
-                    "fossil": 66.48,
-                    "nuclear": 10.55
-                },
-                {
-                    "year": 2016,
-                    "renewables": 23.73,
-                    "fossil": 65.86,
-                    "nuclear": 10.41
-                },
-                {
-                    "year": 2017,
-                    "renewables": 24.47,
-                    "fossil": 65.34,
-                    "nuclear": 10.2
-                },
-                {
-                    "year": 2018,
-                    "renewables": 25.09,
-                    "fossil": 64.86,
-                    "nuclear": 10.05
-                },
-                {
-                    "year": 2019,
-                    "renewables": 26.09,
-                    "fossil": 63.65,
-                    "nuclear": 10.26
-                },
-                {
-                    "year": 2020,
-                    "renewables": 28,
-                    "fossil": 62.09,
-                    "nuclear": 9.91
-                },
-                {
-                    "year": 2021,
-                    "renewables": 28.1,
-                    "fossil": 62.12,
-                    "nuclear": 9.78
-                },
-                {
-                    "year": 2022,
-                    "renewables": 29.45,
-                    "fossil": 61.42,
-                    "nuclear": 9.13
-                },
-                {
-                    "year": 2023,
-                    "renewables": 30.26,
-                    "fossil": 60.64,
-                    "nuclear": 9.1
-                },
-                {
-                    "year": 2024,
-                    "renewables": 31.82,
-                    "fossil": 59.2,
-                    "nuclear": 8.98
-                }
-            ],
-            "United States": [
-                {
-                    "year": 2015,
-                    "renewables": 13.63,
-                    "fossil": 66.85,
-                    "nuclear": 19.52
-                },
-                {
-                    "year": 2016,
-                    "renewables": 15.29,
-                    "fossil": 65,
-                    "nuclear": 19.71
-                },
-                {
-                    "year": 2017,
-                    "renewables": 17.45,
-                    "fossil": 62.68,
-                    "nuclear": 19.86
-                },
-                {
-                    "year": 2018,
-                    "renewables": 17.45,
-                    "fossil": 63.34,
-                    "nuclear": 19.21
-                },
-                {
-                    "year": 2019,
-                    "renewables": 18.29,
-                    "fossil": 62.24,
-                    "nuclear": 19.46
-                },
-                {
-                    "year": 2020,
-                    "renewables": 20.32,
-                    "fossil": 60.15,
-                    "nuclear": 19.54
-                },
-                {
-                    "year": 2021,
-                    "renewables": 20.74,
-                    "fossil": 60.49,
-                    "nuclear": 18.77
-                },
-                {
-                    "year": 2022,
-                    "renewables": 22.35,
-                    "fossil": 59.65,
-                    "nuclear": 18
-                },
-                {
-                    "year": 2023,
-                    "renewables": 22.68,
-                    "fossil": 59.11,
-                    "nuclear": 18.22
-                },
-                {
-                    "year": 2024,
-                    "renewables": 24.06,
-                    "fossil": 58.13,
-                    "nuclear": 17.81
-                }
-            ],
-            "Europe (EI)": [
-                {
-                    "year": 2015,
-                    "renewables": 31.71,
-                    "fossil": 41.99,
-                    "nuclear": 24.3
-                },
-                {
-                    "year": 2016,
-                    "renewables": 32.12,
-                    "fossil": 42.41,
-                    "nuclear": 23.42
-                },
-                {
-                    "year": 2017,
-                    "renewables": 32.08,
-                    "fossil": 42.82,
-                    "nuclear": 23.04
-                },
-                {
-                    "year": 2018,
-                    "renewables": 34.52,
-                    "fossil": 40.45,
-                    "nuclear": 23.02
-                },
-                {
-                    "year": 2019,
-                    "renewables": 36.64,
-                    "fossil": 38.13,
-                    "nuclear": 23.25
-                },
-                {
-                    "year": 2020,
-                    "renewables": 40.79,
-                    "fossil": 35.73,
-                    "nuclear": 21.46
-                },
-                {
-                    "year": 2021,
-                    "renewables": 39.6,
-                    "fossil": 36.66,
-                    "nuclear": 21.83
-                },
-                {
-                    "year": 2022,
-                    "renewables": 41.25,
-                    "fossil": 37.58,
-                    "nuclear": 19.01
-                },
-                {
-                    "year": 2023,
-                    "renewables": 46.64,
-                    "fossil": 31.9,
-                    "nuclear": 19.27
-                },
-                {
-                    "year": 2024,
-                    "renewables": 49.17,
-                    "fossil": 28.92,
-                    "nuclear": 19.71
-                }
-            ],
-            "China": [
-                {
-                    "year": 2015,
-                    "renewables": 23.97,
-                    "fossil": 73.08,
-                    "nuclear": 2.95
-                },
-                {
-                    "year": 2016,
-                    "renewables": 24.83,
-                    "fossil": 71.7,
-                    "nuclear": 3.48
-                },
-                {
-                    "year": 2017,
-                    "renewables": 25.24,
-                    "fossil": 71,
-                    "nuclear": 3.76
-                },
-                {
-                    "year": 2018,
-                    "renewables": 25.61,
-                    "fossil": 70.27,
-                    "nuclear": 4.12
-                },
-                {
-                    "year": 2019,
-                    "renewables": 26.85,
-                    "fossil": 68.5,
-                    "nuclear": 4.65
-                },
-                {
-                    "year": 2020,
-                    "renewables": 28.09,
-                    "fossil": 67.2,
-                    "nuclear": 4.71
-                },
-                {
-                    "year": 2021,
-                    "renewables": 28.69,
-                    "fossil": 66.53,
-                    "nuclear": 4.77
-                },
-                {
-                    "year": 2022,
-                    "renewables": 30.18,
-                    "fossil": 65.1,
-                    "nuclear": 4.72
-                },
-                {
-                    "year": 2023,
-                    "renewables": 30.61,
-                    "fossil": 64.8,
-                    "nuclear": 4.6
-                },
-                {
-                    "year": 2024,
-                    "renewables": 33.7,
-                    "fossil": 61.83,
-                    "nuclear": 4.47
-                }
-            ],
-            "India": [
-                {
-                    "year": 2015,
-                    "renewables": 14.63,
-                    "fossil": 82.45,
-                    "nuclear": 2.92
-                },
-                {
-                    "year": 2016,
-                    "renewables": 14.44,
-                    "fossil": 82.85,
-                    "nuclear": 2.72
-                },
-                {
-                    "year": 2017,
-                    "renewables": 15.45,
-                    "fossil": 81.99,
-                    "nuclear": 2.56
-                },
-                {
-                    "year": 2018,
-                    "renewables": 16.29,
-                    "fossil": 81.22,
-                    "nuclear": 2.48
-                },
-                {
-                    "year": 2019,
-                    "renewables": 18.14,
-                    "fossil": 79.06,
-                    "nuclear": 2.8
-                },
-                {
-                    "year": 2020,
-                    "renewables": 19.4,
-                    "fossil": 77.76,
-                    "nuclear": 2.84
-                },
-                {
-                    "year": 2021,
-                    "renewables": 19.01,
-                    "fossil": 78.38,
-                    "nuclear": 2.61
-                },
-                {
-                    "year": 2022,
-                    "renewables": 20.26,
-                    "fossil": 77.19,
-                    "nuclear": 2.56
-                },
-                {
-                    "year": 2023,
-                    "renewables": 19.32,
-                    "fossil": 78.17,
-                    "nuclear": 2.51
-                },
-                {
-                    "year": 2024,
-                    "renewables": 19.56,
-                    "fossil": 77.75,
-                    "nuclear": 2.69
-                }
-            ]
-        };
+    </main>
 
-        Highcharts.chart('chart', {
+    <script src="examples/programming-languages.js"></script>
+    <script src="examples/electricity.js"></script>
+    <script src="examples/usage-example.js"></script>
 
-            chart: {
-                ternary: true,
-                ternarySpacing: 35,
-                height: 600
-            },
-
-            credits: {
-                enabled: false
-            },
-
-            title: {
-                text: 'Changes in Electricity Generation Mix (%)<br/>2015-2024',
-                style: {
-                    fontSize: '30px',
-                    fontFamily: 'Inter',
-                    fontWeight: 500
-                }
-            },
-
-            subtitle: {
-                text: `Each sequence shows annual progression from 2015 to 2024.<br/>
-                    <span style="font-size: 10px;">Data source: Our World in Data<span>`,
-                style: {
-                    fontSize: '16px',
-                    opacity: 0.6,
-                    fontFamily: 'Inter',
-                    fontWeight: 500
-                }
-            },
-
-            ternaryAxis: [{
-                tickInterval: 10,
-                title: {
-                    useHTML: true,
-                    text: 'Higher renewables share (%)',
-                    style: {
-                        fontWeight: '500',
-                    }
-                },
-                labels: {
-                    style: {
-                        color: '#9c9c9c'
-                    }
-                }
-            }, {
-                tickInterval: 10,
-                title: {
-                    text: 'Higher ossil share (%)',
-                    style: {
-                        fontWeight: '500',
-                    }
-                },
-                labels: {
-                    style: {
-                        color: '#9c9c9c'
-                    }
-                }
-            }, {
-                tickInterval: 10,
-                title: {
-                    text: 'Higher nuclear share (%)',
-                    style: {
-                        fontWeight: '500',
-                    }
-                },
-                labels: {
-                    style: {
-                        color: '#9c9c9c'
-                    }
-                }
-            }],
-
-            plotOptions: {
-                ternaryscatter: {
-                    tooltip: {
-                        pointFormat: '<b>{point.custom.entity} ({point.custom.year}):</b><br/>' +
-                            'Renewables share: {point.x}%<br/>' +
-                            'Ossil: {point.y}%<br/>' +
-                            'Nuclear: {point.z}%'
-                    },
-                    marker: {
-                        radius: 3,
-                        symbol: 'circle',
-                        lineWidth: 0.5
-                    },
-                    lineWidth: 0.5
-                }
-            },
-
-            series: Object.entries(energyMixData).map(([name, points]) => ({
-                type: 'ternaryscatter',
-                name,
-                data: points.map(point => ({
-                    x: point.renewables,
-                    y: point.fossil,
-                    z: point.nuclear,
-                    custom: {
-                        entity: name,
-                        year: point.year
-                    },
-                    marker: point.year === 2024 ? { radius: 6 } : undefined
-                }))
-            }))
-
-        });
-
-    </script>
+    <script src="js/main.js"></script>
 </body>
 
 </html>

@@ -1,11 +1,11 @@
 /**
 ----
 *
-* Highcharts Ternary Plot v0.1.0
+* Highcharts Ternary Plot v2.0.0
 *
-* (c) 2012-2025 Black Label, Rafał Sebestjański
+* (c) 2012-2026 Black Label, Rafał Sebestjański
 *
-* License: Creative Commons Attribution (CC)
+* License: MIT
 */
 (function (factory) {
   if (typeof module === 'object' && module.exports) {
@@ -15,20 +15,25 @@
   }
 }(function (Highcharts) {
 function TernaryPlotPlugin(H) {
-    if (H.ternaryPlotPluginLoaded) {
+    if (H.ternaryPlotPluginLoaded)
         return;
-    }
     H.ternaryPlotPluginLoaded = true;
-    const { addEvent, merge, pick, correctFloat, fireEvent, seriesType, wrap, Chart, Series } = H;
+    // ---- Utils ----
+    const { addEvent, Chart, clamp, color, correctFloat, defined, fireEvent, isNumber, merge, pick, Series, seriesType, wrap } = H;
+    // ---- Defaults ----
     const defaultTernary = {
         tickInterval: 50,
+        lineWidth: 1,
+        lineColor: '#d6d6d6',
+        lineDashStyle: 'Solid',
         gridLineWidth: 1,
         gridLineColor: '#d6d6d6',
-        minorTickInterval: 0,
-        minorGridLineWidth: 0,
-        minorGridLineColor: '#d6d6d6',
+        gridLineDashStyle: 'Solid',
         title: {
             text: 'Axis',
+            margin: 30,
+            x: 0,
+            y: 0,
             style: {
                 align: 'center',
                 zIndex: 2,
@@ -37,291 +42,579 @@ function TernaryPlotPlugin(H) {
             }
         },
         labels: {
-            align: 'center',
             zIndex: 2,
+            align: 'center',
+            distance: 6,
+            x: 0,
+            y: 0,
             style: {
                 fontSize: '0.8em'
             }
         }
     };
-    const AXES = [
-        // x-axis
-        { corner: [50, 0, 0], rotDefault: 0, titlePos: [0, -1] },
-        // y-axis
-        { corner: [50, 50, 0], rotDefault: 63, titlePos: [-1, 0] },
-        // z-axis
-        { corner: [0, 50, 0], rotDefault: -63, titlePos: [1, 0] }
-    ];
+    // ---- Chart prototype methods ----
+    Chart.prototype.resolveTernary = function (ternaryOpt) {
+        var _a, _b, _c;
+        if (!ternaryOpt)
+            return null;
+        const isObj = typeof ternaryOpt === 'object' && ternaryOpt !== null;
+        if (isObj && ternaryOpt.enabled === false)
+            return null;
+        const opts = isObj ? ternaryOpt : {};
+        return {
+            enabled: true,
+            angle: (_a = opts.angle) !== null && _a !== void 0 ? _a : 60,
+            spacing: (_b = opts.spacing) !== null && _b !== void 0 ? _b : 35,
+            sumTo: (_c = opts.sumTo) !== null && _c !== void 0 ? _c : 100
+        };
+    };
+    Chart.prototype.resolveMedian = function (medianOpt) {
+        var _a, _b, _c;
+        if (!medianOpt)
+            return null;
+        const isObj = typeof medianOpt === 'object' && medianOpt !== null;
+        if (isObj && medianOpt.enabled === false)
+            return null;
+        const opts = isObj ? medianOpt : {};
+        return {
+            enabled: true,
+            color: (_a = opts.color) !== null && _a !== void 0 ? _a : '#d6d6d6',
+            width: (_b = opts.width) !== null && _b !== void 0 ? _b : 1,
+            dashStyle: (_c = opts.dashStyle) !== null && _c !== void 0 ? _c : 'Solid'
+        };
+    };
     // Render ternary axis gridlines. Keep it on chart for easy access
-    Chart.prototype.getGrids = function (index, width, interval, stroke) {
-        const chart = this;
-        const { plotTop } = chart;
-        const ticks = {};
-        if (!interval || interval <= 0) {
-            return ticks;
-        }
-        for (let cursor = 0; cursor <= 100; cursor += interval) {
-            let pos;
-            let posEnd;
-            let tick;
-            switch (index) {
-                case 1:
-                    pos = chart.toPerspective([0, cursor, 0]);
-                    posEnd = chart.toPerspective([100 - cursor, cursor, 0]);
-                    tick = [posEnd[0] + 4, posEnd[1]];
-                    break;
-                case 2:
-                    pos = chart.toPerspective([cursor, 0, 0]);
-                    posEnd = chart.toPerspective([0, cursor, 0]);
-                    tick = [posEnd[0] - 2, posEnd[1] - 4];
-                    break;
-                default:
-                    pos = chart.toPerspective([cursor, 100 - cursor, 0]);
-                    posEnd = chart.toPerspective([cursor, 0, 0]);
-                    tick = [posEnd[0] - 2, posEnd[1] + 4];
-            }
-            ticks[cursor] = chart.renderer
-                .path()
-                .attr({
-                'stroke-width': width,
+    Chart.prototype.getGridLines = function (axis, index) {
+        const gridLines = {};
+        const interval = axis.tickInterval;
+        if (!interval || interval <= 0)
+            return gridLines;
+        const chart = this, ternaryOpts = chart.ternaryOpts, sumTo = ternaryOpts.sumTo;
+        let p1, p2;
+        const medianOpts = chart.resolveMedian(axis.median);
+        function renderLine(path, median, isAxisLine) {
+            const stroke = median ? median.color
+                : (isAxisLine ? axis.lineColor : axis.gridLineColor), strokeWidth = median ? median.width
+                : (isAxisLine ? axis.lineWidth : axis.gridLineWidth), dashStyle = median ? median.dashStyle
+                : (isAxisLine ? axis.lineDashStyle : axis.gridLineDashStyle);
+            const attrs = {
+                'stroke-width': strokeWidth,
                 stroke,
-                zIndex: 2,
-                d: [
-                    'M', pos[0], pos[1] + plotTop,
-                    'L', posEnd[0], posEnd[1] + plotTop,
-                    'L', tick[0], tick[1] + plotTop
-                ]
-            })
+                zIndex: 2
+            };
+            if (median || (isAxisLine && dashStyle && dashStyle !== 'Solid')) {
+                attrs['shape-rendering'] = 'geometricPrecision';
+            }
+            if (dashStyle && dashStyle !== 'Solid') {
+                attrs.dashstyle = dashStyle;
+            }
+            return chart.renderer
+                .path(path)
+                .attr(attrs)
                 .add();
         }
-        return ticks;
+        if (medianOpts) {
+            const sidesAndMedians = [
+                // Sides: ordered to match axes (a=bottom, b=right, c=left)
+                [[0, 0], [100, 0]], // bottom side (axis a)
+                [[100, 0], [0, 100]], // right side  (axis b)
+                [[0, 100], [0, 0]], // left side   (axis c)
+                // Medians: opposite vertex → midpoint of axis side
+                [[0, 100], [50, 0]], // top → bottom midpoint   (axis a)
+                [[0, 0], [50, 50]], // bottom-left → right midpoint (axis b)
+                [[100, 0], [0, 50]] // bottom-right → left midpoint (axis c)
+            ];
+            for (let i = 0; i < 2; i++) {
+                const [from, to] = sidesAndMedians[index + i * 3];
+                p1 = chart.ternaryToPlot(from);
+                p2 = chart.ternaryToPlot(to);
+                const path = [
+                    'M', chart.plotLeft + p1[0], p1[1] + chart.plotTop,
+                    'L', chart.plotLeft + p2[0], p2[1] + chart.plotTop
+                ];
+                gridLines[i] = renderLine(path, i % 2 === 1 ? medianOpts : undefined, i % 2 === 0);
+            }
+        }
+        else {
+            for (let cursor = 0; cursor <= sumTo; cursor += interval) {
+                const gridLineExtension = axis.gridLineExtension || 0, alpha = clamp(ternaryOpts.angle, 1, 89)
+                    * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
+                switch (index) {
+                    // First grid (bottom axis)
+                    case 0:
+                        p1 = chart.ternaryToPlot([cursor, sumTo - cursor], true);
+                        p2 = chart.ternaryToPlot([cursor, 0], true);
+                        p2[0] = p2[0] - gridLineExtension / 2;
+                        p2[1] = p2[1] + heightRatio * gridLineExtension;
+                        break;
+                    // Second grid (right axis)
+                    case 1:
+                        p1 = chart.ternaryToPlot([0, cursor], true);
+                        p2 = chart.ternaryToPlot([sumTo - cursor, cursor], true);
+                        p2[0] = p2[0] + gridLineExtension;
+                        break;
+                    // Third grid (left axis)
+                    default:
+                        p1 = chart.ternaryToPlot([cursor, 0], true);
+                        p2 = chart.ternaryToPlot([0, cursor], true);
+                        p2[0] = p2[0] - gridLineExtension / 2;
+                        p2[1] = p2[1] - heightRatio * gridLineExtension;
+                }
+                const { plotLeft, plotTop } = chart;
+                const path = [
+                    'M', plotLeft + p1[0], plotTop + p1[1],
+                    'L', plotLeft + p2[0], plotTop + p2[1]
+                ];
+                gridLines[cursor] = renderLine(path, undefined, cursor === 0 || cursor === sumTo);
+            }
+        }
+        return gridLines;
     };
     // Render ternary axis labels. Keep it on chart for easy access
-    Chart.prototype.getLabels = function (axis, index, interval) {
-        const chart = this;
-        const { plotTop } = chart;
-        const labels = {};
-        const distance = 20;
-        if (!interval || interval <= 0) {
+    Chart.prototype.getLabels = function (axis, index) {
+        const labels = {}, interval = axis.tickInterval;
+        if (!interval || interval <= 0)
             return labels;
-        }
-        const { align, zIndex, style } = axis.labels;
-        for (let tick = 0; tick <= 100; tick += interval) {
-            let pos;
-            let offsetX = 0;
-            let offsetY = 0;
-            switch (index) {
-                case 2: // vertical left
-                    pos = chart.toPerspective([0, 100 - tick, 0]);
-                    offsetY = 3;
-                    offsetX = -distance;
-                    break;
-                case 0: // horizontal
-                    pos = chart.toPerspective([tick, 0, 0]);
-                    offsetY = distance + 3;
-                    offsetX = 0;
-                    break;
-                default: // vertical right
-                    pos = chart.toPerspective([100 - tick, tick, 0]);
-                    offsetY = 3;
-                    offsetX = distance;
-            }
-            labels[tick] = chart.renderer
-                .text(tick, pos[0] + offsetX, pos[1] + plotTop + offsetY)
+        const chart = this, ternaryOpts = chart.ternaryOpts, sumTo = ternaryOpts.sumTo, { plotLeft, plotTop } = chart, { align, zIndex, style, x, y } = axis.labels, gridLineExtension = axis.gridLineExtension || 0, labelMargin = axis.labels.distance || 0, distance = gridLineExtension + labelMargin, alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
+        for (let tick = 0; tick <= sumTo; tick += interval) {
+            const label = labels[tick] = chart.renderer
+                .text(String(tick), x, y)
                 .attr({ align, zIndex })
                 .css(style)
                 .add();
+            const fm = chart.renderer.fontMetrics(label), bb = label.getBBox();
+            let pos, offsetX = 0, offsetY = 0;
+            switch (index) {
+                case 0: // horizontal
+                    pos = chart.ternaryToPlot([tick, 0], true);
+                    if (gridLineExtension) {
+                        offsetX = -distance / 2;
+                        offsetY = heightRatio * distance + fm.b;
+                    }
+                    else {
+                        offsetY = distance + fm.b;
+                    }
+                    break;
+                case 1: // vertical right
+                    pos = chart.ternaryToPlot([sumTo - tick, tick], true);
+                    offsetX = distance + bb.width / 2;
+                    break;
+                default: // vertical left
+                    pos = chart.ternaryToPlot([0, sumTo - tick], true);
+                    if (gridLineExtension) {
+                        offsetX = -distance / 2;
+                        offsetY = -heightRatio * distance;
+                    }
+                    else {
+                        offsetX = -distance - bb.width / 2;
+                    }
+            }
+            label.translate(plotLeft + pos[0] + offsetX, plotTop + pos[1] + offsetY);
         }
         return labels;
     };
-    // Set ternarySpacing when initializing the chart
-    addEvent(Chart, 'init', function (e) {
-        const userOptions = e.args[0], chartOptions = userOptions.chart;
-        if (!chartOptions.ternary) {
-            return;
-        }
-        chartOptions.ternarySpacing = pick(chartOptions.ternarySpacing, 25);
-    });
-    // Fix for NaN clip box width issue before v12.1.0
-    if (Series.prototype.getClipBox) {
-        wrap(H.Series.prototype, 'getClipBox', function (p) {
-            const ret = p.call(this);
-            ret.width = this.chart.xAxis[0].len;
-            return ret;
-        });
-    }
+    // Convert ternary (a, b) to plot coordinates
+    // using 2D barycentric projection
+    Chart.prototype.ternaryToPlot = function (point, useSumTo) {
+        const chart = this, ternaryOpts = chart.ternaryOpts, spacing = ternaryOpts.spacing * 2, 
+        // α — angle between the triangle side and the base (0° < α < 90°)
+        alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, 
+        // Determine the length of the triangle's base from available space
+        baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio), 
+        // Shrink by spacing to get the final width
+        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? ternaryOpts.sumTo : 100, a = pick(point.a, point[0]), b = pick(point.b, point[1]), x = a * width / sumTo, y = b * width / sumTo, 
+        // Center within the plot area
+        centerX = (chart.plotWidth - width) / 2, centerY = (chart.plotHeight - width * heightRatio) / 2;
+        return [
+            x + y / 2 + centerX,
+            chart.plotHeight - y * heightRatio - centerY
+        ];
+    };
+    // 2D barycentric projection
+    //
+    // Only [x, y] is needed for calculations (x + y + z = sumTo)
+    //
+    // pH - plotHeight
+    //
+    // For any 0 < α < 90
+    //                            (50, 100·tan(α)/2)
+    //                                   / \
+    //                                  /   \
+    //                                 /     \
+    //                                /       \
+    //                               /         \
+    //                              /           \
+    //                             /             \
+    //                            /               \
+    //                           /                 \
+    //                          /                   \
+    //                         /                     \
+    //                        /                       \
+    //                       /                         \
+    //                      /                           \
+    //                     /                             \
+    //                    /     P(x+y/2, pH-(tan(α)/2)*y) \___
+    //                   /             ○                   \
+    //                  /             /|                    \
+    //                 /             / |                     \
+    //                /             /  |                      \
+    //               /           y /   | (tan(α)/2)*y          \ y
+    //              /             /    |                        \
+    //             /             /     |                         \
+    //            /α            / α    |                       α  \
+    //           /_____________/_______|___________________________\___
+    //   (0, 0)  |      x      |  y/2  |                             (100, 0)
     // Fix for NaN clip box width issue after v12.1.0
     // (getClipBox moved to Chart prototype)
     if (Chart.prototype.getClipBox) {
-        wrap(Chart.prototype, 'getClipBox', function (p, series, chartCoords) {
-            const ret = p.call(this, series, chartCoords);
+        wrap(Chart.prototype, 'getClipBox', function (proceed, series, chartCoords) {
+            const ret = proceed.call(this, series, chartCoords);
             ret.width = this.xAxis[0].len;
             return ret;
         });
     }
-    // Initialize ternary axes before rendering the chart
-    addEvent(Chart, 'beforeRender', function () {
-        const chart = this;
-        const { chart: chartOptions, ternaryAxis: userAxes = [] } = chart.options;
-        if (!chartOptions.ternary)
+    // ---- Series prototype methods ----
+    // Translate data points from ternary x,y to plotX,plotY
+    function translate() {
+        this.generatePoints();
+        if (!this.chart.ternaryOpts) {
+            this.points.forEach(p => { p.isNull = true; });
             return;
-        chart.ternarySpacing = chartOptions.ternarySpacing;
-        chart.ternaryAxis = AXES.map(({ corner, rotDefault, titlePos }, i) => {
-            var _a, _b, _c;
-            const axis = merge(defaultTernary, (_a = userAxes[i]) !== null && _a !== void 0 ? _a : {});
-            axis.corner = corner;
-            axis.title.style.rotation = pick((_c = (_b = userAxes[i]) === null || _b === void 0 ? void 0 : _b.title) === null || _c === void 0 ? void 0 : _c.rotation, rotDefault);
-            axis.title.pos = titlePos;
+        }
+        // Stub xAxis so that pointPlacementToXValue() and isRadial checks
+        // inside Highcharts internals don't throw on a non-cartesian series
+        this.xAxis = {
+            isRadial: false,
+            options: {
+                type: 'linear'
+            }
+        };
+        const series = this, chart = series.chart, xAxis = series.xAxis, points = series.points, dataLength = points.length, sumTo = chart.ternaryOpts.sumTo, pointPlacement = series.pointPlacementToXValue(), // #7860
+        dynamicallyPlaced = Boolean(pointPlacement);
+        let i, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
+        // Pre-compute min/max totals once per translate pass for getRadius()
+        if (series.options.minSize && series.options.maxSize) {
+            const allTotals = points.map((p) => p.total);
+            series._radiusCache = {
+                min: Math.min(...allTotals),
+                max: Math.max(...allTotals)
+            };
+        }
+        // Translate each point
+        for (i = 0; i < dataLength; i++) {
+            const point = points[i], xValue = point.a;
+            point.yBottom = undefined;
+            const perspectivePoint = chart.ternaryToPlot(point, true);
+            point.plotX = perspectivePoint[0];
+            point.plotY = perspectivePoint[1];
+            // Derive c from a + b if not explicitly provided.
+            // The projection only needs a and b, but c must be a valid number
+            // for tooltips and color interpolation.
+            if (!isNumber(point.c)) {
+                point.c = sumTo - point.a - point.b;
+            }
+            // Preserve user-provided total (independent 4th dimension, e.g.
+            // raw count for bubble sizing). Fall back to component sum only
+            // when absent.
+            if (!isNumber(point.total)) {
+                point.total = point.a + point.b + point.c;
+            }
+            point.shapeArgs = {
+                x: point.plotX,
+                y: point.plotY
+            };
+            // Do we need it? Perhaps for the future
+            //point.isInside = this.isPointInside(point);
+            point.isInside = true;
+            // Ensure the tooltip engine resolves to pointFormat/headerFormat.
+            // Custom series types may not inherit the default 'point' prefix,
+            // causing an empty tooltip.
+            point.formatPrefix = 'point';
+            // Keep Highcharts internals happy: isNull check, getLabelConfig
+            // and yData all rely on point.y being a valid number
+            point.y = point.b;
+            point.isNull = false;
+            point.tooltipPos =
+                [point.plotX, point.plotY];
+            // Set client related positions for mouse tracking
+            point.clientX = dynamicallyPlaced ?
+                correctFloat(xAxis.translate(xValue, false, false, false, true, pointPlacement)) :
+                point.plotX; // #1514, #5383, #5518
+            // Determine auto enabling of markers (#3635, #5099)
+            if (!point.isNull && point.visible !== false) {
+                if (defined(lastPlotX)) {
+                    closestPointRangePx = Math.min(closestPointRangePx, Math.abs(point.plotX - lastPlotX));
+                }
+                lastPlotX = point.plotX;
+            }
+            if ((!point.marker ||
+                !defined(point.marker.radius)) &&
+                series.options.minSize &&
+                series.options.maxSize) {
+                point.marker = {
+                    radius: point.getRadius()
+                };
+            }
+        }
+        series.closestPointRangePx = closestPointRangePx;
+        fireEvent(this, 'afterTranslate');
+    }
+    function getTernaryColor(a, b, c, alpha) {
+        var _a;
+        const { componentColors } = this.options;
+        // H.color handles all formats HC supports (hex, rgb, rgba, named,
+        // 8-digit hex, etc.) — new formats added to HC work here for free.
+        // Alpha from the color string is intentionally ignored; use
+        // componentColors.alpha to control opacity uniformly.
+        const ca = color(componentColors.a).rgba, cb = color(componentColors.b).rgba, cc = color(componentColors.c).rgba;
+        // Return transparent if any color string was unparseable.
+        // H.color() always returns an rgba array, but invalid strings produce
+        // NaN values — isNumber(NaN) is false, so we check the red channel.
+        if (!isNumber(ca[0]) || !isNumber(cb[0]) || !isNumber(cc[0])) {
+            return 'rgba(0,0,0,0)';
+        }
+        // Barycentric interpolation: each point color is a weighted blend
+        // of the three corner colors, where weights = a/b/c component values
+        const sumTo = this.chart.ternaryOpts.sumTo, wa = a / sumTo, wb = b / sumTo, wc = c / sumTo, rCh = Math.round(ca[0] * wa + cb[0] * wb + cc[0] * wc), gCh = Math.round(ca[1] * wa + cb[1] * wb + cc[1] * wc), bCh = Math.round(ca[2] * wa + cb[2] * wb + cc[2] * wc), finalAlpha = (_a = alpha !== null && alpha !== void 0 ? alpha : componentColors.alpha) !== null && _a !== void 0 ? _a : 1;
+        return `rgba(${rCh}, ${gCh}, ${bCh}, ${finalAlpha})`;
+    }
+    function pointAttribs(point, state) {
+        var _a, _b;
+        const attr = Series.prototype.pointAttribs.call(this, point, state);
+        if (!point || point.isNull || !this.options.componentColors) {
+            return attr;
+        }
+        const [a, b, c] = [point.a, point.b, point.c];
+        attr.fill = this.getTernaryColor(a, b, c);
+        point.ternaryColor = this.getTernaryColor(a, b, c, 1);
+        const strokeAlpha = (_a = this.options.componentColors) === null || _a === void 0 ? void 0 : _a.strokeAlpha;
+        attr.stroke = ((_b = point.marker) === null || _b === void 0 ? void 0 : _b.lineColor) ||
+            (strokeAlpha !== undefined
+                ? this.getTernaryColor(a, b, c, strokeAlpha)
+                : point.ternaryColor);
+        return attr;
+    }
+    // Return the plot box of the ternary plot area
+    function getPlotBox(name) {
+        const { plotLeft, plotTop } = this.chart;
+        const params = {
+            name,
+            scale: 1,
+            translateX: plotLeft,
+            translateY: plotTop
+        };
+        fireEvent(this, 'getPlotBox', params);
+        return {
+            translateX: plotLeft,
+            translateY: plotTop,
+            rotation: 0,
+            rotationOriginX: 0,
+            rotationOriginY: 0,
+            scaleX: 1,
+            scaleY: 1
+        };
+    }
+    function getRadius() {
+        const series = this.series, minSize = series.options.minSize, maxSize = series.options.maxSize, cache = series._radiusCache, allTotals = cache ? null : series.points.map((p) => p.total), minValue = cache ? cache.min : Math.min(...allTotals), maxValue = cache ? cache.max : Math.max(...allTotals);
+        if (maxValue === minValue)
+            return (minSize + maxSize) / 2;
+        const t = (this.total - minValue) / (maxValue - minValue), minA = Math.PI * minSize * minSize, maxA = Math.PI * maxSize * maxSize, A = minA + t * (maxA - minA);
+        return Math.sqrt(A / Math.PI);
+    }
+    // ---- Events ----
+    // Initialize ternary axes before rendering the chart
+    function buildTernaryAxis(chart) {
+        const ternaryOpts = chart.ternaryOpts, ternaryAngle = clamp(ternaryOpts.angle, 1, 89), alpha = ternaryAngle * Math.PI / 180, heightRatio = Math.tan(alpha) / 2;
+        const axes = [{
+                // Horizontal
+                axisCenters: [[50, 0], [100, 0]],
+                rotationSign: 0,
+                // Two different positions (margin directions):
+                // perpendicular to the axis line, or purely horizontal
+                titleDirections: [[0, 1], [0, 1], [0, 1]]
+            }, {
+                // Vertical right
+                axisCenters: [[50, 50], [0, 100]],
+                rotationSign: 1,
+                titleDirections: [[-heightRatio, -1 / 2], [-1, 0], [0, -1]]
+            }, {
+                // Vertical left
+                axisCenters: [[0, 50], [0, 0]],
+                rotationSign: -1,
+                titleDirections: [[heightRatio, -1 / 2], [1, 0], [0, 1]]
+            }];
+        const axisKeys = ['a', 'b', 'c'], userTernaryAxis = chart.options.ternaryAxis || {};
+        chart.ternaryAxis = axes.map(({ axisCenters, rotationSign, titleDirections }, i) => {
+            var _a, _b, _c, _d;
+            const axis = merge(defaultTernary, (_a = userTernaryAxis.common) !== null && _a !== void 0 ? _a : {}, (_b = userTernaryAxis[axisKeys[i]]) !== null && _b !== void 0 ? _b : {});
+            let rotation = 0, axisCenter;
+            if (axis.title.position === 'corner') {
+                axisCenter = axisCenters[1];
+            }
+            else {
+                axisCenter = axisCenters[0];
+                rotation = pick((_d = (_c = userTernaryAxis[axisKeys[i]]) === null || _c === void 0 ? void 0 : _c.title) === null || _d === void 0 ? void 0 : _d.rotation, rotationSign * ternaryAngle);
+            }
+            axis.axisCenter = axisCenter;
+            axis.title.style['rotation'] = rotation;
+            axis.titleDirection =
+                titleDirections[axis.title.position === 'corner' ?
+                    2 :
+                    (axis.title.offsetDirection === 'horizontal' ? 1 : 0)];
             axis.gridlineTicks = {};
-            axis.gridlineMinorTicks = {};
             return axis;
         });
+    }
+    addEvent(Chart, 'beforeRender', function () {
+        const chart = this, ternaryOpts = chart.resolveTernary(chart.options.chart.ternary);
+        if (!ternaryOpts)
+            return;
+        chart.ternaryOpts = ternaryOpts;
+        buildTernaryAxis(chart);
     });
     // Position ternary axis titles and render gridlines/labels after
     // setting chart size
     addEvent(Chart, 'afterSetChartSize', function () {
         const chart = this;
-        const { options } = chart;
-        if (!options.chart.ternary || !chart.ternaryAxis) {
+        if (!chart.ternaryOpts || !chart.ternaryAxis)
             return;
-        }
         const destroyCollection = (coll) => {
-            if (!coll) {
+            if (!coll)
                 return;
-            }
             for (const k in coll) {
-                coll[k] = coll[k].destroy();
+                if (coll[k]) {
+                    coll[k].destroy();
+                    coll[k] = null;
+                }
             }
         };
         chart.ternaryAxis.forEach((axis, i) => {
-            // Axis title
             const title = axis.title;
             if (title === null || title === void 0 ? void 0 : title.text) {
                 if (!axis.titleElem) {
                     axis.titleElem = chart.renderer
-                        .text(title.text, 0, 0)
+                        .text(title.text, title.x, title.y)
                         .css(title.style)
                         .attr(title.style)
                         .add();
                 }
-                const pos = chart.toPerspective(axis.corner);
-                const bbox = axis.titleElem.getBBox(true);
-                pos[1] = i !== 0 ?
-                    (pos[1] - chart.ternarySpacing * title.pos[1]) :
-                    (pos[1] + bbox.height + chart.ternarySpacing);
-                axis.titleElem.translate(pos[0], pos[1] + chart.plotTop);
-                axis.titleElem.attr({ x: -50 * title.pos[0] });
+                const [x0, y0] = chart.ternaryToPlot(axis.axisCenter), [dirX, dirY] = axis.titleDirection, 
+                // The pixel distance between the axis line and the title.
+                titleMargin = title.margin;
+                // Move one or two bottom titles down to avoid overlapping
+                // with gridLines
+                let offsetY = 0;
+                if (i !== 1 && (title.position === 'corner' || i === 0)) {
+                    // Font metrics baseline is better than bbox.height
+                    // for better baseline alignment
+                    const fm = chart.renderer.fontMetrics(axis.titleElem);
+                    offsetY = fm.b - 5;
+                }
+                axis.titleElem.translate(x0 + (-titleMargin * dirX) + chart.plotLeft, y0 + (titleMargin * dirY) + chart.plotTop + offsetY);
             }
             // Axis grid lines and labels: destroy previous
             destroyCollection(axis.gridlineTicks);
             destroyCollection(axis.gridlineLabels);
-            destroyCollection(axis.minorGridlineTicks);
             // Recreate
             if (axis.gridLineWidth >= 1) {
-                axis.gridlineTicks = chart.getGrids(i, axis.gridLineWidth, axis.tickInterval, axis.gridLineColor);
-            }
-            if (axis.minorGridLineWidth >= 1) {
-                axis.minorGridlineTicks = chart.getGrids(i, axis.minorGridLineWidth, axis.minorTickInterval, axis.minorGridLineColor);
+                axis.gridlineTicks = chart.getGridLines(axis, i);
             }
             if (axis.labels.enabled !== false) {
-                axis.gridlineLabels = chart.getLabels(axis, i, axis.tickInterval);
+                axis.gridlineLabels = chart.getLabels(axis, i);
             }
         });
     });
-    // Convert ternary x,y (0-100) to perspective plotX,plotY
-    Chart.prototype.toPerspective = function (point) {
+    function destroyTernaryAxis(chart) {
+        if (!chart.ternaryAxis)
+            return;
+        chart.ternaryAxis.forEach(axis => {
+            var _a;
+            (_a = axis.titleElem) === null || _a === void 0 ? void 0 : _a.destroy();
+            axis.titleElem = undefined;
+            [axis.gridlineTicks, axis.gridlineLabels].forEach(coll => {
+                var _a;
+                if (!coll)
+                    return;
+                for (const k in coll) {
+                    (_a = coll[k]) === null || _a === void 0 ? void 0 : _a.destroy();
+                    coll[k] = null;
+                }
+            });
+        });
+    }
+    addEvent(Chart, 'destroy', function () {
+        destroyTernaryAxis(this);
+    });
+    // Rebuild ternary axis config when chart options change via chart.update()
+    addEvent(Chart, 'afterUpdate', function () {
+        const chart = this, ternaryOpts = chart.resolveTernary(chart.options.chart.ternary);
+        if (!ternaryOpts)
+            return;
+        // Destroy old SVG elements before rebuilding axis objects,
+        // otherwise the old titleElem references would be lost and leaked
+        destroyTernaryAxis(chart);
+        chart.ternaryOpts = ternaryOpts;
+        // Rebuild axis config from updated options
+        buildTernaryAxis(chart);
+        // afterSetChartSize already ran during chart.update() with old config —
+        // re-render now that ternaryAxis has been rebuilt
+        fireEvent(chart, 'afterSetChartSize');
+    });
+    addEvent(Chart, 'afterIsInsidePlot', function (e) {
         const chart = this;
-        const spacing = chart.ternarySpacing * 2;
-        const baseWidth = Math.min(chart.plotHeight, chart.plotWidth - 90 < chart.plotHeight ?
-            chart.containerBox.width :
-            chart.plotHeight);
-        const width = Math.max(baseWidth - spacing, 5);
-        const x = pick(point.x, point[0]) * width / 100;
-        const y = pick(point.y, point[1]) * width / 100;
-        return [
-            x + y / 2 + (chart.containerBox.width - width) / 2,
-            chart.plotHeight - y - spacing * 0.7
-        ];
-    };
+        if (!chart.ternaryOpts) {
+            return;
+        }
+        // Barycentric technique to determine if point is inside triangle
+        function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
+            const v0x = cx - ax, v0y = cy - ay, v1x = bx - ax, v1y = by - ay, v2x = px - ax, v2y = py - ay, dot00 = v0x * v0x + v0y * v0y, dot01 = v0x * v1x + v0y * v1y, dot02 = v0x * v2x + v0y * v2y, dot11 = v1x * v1x + v1y * v1y, dot12 = v1x * v2x + v1y * v2y, invDenom = 1 / (dot00 * dot11 - dot01 * dot01), u = (dot11 * dot02 - dot01 * dot12) * invDenom, v = (dot00 * dot12 - dot01 * dot02) * invDenom, 
+            // Allow points very close to the edge
+            // (floating point precision)
+            eps = 0.01;
+            return u >= -eps && v >= -eps && u + v <= 1 + eps;
+        }
+        const [Ax, Ay] = chart.ternaryToPlot([0, 0]), [Bx, By] = chart.ternaryToPlot([100, 0]), [Cx, Cy] = chart.ternaryToPlot([0, 100]), px = e.x, py = e.y;
+        e.isInsidePlot = pointInTriangle(px, py, Ax, Ay, Bx, By, Cx, Cy);
+    });
+    addEvent(Series, 'afterDrawDataLabels', function () {
+        if (!(this.options.minSize && this.options.maxSize)) {
+            return;
+        }
+        this.points.forEach(point => {
+            // Is there a better TS type?
+            const dataLabel = point.dataLabel;
+            dataLabel[dataLabel.placed ? 'animate' : 'attr']({
+                y: dataLabel.y - point.marker.radius + 5
+            });
+        });
+    });
+    // ---- New Series ----
     // Define the new ternaryscatter series type
-    seriesType('ternaryscatter', 'scatter', {
+    seriesType('ternaryscatter', 'scatter', 
+    // Default series options
+    {
         tooltip: {
             headerFormat: '{point.name}<br/>',
-            pointFormat: '{point.x}, {point.y}, {point.z}'
+            pointFormat: '{point.a}, {point.b}, {point.c}'
         }
-    }, {
+    }, 
+    // Series proto
+    {
         directTouch: true,
         isCartesian: false,
         noSharedTooltip: true,
         axisTypes: [],
-        zoneAxis: '',
-        pointArrayMap: ['y', 'z'],
-        parallelArrays: ['x', 'y', 'z'],
-        // Translate data points from ternary x,y to plotX,plotY
-        translate() {
-            this.generatePoints();
-            this.xAxis = {
-                isRadial: false,
-                options: {
-                    type: 'linear'
-                }
-            };
-            const series = this, chart = series.chart, xAxis = series.xAxis, points = series.points, dataLength = points.length, pointPlacement = series.pointPlacementToXValue(), // #7860
-            dynamicallyPlaced = Boolean(pointPlacement);
-            let i, plotX, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
-            // Translate each point
-            for (i = 0; i < dataLength; i++) {
-                const point = points[i], xValue = point.x;
-                point.yBottom = void 0;
-                const perspectivePoint = chart.toPerspective(point);
-                plotX = perspectivePoint[0] - chart.plotLeft;
-                point.plotX = plotX;
-                point.plotY = perspectivePoint[1];
-                point.shapeArgs = {
-                    x: point.plotX - chart.plotLeft,
-                    y: point.plotY - chart.plotTop
-                };
-                // Do we need it? Perhaps for the future
-                //point.isInside = this.isPointInside(point);
-                point.isInside = true;
-                point.tooltipPos = [point.plotX, point.plotY];
-                // Set client related positions for mouse tracking
-                point.clientX = dynamicallyPlaced ?
-                    correctFloat(xAxis.translate(xValue, false, false, false, true, pointPlacement)) :
-                    plotX; // #1514, #5383, #5518
-                // Determine auto enabling of markers (#3635, #5099)
-                if (!point.isNull && point.visible !== false) {
-                    if (typeof lastPlotX !== 'undefined') {
-                        closestPointRangePx = Math.min(closestPointRangePx, Math.abs(plotX - lastPlotX));
-                    }
-                    lastPlotX = plotX;
-                }
-                // Zones disabled for now
-                point.zone = void 0;
-            }
-            series.closestPointRangePx = closestPointRangePx;
-            fireEvent(this, 'afterTranslate');
-        },
-        // Override to return the plot box of the ternary plot area
-        getPlotBox(name) {
-            const { plotLeft, plotTop } = this.chart;
-            const params = {
-                name,
-                scale: 1,
-                translateX: plotLeft,
-                translateY: plotTop
-            };
-            fireEvent(this, 'getPlotBox', params);
-            return {
-                translateX: plotLeft,
-                translateY: plotTop,
-                rotation: 0,
-                rotationOriginX: 0,
-                rotationOriginY: 0,
-                scaleX: 1,
-                scaleY: 1
-            };
-        }
+        pointArrayMap: ['a', 'b', 'c'],
+        parallelArrays: ['a', 'b', 'c'],
+        // Override Series prototype methods
+        translate: translate,
+        getPlotBox: getPlotBox,
+        getTernaryColor: getTernaryColor,
+        pointAttribs: pointAttribs
+    }, 
+    // Point proto
+    {
+        getRadius: getRadius
     });
 }
 

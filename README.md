@@ -161,13 +161,13 @@ Highcharts.chart('container', {
 
 `boolean | object` — Enable and configure the ternary coordinate system. Set to `true` to use all defaults, or pass an options object.
 
-| Option                  | Type      | Default | Description                                                                                     |
-| ----------------------- | --------- | ------- | ----------------------------------------------------------------------------------------------- |
-| `chart.ternary`         | `boolean \| TernaryOptions` | — | Enable ternary mode. |
-| `chart.ternary.enabled` | `boolean` | `true`  | Set to `false` to disable while keeping the configuration object.                               |
-| `chart.ternary.angle`   | `number`  | `60`    | Angle in degrees between the base and sides of the triangle. `60` produces an equilateral shape. Must be in the range (0, 90). |
-| `chart.ternary.spacing` | `number`  | `35`    | Pixel padding applied uniformly around the triangle. Increase to make room for axis labels.     |
-| `chart.ternary.sumTo`   | `number`  | `100`   | The value that the three components must sum to. Use `1` for fractions, `100` for percentages.  |
+| Option                  | Type                      | Default | Description                                                                                                    |
+| ----------------------- | ------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| `chart.ternary`         | `boolean \| TernaryOptions` | —     | Enable ternary mode.                                                                                           |
+| `chart.ternary.enabled` | `boolean`                 | `true`  | Set to `false` to disable while keeping the configuration object.                                              |
+| `chart.ternary.angle`   | `number`                  | `60`    | Angle in degrees between the base and sides of the triangle. `60` produces an equilateral shape. Range (0, 90). |
+| `chart.ternary.spacing` | `number`                  | `35`    | Pixel padding applied uniformly around the triangle. Increase to make room for axis labels.                    |
+| `chart.ternary.sumTo`   | `number`                  | `100`   | The value that the three components must sum to. Use `1` for fractions, `100` for percentages.                 |
 
 ---
 
@@ -177,58 +177,58 @@ Highcharts.chart('container', {
 
 #### Structure
 
-| Option                 | Description                               |
-| ---------------------- | ----------------------------------------- |
-| `ternaryAxis.common`   | Shared options applied to all three axes. |
-| `ternaryAxis.a`           | Options for the bottom axis (A).          |
-| `ternaryAxis.b`           | Options for the right axis (B).           |
-| `ternaryAxis.c`           | Options for the left axis (C).            |
+| Option               | Description                               |
+| -------------------- | ----------------------------------------- |
+| `ternaryAxis.common` | Shared options applied to all three axes.  |
+| `ternaryAxis.a`      | Options for the bottom axis (A).           |
+| `ternaryAxis.b`      | Options for the right axis (B).            |
+| `ternaryAxis.c`      | Options for the left axis (C).             |
 
 #### Grid lines
 
-| Option                  | Type     | Default    | Description                                                    |
-| ----------------------- | -------- | ---------- | -------------------------------------------------------------- |
-| `tickInterval`          | `number` | `50`       | Interval between grid lines.                                   |
-| `gridLineColor`         | `string` | `#d6d6d6`  | Color of the internal grid lines.                              |
-| `gridLineWidth`         | `number` | `1`        | Width of the internal grid lines in pixels.                    |
-| `gridLineDashStyle`     | `string` | `'Solid'`  | Dash style of the internal grid lines (`DashStyleValue`).      |
-| `gridLineExtension`     | `number` | `0`        | Extends grid lines beyond the triangle edges, in pixels.       |
+| Option              | Type     | Default   | Description                                               |
+| ------------------- | -------- | --------- | --------------------------------------------------------- |
+| `tickInterval`      | `number` | `50`      | Interval between grid lines.                              |
+| `gridLineColor`     | `string` | `#d6d6d6` | Color of the internal grid lines.                         |
+| `gridLineWidth`     | `number` | `1`       | Width of the internal grid lines in pixels.               |
+| `gridLineDashStyle` | `string` | `'Solid'` | Dash style of the internal grid lines (`DashStyleValue`). |
+| `gridLineExtension` | `number` | `0`       | Extends grid lines beyond the triangle edges, in pixels.  |
 
 #### Triangle sides (axis lines)
 
-| Option          | Type     | Default   | Description                                             |
-| --------------- | -------- | --------- | ------------------------------------------------------- |
-| `lineColor`     | `string` | `#d6d6d6` | Color of the triangle sides.                            |
-| `lineWidth`     | `number` | `1`       | Width of the triangle sides in pixels.                  |
-| `lineDashStyle` | `string` | `'Solid'` | Dash style of the triangle sides (`DashStyleValue`).    |
+| Option          | Type     | Default   | Description                                          |
+| --------------- | -------- | --------- | ---------------------------------------------------- |
+| `lineColor`     | `string` | `#d6d6d6` | Color of the triangle sides.                         |
+| `lineWidth`     | `number` | `1`       | Width of the triangle sides in pixels.               |
+| `lineDashStyle` | `string` | `'Solid'` | Dash style of the triangle sides (`DashStyleValue`). |
 
 #### Median lines
 
-| Option               | Type                | Default   | Description                                                                            |
-| -------------------- | ------------------- | --------- | -------------------------------------------------------------------------------------- |
-| `median`             | `boolean \| object` | —         | Show or configure median lines (vertex → midpoint of opposite side).                   |
-| `median.color`       | `string`            | `#d6d6d6` | Color of the median lines.                                                             |
-| `median.width`       | `number`            | `1`       | Width of the median lines in pixels.                                                   |
-| `median.dashStyle`   | `string`            | `'Solid'` | Dash style of the median lines (`DashStyleValue`).                                     |
+| Option             | Type                | Default   | Description                                                          |
+| ------------------ | ------------------- | --------- | -------------------------------------------------------------------- |
+| `median`           | `boolean \| object` | —         | Show or configure median lines (vertex → midpoint of opposite side). |
+| `median.color`     | `string`            | `#d6d6d6` | Color of the median lines.                                           |
+| `median.width`     | `number`            | `1`       | Width of the median lines in pixels.                                 |
+| `median.dashStyle` | `string`            | `'Solid'` | Dash style of the median lines (`DashStyleValue`).                   |
 
 #### Labels
 
-| Option             | Type      | Default | Description                                              |
-| ------------------ | --------- | ------- | -------------------------------------------------------- |
-| `labels.enabled`   | `boolean` | —       | Show or hide tick labels.                                |
-| `labels.style`     | `object`  | —       | CSS style object applied to label text.                  |
-| `labels.distance`  | `number`  | `6`     | Distance between labels and the triangle edge, in pixels.|
+| Option            | Type      | Default | Description                                               |
+| ----------------- | --------- | ------- | --------------------------------------------------------- |
+| `labels.enabled`  | `boolean` | —       | Show or hide tick labels.                                 |
+| `labels.style`    | `object`  | —       | CSS style object applied to label text.                   |
+| `labels.distance` | `number`  | `6`     | Distance between labels and the triangle edge, in pixels. |
 
 #### Title
 
-| Option                  | Type                              |  Default   | Description                                                  |
+| Option                  | Type                              | Default    | Description                                                  |
 | ----------------------- | --------------------------------- | ---------- | ------------------------------------------------------------ |
 | `title.text`            | `string`                          | —          | Axis title text.                                             |
 | `title.style`           | `object`                          | —          | CSS style object applied to the title.                       |
 | `title.margin`          | `number`                          | `30`       | Distance between the title and the triangle edge, in pixels. |
 | `title.position`        | `'corner' \| 'side'`              | `'corner'` | Position of the title relative to the triangle.              |
-| `title.offsetDirection` | `'horizontal' \| 'perpendicular'` | —          | Direction the title offsets from its axis edge.              |
-| `title.rotation`        | `number`                          |            | Title rotation in degrees. Overrides the automatic rotation. |
+| `title.offsetDirection` | `'horizontal' \| 'perpendicular'` | —          | Direction the title offsets from its axis edge.               |
+| `title.rotation`        | `number`                          | —          | Title rotation in degrees. Overrides the automatic rotation. |
 
 ---
 
@@ -236,16 +236,16 @@ Highcharts.chart('container', {
 
 Set `series.type` to `'ternaryscatter'`. Data points accept `[a, b, c]` arrays or objects with `a`, `b`, `c` properties. The `c` value may be omitted — it is derived as `sumTo - a - b`.
 
-| Option                      | Type                     | Description                                                                                                    |
-| --------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `series.minSize`            | `number`                 | Minimum marker radius in pixels for bubble sizing. Requires `maxSize`.                                         |
-| `series.maxSize`            | `number`                 | Maximum marker radius in pixels for bubble sizing. Requires `minSize`.                                         |
-| `series.componentColors`    | `object`                 | Barycentric color blending — each point's color is interpolated from the three corner colors by its a/b/c values. |
-| `componentColors.a`         | `string`                 | Color at the A vertex.                                                                                         |
-| `componentColors.b`         | `string`                 | Color at the B vertex.                                                                                         |
-| `componentColors.c`         | `string`                 | Color at the C vertex.                                                                                         |
-| `componentColors.alpha`     | `number`                 | Opacity applied to all points (`0`–`1`). Overrides any alpha in the color strings.                            |
-| `componentColors.strokeAlpha` | `number`               | Opacity for the point stroke (border). When set, the stroke uses the same barycentric blend as the fill but with this alpha. |
+| Option                        | Type     | Description                                                                                        |
+| ----------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
+| `series.minSize`              | `number` | Minimum marker radius in pixels for bubble sizing. Requires `maxSize`.                             |
+| `series.maxSize`              | `number` | Maximum marker radius in pixels for bubble sizing. Requires `minSize`.                             |
+| `series.componentColors`      | `object` | Barycentric color blending — each point's color is interpolated from three corner colors.          |
+| `componentColors.a`           | `string` | Color at the A vertex.                                                                             |
+| `componentColors.b`           | `string` | Color at the B vertex.                                                                             |
+| `componentColors.c`           | `string` | Color at the C vertex.                                                                             |
+| `componentColors.alpha`       | `number` | Opacity applied to all points (`0`–`1`). Overrides any alpha in the color strings.                 |
+| `componentColors.strokeAlpha` | `number` | Opacity for the point stroke (border). Uses the same barycentric blend as fill but with this alpha. |
 
 ## Migrating from v1 to v2
 

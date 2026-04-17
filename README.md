@@ -70,7 +70,7 @@ If your data has three parts that sum to a constant and you want to see clusteri
 
 | Ternary Plot Version | Highcharts Version |
 | -------------------- | ------------------ |
-| **2.0.0**            | `12.0.0+`          |
+| **2.0.1**            | `12.0.0+`          |
 
 ### Browser Support
 
@@ -99,7 +99,7 @@ HighchartsTernaryPlot(Highcharts);
 Or include via a `<script>` tag after loading Highcharts:
 ```html
 <script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highcharts-ternary-plot@2.0.0/js/ternary-plot.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highcharts-ternary-plot@2.0.1/js/ternary-plot.js"></script>
 ```
 
 ## Minimal Code
@@ -227,7 +227,7 @@ Highcharts.chart('container', {
 | `title.style`           | `object`                          | —          | CSS style object applied to the title.                       |
 | `title.margin`          | `number`                          | `30`       | Distance between the title and the triangle edge, in pixels. |
 | `title.position`        | `'corner' \| 'side'`              | `'corner'` | Position of the title relative to the triangle.              |
-| `title.offsetDirection` | `'horizontal' \| 'perpendicular'` | —          | Direction the title offsets from its axis edge.               |
+| `title.offsetDirection` | `'horizontal' \| 'perpendicular'` | —          | Direction the title offsets from its axis edge. Only applies when `position` is `'side'`. |
 | `title.rotation`        | `number`                          | —          | Title rotation in degrees. Overrides the automatic rotation. |
 
 ---
@@ -236,10 +236,12 @@ Highcharts.chart('container', {
 
 Set `series.type` to `'ternaryscatter'`. Data points accept `[a, b, c]` arrays or objects with `a`, `b`, `c` properties. The `c` value may be omitted — it is derived as `sumTo - a - b`.
 
+For bubble sizing (`minSize` / `maxSize`), provide a `total` value on each point — this is the independent 4th dimension that drives marker area. Without it, all bubbles render at the same middle size and a console warning is emitted.
+
 | Option                        | Type     | Description                                                                                        |
 | ----------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
-| `series.minSize`              | `number` | Minimum marker radius in pixels for bubble sizing. Requires `maxSize`.                             |
-| `series.maxSize`              | `number` | Maximum marker radius in pixels for bubble sizing. Requires `minSize`.                             |
+| `series.minSize`              | `number` | Minimum marker radius in pixels for bubble sizing. Requires `maxSize` and `point.total`.           |
+| `series.maxSize`              | `number` | Maximum marker radius in pixels for bubble sizing. Requires `minSize` and `point.total`.           |
 | `series.componentColors`      | `object` | Barycentric color blending — each point's color is interpolated from three corner colors.          |
 | `componentColors.a`           | `string` | Color at the A vertex.                                                                             |
 | `componentColors.b`           | `string` | Color at the B vertex.                                                                             |
@@ -332,7 +334,7 @@ Yes. Set `chart.ternary.sumTo: 1` and provide data where `a + b + c = 1`.
 Yes. Use `lineColor`, `lineWidth`, and `lineDashStyle` for the triangle sides, and `gridLineColor`, `gridLineWidth`, `gridLineDashStyle` for the internal grid lines. These are independent.
 
 **Does the plugin support bubble charts on a ternary axis?**  
-Yes. Set `minSize` and `maxSize` on the series, and provide a `total` (or any numeric `z`-like property) on each point. The plugin scales marker sizes with area-proportional interpolation.
+Yes. Set `minSize` and `maxSize` on the series, and provide a `total` value on each point — this is the independent 4th dimension used for sizing. The plugin scales marker sizes with area-proportional interpolation. If `total` is omitted, all bubbles render at the middle size and a console warning is emitted.
 
 **Can I color points based on their position in the triangle?**  
 Yes — use `componentColors` to define a color per vertex. Each point's fill is automatically blended by its `a`, `b`, `c` values.

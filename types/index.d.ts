@@ -92,7 +92,10 @@ declare module 'highcharts' {
             margin?: number;
             /** Position of the title relative to the triangle. */
             position?: 'side' | 'corner';
-            /** Direction the title offsets from its axis edge. */
+            /**
+             * Direction the title offsets from its axis edge.
+             * Only applies when `position` is `'side'` — ignored for `'corner'`.
+             */
             offsetDirection?: 'perpendicular' | 'horizontal';
             /** Title rotation in degrees. Overrides automatic rotation. */
             rotation?: number;
@@ -159,7 +162,18 @@ declare module 'highcharts' {
         extends _Highcharts.SeriesOptions,
             _Highcharts.PlotScatterOptions {
         type: 'ternaryscatter';
-        data?: Array<TernaryPointOptions | [number, number, number] | null>;
+        /**
+         * Array of data points. Each entry can be:
+         * - an object: `{ a, b, c?, total?, ...custom }`
+         * - a tuple: `[a, b, c]` — or with extra values mapped via `series.keys`,
+         *   e.g. `keys: ['a', 'b', 'c', 'total', 'name']` with `[20, 70, 10, 500, 'Alpha']`
+         * - `null` to render a gap
+         */
+        data?: Array<
+            | TernaryPointOptions
+            | [number, number, number, ...unknown[]]
+            | null
+        >;
         /**
          * Minimum marker radius in pixels for bubble sizing.
          * Requires `maxSize` to be set.
@@ -251,6 +265,12 @@ declare module 'highcharts' {
     // ---- Internal Point properties used by the plugin ----
 
     interface Point {
+        /**
+         * Barycentric-blended color for this point, set when the series uses
+         * `componentColors`. Available in formatters (e.g. `dataLabels.formatter`,
+         * `tooltip.formatter`) after the point has been rendered.
+         */
+        ternaryColor?: string;
         /** @internal */
         yBottom?: number;
         /** @internal */

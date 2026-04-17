@@ -1,7 +1,7 @@
 /**
 ----
 *
-* Highcharts Ternary Plot v2.0.0
+* Highcharts Ternary Plot v2.0.1
 *
 * (c) 2012-2026 Black Label, Rafał Sebestjański
 *
@@ -292,8 +292,33 @@ function TernaryPlotPlugin(H) {
         const series = this, chart = series.chart, xAxis = series.xAxis, points = series.points, dataLength = points.length, sumTo = chart.ternaryOpts.sumTo, pointPlacement = series.pointPlacementToXValue(), // #7860
         dynamicallyPlaced = Boolean(pointPlacement);
         let i, lastPlotX, closestPointRangePx = Number.MAX_VALUE;
+        // Derive c and total defaults first so the bubble-size cache below
+        // sees valid numbers (would be NaN otherwise when total is omitted).
+        // Also track whether any point carried an explicit total — if none
+        // did, bubble sizing has no meaningful input to work with.
+        let anyExplicitTotal = false;
+        for (i = 0; i < dataLength; i++) {
+            const point = points[i];
+            if (!isNumber(point.c)) {
+                point.c = sumTo - point.a - point.b;
+            }
+            if (isNumber(point.total)) {
+                anyExplicitTotal = true;
+            }
+            else {
+                point.total = point.a + point.b + point.c;
+            }
+        }
         // Pre-compute min/max totals once per translate pass for getRadius()
         if (series.options.minSize && series.options.maxSize) {
+            if (!anyExplicitTotal && !series._radiusWarned) {
+                // eslint-disable-next-line no-console
+                console.warn('Highcharts ternary-plot: minSize/maxSize is set but no ' +
+                    'point has a `total` value — bubble sizing has no input ' +
+                    'and all markers will render at roughly the same size. ' +
+                    'Provide a `total` on each point to enable sizing.');
+                series._radiusWarned = true;
+            }
             const allTotals = points.map((p) => p.total);
             series._radiusCache = {
                 min: Math.min(...allTotals),
@@ -307,18 +332,6 @@ function TernaryPlotPlugin(H) {
             const perspectivePoint = chart.ternaryToPlot(point, true);
             point.plotX = perspectivePoint[0];
             point.plotY = perspectivePoint[1];
-            // Derive c from a + b if not explicitly provided.
-            // The projection only needs a and b, but c must be a valid number
-            // for tooltips and color interpolation.
-            if (!isNumber(point.c)) {
-                point.c = sumTo - point.a - point.b;
-            }
-            // Preserve user-provided total (independent 4th dimension, e.g.
-            // raw count for bubble sizing). Fall back to component sum only
-            // when absent.
-            if (!isNumber(point.total)) {
-                point.total = point.a + point.b + point.c;
-            }
             point.shapeArgs = {
                 x: point.plotX,
                 y: point.plotY

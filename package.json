@@ -1,6 +1,6 @@
 {
   "name": "highcharts-ternary-plot",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Ternary / triangular plot plugin for Highcharts. Visualize three-component composition data with barycentric diagrams. TypeScript support included.",
   "main": "js/ternary-plot.js",
   "types": "types/index.d.ts",

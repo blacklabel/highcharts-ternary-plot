@@ -103,16 +103,8 @@ const sortedData = [...allData].sort((a, b) => {
 
 const dataByName = Object.fromEntries(allData.map(d => [d[4], d]));
 
-// Fixed global scale — mirrors the plugin's getRadius() formula with global min/max
 const GLOBAL_Z_MIN = Math.min(...allData.map(d => d[3])),
     GLOBAL_Z_MAX = Math.max(...allData.map(d => d[3]));
-const _minA = Math.PI * 10 * 10, // minSize = 10
-    _maxA = Math.PI * 60 * 60; // maxSize = 60
-
-function calcRadius(total) {
-    const t = (total - GLOBAL_Z_MIN) / (GLOBAL_Z_MAX - GLOBAL_Z_MIN);
-    return Math.sqrt((_minA + t * (_maxA - _minA)) / Math.PI);
-}
 
 function formatHits(n) {
     if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
@@ -179,12 +171,7 @@ function buildChipTooltipHTML(a, b, c, total, name) {
 function toPoints(terms) {
     return sortedData
         .filter(d => terms.has(d[4]))
-        .map(([a, b, c, total, name]) => ({
-            a, b, c, total, name,
-            marker: {
-                radius: calcRadius(total)
-            }
-        }));
+        .map(([a, b, c, total, name]) => ({ a, b, c, total, name }));
 }
 
 const langChart = Highcharts.chart('chart-languages', {

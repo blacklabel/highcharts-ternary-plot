@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.1] — 2026-04-17
+
+### Bug fixes
+
+- Fixed SVG `translate(x, NaN)` error when `minSize` / `maxSize` were enabled but points had no `total`. Defaults for `c` and `total` are now resolved before the bubble-size cache is built.
+
+### Improvements
+
+- Added a console warning when `minSize` / `maxSize` are set but no point carries an explicit `total` — bubble sizing has no input in that case and all markers render at roughly the same size.
+
+### Types
+
+- `TernarySeriesOptions.data` tuples now accept extra values beyond `[a, b, c]` for use with `series.keys` (e.g. `keys: ['a', 'b', 'c', 'total', 'name']`)
+- Added `Point.ternaryColor` — blended color available in formatters when `componentColors` is used
+
+---
+
 ## [2.0.0] — 2026-04-07
 
 ### Breaking changes

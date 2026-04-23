@@ -590,7 +590,9 @@ function TernaryPlotPlugin(H) {
         e.isInsidePlot = pointInTriangle(px, py, Ax, Ay, Bx, By, Cx, Cy);
     });
     addEvent(Series, 'afterDrawDataLabels', function () {
-        if (!(this.options.minSize && this.options.maxSize)) {
+        var _a;
+        if (!(this.options.minSize && this.options.maxSize) ||
+            !((_a = (this.options.dataLabels)) === null || _a === void 0 ? void 0 : _a.enabled)) {
             return;
         }
         this.points.forEach(point => {

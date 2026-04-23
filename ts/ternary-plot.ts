@@ -115,6 +115,7 @@ type TernarySeriesOptions = Highcharts.SeriesOptions & {
     minSize?: number;
     maxSize?: number;
     componentColors?: ComponentColors;
+    dataLabels?: Highcharts.DataLabelsOptions;
 };
 
 type TernarySeries = Highcharts.Series & {
@@ -1071,7 +1072,10 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     });
 
     addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
-        if (!(this.options.minSize && this.options.maxSize)) {
+        if (
+            !(this.options.minSize && this.options.maxSize) ||
+            !(this.options.dataLabels)?.enabled
+        ) {
             return;
         }
 

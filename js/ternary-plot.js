@@ -590,9 +590,13 @@ function TernaryPlotPlugin(H) {
         e.isInsidePlot = pointInTriangle(px, py, Ax, Ay, Bx, By, Cx, Cy);
     });
     addEvent(Series, 'afterDrawDataLabels', function () {
-        var _a;
-        if (!(this.options.minSize && this.options.maxSize) ||
-            !((_a = (this.options.dataLabels)) === null || _a === void 0 ? void 0 : _a.enabled)) {
+        // Data labels can be enabled either as a single object or as an array
+        // of objects (#5)
+        const dataLabels = this.options.dataLabels;
+        const dataLabelsEnabled = Array.isArray(dataLabels)
+            ? dataLabels.some(d => d.enabled !== false)
+            : (dataLabels === null || dataLabels === void 0 ? void 0 : dataLabels.enabled) !== false;
+        if (!(this.options.minSize && this.options.maxSize) || !dataLabelsEnabled) {
             return;
         }
         this.points.forEach(point => {

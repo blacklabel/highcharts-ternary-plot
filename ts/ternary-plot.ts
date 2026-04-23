@@ -115,7 +115,7 @@ type TernarySeriesOptions = Highcharts.SeriesOptions & {
     minSize?: number;
     maxSize?: number;
     componentColors?: ComponentColors;
-    dataLabels?: Highcharts.DataLabelsOptions;
+    dataLabels?: Highcharts.DataLabelsOptions | Highcharts.DataLabelsOptions[];
 };
 
 type TernarySeries = Highcharts.Series & {
@@ -1072,10 +1072,14 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     });
 
     addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
-        if (
-            !(this.options.minSize && this.options.maxSize) ||
-            !(this.options.dataLabels)?.enabled
-        ) {
+        // Data labels can be enabled either as a single object or as an array
+        // of objects (#5)
+        const dataLabels = this.options.dataLabels;
+        const dataLabelsEnabled = Array.isArray(dataLabels)
+            ? (dataLabels as Highcharts.DataLabelsOptions[]).some(d => d.enabled !== false)
+            : dataLabels?.enabled !== false;
+
+        if (!(this.options.minSize && this.options.maxSize) || !dataLabelsEnabled) {
             return;
         }
 

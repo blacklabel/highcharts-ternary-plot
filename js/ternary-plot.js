@@ -592,10 +592,10 @@ function TernaryPlotPlugin(H) {
     addEvent(Series, 'afterDrawDataLabels', function () {
         // Data labels can be enabled either as a single object or as an array
         // of objects (#5)
-        const dataLabels = this.options.dataLabels;
-        const dataLabelsEnabled = Array.isArray(dataLabels)
-            ? dataLabels.some(d => d.enabled !== false)
-            : (dataLabels === null || dataLabels === void 0 ? void 0 : dataLabels.enabled) !== false;
+        const dataLabelsOption = this.options.dataLabels;
+        const dataLabelsEnabled = dataLabelsOption === undefined
+            ? true
+            : H.splat(dataLabelsOption).some(d => (d === null || d === void 0 ? void 0 : d.enabled) !== false);
         if (!(this.options.minSize && this.options.maxSize) || !dataLabelsEnabled) {
             return;
         }

@@ -590,18 +590,17 @@ function TernaryPlotPlugin(H) {
         e.isInsidePlot = pointInTriangle(px, py, Ax, Ay, Bx, By, Cx, Cy);
     });
     addEvent(Series, 'afterDrawDataLabels', function () {
-        // Data labels can be enabled either as a single object or as an array
-        // of objects (#5)
-        const dataLabelsOption = this.options.dataLabels;
-        const dataLabelsEnabled = dataLabelsOption === undefined
-            ? true
-            : H.splat(dataLabelsOption).some(d => (d === null || d === void 0 ? void 0 : d.enabled) !== false);
-        if (!(this.options.minSize && this.options.maxSize) || !dataLabelsEnabled) {
+        if (!(this.options.minSize && this.options.maxSize)) {
             return;
         }
         this.points.forEach(point => {
             // Is there a better TS type?
             const dataLabel = point.dataLabel;
+            // checking each point for dataLabel after rendering, if it doesn't
+            // exist, return. (#5)
+            if (!dataLabel) {
+                return;
+            }
             dataLabel[dataLabel.placed ? 'animate' : 'attr']({
                 y: dataLabel.y - point.marker.radius + 5
             });

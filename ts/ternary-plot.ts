@@ -1072,14 +1072,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     });
 
     addEvent(Series, 'afterDrawDataLabels', function (this: TernarySeries) {
-        // Data labels can be enabled either as a single object or as an array
-        // of objects (#5)
-        const dataLabelsOption = this.options.dataLabels;
-        const dataLabelsEnabled = dataLabelsOption === undefined
-            ? true
-            : H.splat(dataLabelsOption).some(d => d?.enabled !== false);
-
-        if (!(this.options.minSize && this.options.maxSize) || !dataLabelsEnabled) {
+        if (!(this.options.minSize && this.options.maxSize)) {
             return;
         }
 
@@ -1091,6 +1084,12 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                 y: number;
                 height: number
             };
+
+            // checking each point for dataLabel after rendering, if it doesn't
+            // exist, return. (#5)
+            if (!dataLabel) {
+                return;
+            }
 
             dataLabel[dataLabel.placed ? 'animate' : 'attr']({
                 y: dataLabel.y - point.marker.radius + 5

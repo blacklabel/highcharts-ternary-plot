@@ -1084,6 +1084,12 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                 height: number
             };
 
+            // Checking each point for dataLabel after rendering, if it doesn't
+            // exist, return. (tp#5)
+            if (!dataLabel) {
+                return;
+            }
+
             dataLabel[dataLabel.placed ? 'animate' : 'attr']({
                 y: dataLabel.y - point.marker.radius + 5
             });

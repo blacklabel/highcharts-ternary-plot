@@ -596,6 +596,11 @@ function TernaryPlotPlugin(H) {
         this.points.forEach(point => {
             // Is there a better TS type?
             const dataLabel = point.dataLabel;
+            // checking each point for dataLabel after rendering, if it doesn't
+            // exist, return. (#5)
+            if (!dataLabel) {
+                return;
+            }
             dataLabel[dataLabel.placed ? 'animate' : 'attr']({
                 y: dataLabel.y - point.marker.radius + 5
             });

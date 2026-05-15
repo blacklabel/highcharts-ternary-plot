@@ -115,7 +115,6 @@ type TernarySeriesOptions = Highcharts.SeriesOptions & {
     minSize?: number;
     maxSize?: number;
     componentColors?: ComponentColors;
-    dataLabels?: Highcharts.DataLabelsOptions | Highcharts.DataLabelsOptions[];
 };
 
 type TernarySeries = Highcharts.Series & {
@@ -1086,7 +1085,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             };
 
             // checking each point for dataLabel after rendering, if it doesn't
-            // exist, return. (#5)
+            // exist, return. (tp#5)
             if (!dataLabel) {
                 return;
             }

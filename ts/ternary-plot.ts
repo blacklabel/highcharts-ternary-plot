@@ -1084,7 +1084,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
                 height: number
             };
 
-            // checking each point for dataLabel after rendering, if it doesn't
+            // Checking each point for dataLabel after rendering, if it doesn't
             // exist, return. (tp#5)
             if (!dataLabel) {
                 return;

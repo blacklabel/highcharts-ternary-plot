@@ -22,6 +22,15 @@ type MedianOptsInput = {
 };
 type MedianOpts = Required<MedianOptsInput>;
 
+type CrosshairOptsInput = {
+    enabled?: boolean;
+    color?: string;
+    width?: number;
+    dashStyle?: string;
+    zIndex?: number;
+};
+type CrosshairOpts = Required<CrosshairOptsInput>;
+
 // User-configurable axis options (mirrors chart.ternaryAxis.a / .b / .c)
 type TernaryAxisOptions = {
     tickInterval: number;
@@ -73,12 +82,21 @@ type TernaryAxisConfig = TernaryAxisOptions & TernaryAxisState;
 type TernaryChart = Highcharts.Chart & {
     ternaryOpts: TernaryOpts;
     ternaryAxis: TernaryAxisConfig[];
+    ternaryCrosshair?: Highcharts.SVGElement[];
     resolveTernary(
         opt: boolean | TernaryOptsInput | undefined
     ): TernaryOpts | null;
     resolveMedian(
         opt: boolean | MedianOptsInput | undefined
     ): MedianOpts | null;
+    resolveCrosshair(
+        opt: boolean | CrosshairOptsInput | undefined
+    ): CrosshairOpts | null;
+    crosshairEndpoints(
+        a: number,
+        b: number,
+        c: number
+    ): [Vec2, Vec2][];
     ternaryToPlot(
         point: TernaryPlotInput,
         useSumTo?: boolean
@@ -115,6 +133,7 @@ type TernarySeriesOptions = Highcharts.SeriesOptions & {
     minSize?: number;
     maxSize?: number;
     componentColors?: ComponentColors;
+    crosshair?: boolean | CrosshairOptsInput;
 };
 
 type TernarySeries = Highcharts.Series & {
@@ -172,7 +191,9 @@ export type {
     TernaryOptsInput,
     MedianOptsInput,
     TernaryOpts,
-    MedianOpts
+    MedianOpts,
+    CrosshairOptsInput,
+    CrosshairOpts
 };
 
 export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
@@ -192,6 +213,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         isNumber,
         merge,
         pick,
+        Point,
         Series,
         seriesType,
         wrap
@@ -271,6 +293,43 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             width: opts.width ?? 1,
             dashStyle: opts.dashStyle ?? 'Solid'
         };
+    };
+
+    Chart.prototype.resolveCrosshair = function (
+        this: TernaryChart,
+        crosshairOpt: boolean | CrosshairOptsInput | undefined
+    ): CrosshairOpts | null {
+        if (!crosshairOpt) return null;
+
+        const isObj = typeof crosshairOpt === 'object' && crosshairOpt !== null;
+
+        if (isObj && crosshairOpt.enabled === false) return null;
+
+        const opts = isObj ? crosshairOpt : {};
+
+        return {
+            enabled: true,
+            color: opts.color ?? '#999999',
+            width: opts.width ?? 1,
+            dashStyle: opts.dashStyle ?? 'Solid',
+            zIndex: opts.zIndex ?? 3
+        };
+    };
+
+    Chart.prototype.crosshairEndpoints = function (
+        this: TernaryChart,
+        a: number,
+        b: number,
+        c: number
+    ): [Vec2, Vec2][] {
+        const sumTo = this.ternaryOpts.sumTo,
+            near = this.ternaryToPlot([a, b], true);
+
+        return [
+            [near, this.ternaryToPlot([a, 0], true)],
+            [near, this.ternaryToPlot([sumTo - b, b], true)],
+            [near, this.ternaryToPlot([0, sumTo - c], true)]
+        ];
     };
 
     // Render ternary axis gridlines. Keep it on chart for easy access
@@ -915,6 +974,8 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
         if (!chart.ternaryOpts || !chart.ternaryAxis) return;
 
+        removeCrosshair(chart);
+
         const destroyCollection = (
             coll: Record<string, Highcharts.SVGElement | null> | undefined
         ): void => {
@@ -994,7 +1055,59 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         });
     }
 
+    function removeCrosshair(chart: TernaryChart): void {
+        chart.ternaryCrosshair?.forEach(el => el.destroy());
+        chart.ternaryCrosshair = undefined;
+    }
+
+    function drawCrosshair(chart: TernaryChart, point: TernaryPoint): void {
+        const opts = chart.resolveCrosshair(
+            (point.series.options as TernarySeriesOptions).crosshair
+        );
+
+        removeCrosshair(chart);
+
+        if (!opts || !chart.ternaryOpts) return;
+
+        const { plotLeft, plotTop } = chart,
+            attrs: Record<string, unknown> = {
+                stroke: opts.color,
+                'stroke-width': opts.width,
+                zIndex: opts.zIndex,
+                'pointer-events': 'none'
+            };
+
+        if (opts.dashStyle && opts.dashStyle !== 'Solid') {
+            attrs.dashstyle = opts.dashStyle;
+        }
+
+        chart.ternaryCrosshair = chart
+            .crosshairEndpoints(point.a, point.b, point.c)
+            .map(([near, far]) => {
+                const path = [
+                    'M', plotLeft + near[0], plotTop + near[1],
+                    'L', plotLeft + far[0], plotTop + far[1]
+                ];
+
+                return chart.renderer
+                    .path(path as unknown as Highcharts.SVGPathArray)
+                    .attr(attrs)
+                    .add();
+            });
+    }
+
+    addEvent(Point, 'mouseOver', function (this: TernaryPoint) {
+        if (this.series.type !== 'ternaryscatter') return;
+        drawCrosshair(this.series.chart as TernaryChart, this);
+    });
+
+    addEvent(Point, 'mouseOut', function (this: TernaryPoint) {
+        if (this.series.type !== 'ternaryscatter') return;
+        removeCrosshair(this.series.chart as TernaryChart);
+    });
+
     addEvent(Chart, 'destroy', function (this: TernaryChart) {
+        removeCrosshair(this);
         destroyTernaryAxis(this);
     });
 

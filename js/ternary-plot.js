@@ -19,7 +19,7 @@ function TernaryPlotPlugin(H) {
         return;
     H.ternaryPlotPluginLoaded = true;
     // ---- Utils ----
-    const { addEvent, Chart, clamp, color, correctFloat, defined, fireEvent, isNumber, merge, pick, Series, seriesType, wrap } = H;
+    const { addEvent, Chart, clamp, color, correctFloat, defined, fireEvent, isNumber, merge, pick, Point, Series, seriesType, wrap } = H;
     // ---- Defaults ----
     const defaultTernary = {
         tickInterval: 50,
@@ -82,6 +82,30 @@ function TernaryPlotPlugin(H) {
             width: (_b = opts.width) !== null && _b !== void 0 ? _b : 1,
             dashStyle: (_c = opts.dashStyle) !== null && _c !== void 0 ? _c : 'Solid'
         };
+    };
+    Chart.prototype.resolveCrosshair = function (crosshairOpt) {
+        var _a, _b, _c, _d;
+        if (!crosshairOpt)
+            return null;
+        const isObj = typeof crosshairOpt === 'object' && crosshairOpt !== null;
+        if (isObj && crosshairOpt.enabled === false)
+            return null;
+        const opts = isObj ? crosshairOpt : {};
+        return {
+            enabled: true,
+            color: (_a = opts.color) !== null && _a !== void 0 ? _a : '#999999',
+            width: (_b = opts.width) !== null && _b !== void 0 ? _b : 1,
+            dashStyle: (_c = opts.dashStyle) !== null && _c !== void 0 ? _c : 'Solid',
+            zIndex: (_d = opts.zIndex) !== null && _d !== void 0 ? _d : 3
+        };
+    };
+    Chart.prototype.crosshairEndpoints = function (a, b, c) {
+        const sumTo = this.ternaryOpts.sumTo, near = this.ternaryToPlot([a, b], true);
+        return [
+            [near, this.ternaryToPlot([a, 0], true)],
+            [near, this.ternaryToPlot([sumTo - b, b], true)],
+            [near, this.ternaryToPlot([0, sumTo - c], true)]
+        ];
     };
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (axis, index) {
@@ -491,6 +515,7 @@ function TernaryPlotPlugin(H) {
         const chart = this;
         if (!chart.ternaryOpts || !chart.ternaryAxis)
             return;
+        removeCrosshair(chart);
         const destroyCollection = (coll) => {
             if (!coll)
                 return;
@@ -555,7 +580,50 @@ function TernaryPlotPlugin(H) {
             });
         });
     }
+    function removeCrosshair(chart) {
+        var _a;
+        (_a = chart.ternaryCrosshair) === null || _a === void 0 ? void 0 : _a.forEach(el => el.destroy());
+        chart.ternaryCrosshair = undefined;
+    }
+    function drawCrosshair(chart, point) {
+        const opts = chart.resolveCrosshair(point.series.options.crosshair);
+        removeCrosshair(chart);
+        if (!opts || !chart.ternaryOpts)
+            return;
+        const { plotLeft, plotTop } = chart, attrs = {
+            stroke: opts.color,
+            'stroke-width': opts.width,
+            zIndex: opts.zIndex,
+            'pointer-events': 'none'
+        };
+        if (opts.dashStyle && opts.dashStyle !== 'Solid') {
+            attrs.dashstyle = opts.dashStyle;
+        }
+        chart.ternaryCrosshair = chart
+            .crosshairEndpoints(point.a, point.b, point.c)
+            .map(([near, far]) => {
+            const path = [
+                'M', plotLeft + near[0], plotTop + near[1],
+                'L', plotLeft + far[0], plotTop + far[1]
+            ];
+            return chart.renderer
+                .path(path)
+                .attr(attrs)
+                .add();
+        });
+    }
+    addEvent(Point, 'mouseOver', function () {
+        if (this.series.type !== 'ternaryscatter')
+            return;
+        drawCrosshair(this.series.chart, this);
+    });
+    addEvent(Point, 'mouseOut', function () {
+        if (this.series.type !== 'ternaryscatter')
+            return;
+        removeCrosshair(this.series.chart);
+    });
     addEvent(Chart, 'destroy', function () {
+        removeCrosshair(this);
         destroyTernaryAxis(this);
     });
     // Rebuild ternary axis config when chart options change via chart.update()
@@ -596,8 +664,8 @@ function TernaryPlotPlugin(H) {
         this.points.forEach(point => {
             // Is there a better TS type?
             const dataLabel = point.dataLabel;
-            // checking each point for dataLabel after rendering, if it doesn't
-            // exist, return. (#5)
+            // Checking each point for dataLabel after rendering, if it doesn't
+            // exist, return. (tp#5)
             if (!dataLabel) {
                 return;
             }

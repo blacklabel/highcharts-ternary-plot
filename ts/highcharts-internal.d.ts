@@ -46,6 +46,10 @@ declare module 'highcharts' {
             point: unknown,
             useSumTo?: boolean
         ): [number, number];
+        plotToTernary(
+            px: number,
+            py: number
+        ): [number, number, number];
         /** Added in Highcharts 12.1.0 */
         getClipBox?(
             series?: Series,

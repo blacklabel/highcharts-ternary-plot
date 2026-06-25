@@ -97,7 +97,7 @@ function TernaryPlotPlugin(H) {
             color: (_b = opts.color) !== null && _b !== void 0 ? _b : '#999999',
             width: (_c = opts.width) !== null && _c !== void 0 ? _c : 1,
             dashStyle: (_d = opts.dashStyle) !== null && _d !== void 0 ? _d : 'Solid',
-            zIndex: (_e = opts.zIndex) !== null && _e !== void 0 ? _e : 3
+            zIndex: (_e = opts.zIndex) !== null && _e !== void 0 ? _e : 2
         };
     };
     Chart.prototype.crosshairEndpoints = function (a, b, c) {

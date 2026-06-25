@@ -319,7 +319,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             color: opts.color ?? '#999999',
             width: opts.width ?? 1,
             dashStyle: opts.dashStyle ?? 'Solid',
-            zIndex: opts.zIndex ?? 3
+            zIndex: opts.zIndex ?? 2
         };
     };
 

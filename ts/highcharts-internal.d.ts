@@ -29,11 +29,6 @@ declare module 'highcharts' {
         resolveTernary(opt: boolean | TernaryOptsInput | undefined): TernaryOpts | null;
         resolveMedian(opt: boolean | MedianOptsInput | undefined): MedianOpts | null;
         resolveCrosshair(opt: boolean | CrosshairOptsInput | undefined): CrosshairOpts | null;
-        crosshairEndpoints(
-            a: number,
-            b: number,
-            c: number
-        ): [[number, number], [number, number]][];
         getGridLines(
             axis: unknown,
             index: number
@@ -46,10 +41,6 @@ declare module 'highcharts' {
             point: unknown,
             useSumTo?: boolean
         ): [number, number];
-        plotToTernary(
-            px: number,
-            py: number
-        ): [number, number, number];
         /** Added in Highcharts 12.1.0 */
         getClipBox?(
             series?: Series,

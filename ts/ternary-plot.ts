@@ -83,7 +83,7 @@ type TernaryAxisConfig = TernaryAxisOptions & TernaryAxisState;
 type TernaryChart = Highcharts.Chart & {
     ternaryOpts: TernaryOpts;
     ternaryAxis: TernaryAxisConfig[];
-    ternaryCrosshair?: Highcharts.SVGElement[];
+    ternaryCrosshair?: Highcharts.SVGElement;
     ternaryCrosshairUnbinders?: Array<() => void>;
     resolveTernary(
         opt: boolean | TernaryOptsInput | undefined
@@ -94,19 +94,10 @@ type TernaryChart = Highcharts.Chart & {
     resolveCrosshair(
         opt: boolean | CrosshairOptsInput | undefined
     ): CrosshairOpts | null;
-    crosshairEndpoints(
-        a: number,
-        b: number,
-        c: number
-    ): [Vec2, Vec2][];
     ternaryToPlot(
         point: TernaryPlotInput,
         useSumTo?: boolean
     ): Vec2;
-    plotToTernary(
-        px: number,
-        py: number
-    ): [number, number, number];
     getGridLines(
         axis: TernaryAxisConfig,
         index: number
@@ -323,22 +314,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         };
     };
 
-    Chart.prototype.crosshairEndpoints = function (
-        this: TernaryChart,
-        a: number,
-        b: number,
-        c: number
-    ): [Vec2, Vec2][] {
-        const sumTo = this.ternaryOpts.sumTo,
-            near = this.ternaryToPlot([a, b], true);
-
-        return [
-            [near, this.ternaryToPlot([a, 0], true)],
-            [near, this.ternaryToPlot([sumTo - b, b], true)],
-            [near, this.ternaryToPlot([0, sumTo - c], true)]
-        ];
-    };
-
     // Render ternary axis gridlines. Keep it on chart for easy access
     Chart.prototype.getGridLines = function (
         this: TernaryChart,
@@ -540,6 +515,30 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         return labels;
     };
 
+    // Triangle layout within the plot area — the single source of truth for
+    // both the forward (ternaryToPlot) and inverse (plotToTernary) projection
+    function getTriangleGeometry(
+        chart: TernaryChart
+    ): Record<'width' | 'heightRatio' | 'centerX' | 'centerY', number> {
+        const ternaryOpts = chart.ternaryOpts,
+            spacing = ternaryOpts.spacing * 2,
+            // α — angle between the triangle side and the base (0° < α < 90°)
+            alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180,
+            heightRatio = Math.tan(alpha) / 2,
+            // Determine the length of the triangle's base from available space
+            baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio),
+            // Shrink by spacing to get the final width
+            width = Math.max(baseWidth - spacing, 5);
+
+        return {
+            width,
+            heightRatio,
+            // Center within the plot area
+            centerX: (chart.plotWidth - width) / 2,
+            centerY: (chart.plotHeight - width * heightRatio) / 2
+        };
+    }
+
     // Convert ternary (a, b) to plot coordinates
     // using 2D barycentric projection
     Chart.prototype.ternaryToPlot = function (
@@ -548,23 +547,12 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         useSumTo?: boolean
     ): Vec2 {
         const chart = this,
-            ternaryOpts = chart.ternaryOpts,
-            spacing = ternaryOpts.spacing * 2,
-            // α — angle between the triangle side and the base (0° < α < 90°)
-            alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180,
-            heightRatio = Math.tan(alpha) / 2,
-            // Determine the length of the triangle's base from available space
-            baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio),
-            // Shrink by spacing to get the final width
-            width = Math.max(baseWidth - spacing, 5),
-            sumTo = useSumTo ? ternaryOpts.sumTo : 100,
+            { width, heightRatio, centerX, centerY } = getTriangleGeometry(chart),
+            sumTo = useSumTo ? chart.ternaryOpts.sumTo : 100,
             a = pick((point as { a?: number }).a, (point as number[])[0]),
             b = pick((point as { b?: number }).b, (point as number[])[1]),
             x = a * width / sumTo,
-            y = b * width / sumTo,
-            // Center within the plot area
-            centerX = (chart.plotWidth - width) / 2,
-            centerY = (chart.plotHeight - width * heightRatio) / 2;
+            y = b * width / sumTo;
 
         return [
             x + y / 2 + centerX,
@@ -608,31 +596,21 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
     // Inverse of ternaryToPlot: convert plot-area pixel coords (px, py)
     // back to ternary (a, b, c). Uses sumTo (matches ternaryToPlot useSumTo).
-    Chart.prototype.plotToTernary = function (
-        this: TernaryChart,
+    function plotToTernary(
+        chart: TernaryChart,
         px: number,
         py: number
     ): [number, number, number] {
-        const chart = this,
-            ternaryOpts = chart.ternaryOpts,
-            spacing = ternaryOpts.spacing * 2,
-            alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180,
-            heightRatio = Math.tan(alpha) / 2,
-            baseWidth = Math.min(
-                chart.plotWidth, chart.plotHeight / heightRatio
-            ),
-            width = Math.max(baseWidth - spacing, 5),
-            sumTo = ternaryOpts.sumTo,
-            centerX = (chart.plotWidth - width) / 2,
-            centerY = (chart.plotHeight - width * heightRatio) / 2,
+        const { width, heightRatio, centerX, centerY } =
+                getTriangleGeometry(chart),
+            sumTo = chart.ternaryOpts.sumTo,
             y = (chart.plotHeight - centerY - py) / heightRatio,
             x = px - centerX - y / 2,
             a = x * sumTo / width,
             b = y * sumTo / width;
 
         return [a, b, sumTo - a - b];
-    };
-
+    }
 
     // Fix for NaN clip box width issue after v12.1.0
     // (getClipBox moved to Chart prototype)
@@ -1008,8 +986,6 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
 
         if (!chart.ternaryOpts || !chart.ternaryAxis) return;
 
-        removeCrosshair(chart);
-
         const destroyCollection = (
             coll: Record<string, Highcharts.SVGElement | null> | undefined
         ): void => {
@@ -1089,141 +1065,145 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         });
     }
 
-    function removeCrosshair(chart: TernaryChart): void {
-        chart.ternaryCrosshair?.forEach(el => el.destroy());
-        chart.ternaryCrosshair = undefined;
+    function hideCrosshair(chart: TernaryChart): void {
+        chart.ternaryCrosshair?.hide();
     }
 
+    // Draw or update the crosshair: a single path with one segment per leg.
+    // The element is created once and updated via attr() afterwards — the
+    // Highcharts setters skip the DOM when values are unchanged.
     function renderCrosshair(
         chart: TernaryChart,
         a: number,
         b: number,
-        c: number,
         opts: CrosshairOpts
     ): void {
-        removeCrosshair(chart);
-
-        if (!chart.ternaryOpts) return;
-
         const { plotLeft, plotTop } = chart,
-            attrs: Record<string, unknown> = {
+            sumTo = chart.ternaryOpts.sumTo,
+            near = chart.ternaryToPlot([a, b], true),
+            path: Array<string | number> = [];
+
+        // One leg per component, each parallel to that component's
+        // gridlines. Only a and b matter — the point position (and so the
+        // legs) never depends on c.
+        ([[a, 0], [sumTo - b, b], [0, a + b]] as Vec2[]).forEach(leg => {
+            const far = chart.ternaryToPlot(leg, true);
+
+            path.push(
+                'M', plotLeft + near[0], plotTop + near[1],
+                'L', plotLeft + far[0], plotTop + far[1]
+            );
+        });
+
+        chart.ternaryCrosshair ??= chart.renderer
+            .path()
+            .attr({ 'pointer-events': 'none' })
+            .add();
+
+        chart.ternaryCrosshair
+            .attr({
+                d: path as unknown as Highcharts.SVGPathArray,
                 stroke: opts.color,
                 'stroke-width': opts.width,
-                zIndex: opts.zIndex,
-                'pointer-events': 'none'
-            };
-
-        if (opts.dashStyle && opts.dashStyle !== 'Solid') {
-            attrs.dashstyle = opts.dashStyle;
-        }
-
-        chart.ternaryCrosshair = chart
-            .crosshairEndpoints(a, b, c)
-            .map(([near, far]) => {
-                const path = [
-                    'M', plotLeft + near[0], plotTop + near[1],
-                    'L', plotLeft + far[0], plotTop + far[1]
-                ];
-
-                return chart.renderer
-                    .path(path as unknown as Highcharts.SVGPathArray)
-                    .attr(attrs)
-                    .add();
-            });
+                dashstyle: opts.dashStyle,
+                zIndex: opts.zIndex
+            })
+            .show();
     }
 
-    function snapCrosshairToPoint(chart: TernaryChart, point: TernaryPoint): void {
-        const opts = chart.resolveCrosshair(
-            (point.series.options as TernarySeriesOptions).crosshair
-        );
-
-        // In follow-pointer mode (snap: false) the mouse tracker draws the
-        // crosshair, so point hover must not interfere.
-        if (!opts || !opts.snap) {
-            return;
-        }
-
-        renderCrosshair(chart, point.a, point.b, point.c, opts);
-    }
-
-    addEvent(Point, 'mouseOver', function (this: TernaryPoint) {
-        if (this.series.type !== 'ternaryscatter') return;
-        snapCrosshairToPoint(this.series.chart as TernaryChart, this);
-    });
-
-    addEvent(Point, 'mouseOut', function (this: TernaryPoint) {
-        if (this.series.type !== 'ternaryscatter') return;
-
-        const chart = this.series.chart as TernaryChart,
-            opts = chart.resolveCrosshair(
-                (this.series.options as TernarySeriesOptions).crosshair
-            );
-
-        // Only clear on mouse-out when snapping to points; in follow mode the
-        // tracker owns the crosshair lifecycle.
-        if (opts && opts.snap) {
-            removeCrosshair(chart);
-        }
-    });
-
-    function detachCrosshairTracking(chart: TernaryChart): void {
-        chart.ternaryCrosshairUnbinders?.forEach(unbind => unbind());
-        chart.ternaryCrosshairUnbinders = undefined;
-    }
-
-    // Attach pointer tracking for follow-mode (snap: false) crosshairs.
-    // Re-run on every render so chart.update()/resize re-evaluate the options.
-    function attachCrosshairTracking(chart: TernaryChart): void {
-        detachCrosshairTracking(chart);
-
-        if (!chart.ternaryOpts) return;
-
-        // First ternaryscatter series whose crosshair follows the pointer
-        let opts: CrosshairOpts | null = null;
+    // First visible series whose crosshair follows the pointer (snap: false)
+    function resolveFollowCrosshair(chart: TernaryChart): CrosshairOpts | null {
         for (const series of chart.series) {
-            if (series.type !== 'ternaryscatter') continue;
+            if (series.type !== 'ternaryscatter' || !series.visible) continue;
 
-            const resolved = chart.resolveCrosshair(
+            const opts = chart.resolveCrosshair(
                 (series.options as TernarySeriesOptions).crosshair
             );
 
-            if (resolved && !resolved.snap) {
-                opts = resolved;
-                break;
+            if (opts && !opts.snap) return opts;
+        }
+
+        return null;
+    }
+
+    // Single pointer-driven track, mirroring the native crosshair model:
+    // snap mode reads chart.hoverPoint, follow mode reads the pointer event.
+    // Called without an event on redraw to keep a snapped crosshair in sync.
+    function moveCrosshair(chart: TernaryChart, e?: PointerEvent): void {
+        const hoverPoint = chart.hoverPoint as TernaryPoint | null,
+            snapOpts = hoverPoint?.series.type === 'ternaryscatter' ?
+                chart.resolveCrosshair(
+                    (hoverPoint.series.options as TernarySeriesOptions)
+                        .crosshair
+                ) :
+                null;
+
+        if (
+            hoverPoint && snapOpts?.snap &&
+            isNumber(hoverPoint.a) && isNumber(hoverPoint.b)
+        ) {
+            renderCrosshair(chart, hoverPoint.a, hoverPoint.b, snapOpts);
+
+            return;
+        }
+
+        const followOpts = e ? resolveFollowCrosshair(chart) : null;
+
+        if (e && followOpts) {
+            const event = chart.pointer.normalize(e),
+                px = event.chartX - chart.plotLeft,
+                py = event.chartY - chart.plotTop;
+
+            if (chart.isInsidePlot(px, py)) {
+                const [a, b] = plotToTernary(chart, px, py);
+
+                renderCrosshair(chart, a, b, followOpts);
+
+                return;
             }
         }
 
-        if (!opts) return;
-
-        const followOpts = opts,
-            onMove = (e: PointerEvent): void => {
-                const event = chart.pointer.normalize(e),
-                    px = event.chartX - chart.plotLeft,
-                    py = event.chartY - chart.plotTop,
-                    [a, b, c] = chart.plotToTernary(px, py),
-                    eps = chart.ternaryOpts.sumTo * 0.001;
-
-                if (a >= -eps && b >= -eps && c >= -eps) {
-                    renderCrosshair(chart, a, b, c, followOpts);
-                } else {
-                    removeCrosshair(chart);
-                }
-            },
-            onLeave = (): void => removeCrosshair(chart);
-
-        chart.ternaryCrosshairUnbinders = [
-            addEvent(chart.container, 'mousemove', onMove),
-            addEvent(chart.container, 'mouseleave', onLeave)
-        ] as Array<() => void>;
+        hideCrosshair(chart);
     }
 
+    // Pointer moves that change the hovered point fire mouseOver after
+    // chart.hoverPoint is set, but before our pointermove handler would run
+    // again — re-sync here so a snapped crosshair never lags one event
+    // behind (also covers programmatic hover and a11y keyboard navigation)
+    addEvent(Point, 'mouseOver', function (this: TernaryPoint) {
+        const chart = this.series.chart as TernaryChart;
+
+        if (chart.ternaryOpts) moveCrosshair(chart);
+    });
+
     addEvent(Chart, 'render', function (this: TernaryChart) {
-        attachCrosshairTracking(this);
+        const chart = this;
+
+        if (!chart.ternaryOpts) return;
+
+        // Bind once; options are resolved inside the handler, so
+        // chart.update() needs no re-attach. Pointer events cover touch/pen.
+        if (!chart.ternaryCrosshairUnbinders) {
+            const onMove = (e: PointerEvent): void => moveCrosshair(chart, e),
+                onLeave = (): void => hideCrosshair(chart);
+
+            chart.ternaryCrosshairUnbinders = [
+                addEvent(chart.container, 'pointermove', onMove),
+                addEvent(chart.container, 'pointerleave', onLeave),
+                addEvent(chart.container, 'pointercancel', onLeave)
+            ] as Array<() => void>;
+        }
+
+        // Redraws (setData, addPoint...) don't re-fire mouseOver for an
+        // unchanged hoverPoint — re-sync the crosshair from hover state
+        moveCrosshair(chart);
     });
 
     addEvent(Chart, 'destroy', function (this: TernaryChart) {
-        removeCrosshair(this);
-        detachCrosshairTracking(this);
+        this.ternaryCrosshair?.destroy();
+        this.ternaryCrosshair = undefined;
+        this.ternaryCrosshairUnbinders?.forEach(unbind => unbind());
+        this.ternaryCrosshairUnbinders = undefined;
         destroyTernaryAxis(this);
     });
 

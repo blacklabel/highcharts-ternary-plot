@@ -22,6 +22,16 @@ type MedianOptsInput = {
 };
 type MedianOpts = Required<MedianOptsInput>;
 
+type CrosshairOptsInput = {
+    enabled?: boolean;
+    snap?: boolean;
+    color?: string;
+    width?: number;
+    dashStyle?: string;
+    zIndex?: number;
+};
+type CrosshairOpts = Required<CrosshairOptsInput>;
+
 // User-configurable axis options (mirrors chart.ternaryAxis.a / .b / .c)
 type TernaryAxisOptions = {
     tickInterval: number;
@@ -73,12 +83,17 @@ type TernaryAxisConfig = TernaryAxisOptions & TernaryAxisState;
 type TernaryChart = Highcharts.Chart & {
     ternaryOpts: TernaryOpts;
     ternaryAxis: TernaryAxisConfig[];
+    ternaryCrosshair?: Highcharts.SVGElement;
+    ternaryCrosshairUnbinders?: Array<() => void>;
     resolveTernary(
         opt: boolean | TernaryOptsInput | undefined
     ): TernaryOpts | null;
     resolveMedian(
         opt: boolean | MedianOptsInput | undefined
     ): MedianOpts | null;
+    resolveCrosshair(
+        opt: boolean | CrosshairOptsInput | undefined
+    ): CrosshairOpts | null;
     ternaryToPlot(
         point: TernaryPlotInput,
         useSumTo?: boolean
@@ -115,6 +130,7 @@ type TernarySeriesOptions = Highcharts.SeriesOptions & {
     minSize?: number;
     maxSize?: number;
     componentColors?: ComponentColors;
+    crosshair?: boolean | CrosshairOptsInput;
 };
 
 type TernarySeries = Highcharts.Series & {
@@ -172,7 +188,9 @@ export type {
     TernaryOptsInput,
     MedianOptsInput,
     TernaryOpts,
-    MedianOpts
+    MedianOpts,
+    CrosshairOptsInput,
+    CrosshairOpts
 };
 
 export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
@@ -192,6 +210,7 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         isNumber,
         merge,
         pick,
+        Point,
         Series,
         seriesType,
         wrap
@@ -270,6 +289,28 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
             color: opts.color ?? '#d6d6d6',
             width: opts.width ?? 1,
             dashStyle: opts.dashStyle ?? 'Solid'
+        };
+    };
+
+    Chart.prototype.resolveCrosshair = function (
+        this: TernaryChart,
+        crosshairOpt: boolean | CrosshairOptsInput | undefined
+    ): CrosshairOpts | null {
+        if (!crosshairOpt) return null;
+
+        const isObj = typeof crosshairOpt === 'object' && crosshairOpt !== null;
+
+        if (isObj && crosshairOpt.enabled === false) return null;
+
+        const opts = isObj ? crosshairOpt : {};
+
+        return {
+            enabled: true,
+            snap: opts.snap ?? true,
+            color: opts.color ?? '#999999',
+            width: opts.width ?? 1,
+            dashStyle: opts.dashStyle ?? 'Solid',
+            zIndex: opts.zIndex ?? 2
         };
     };
 
@@ -540,6 +581,34 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
     //           /_____________/_______|___________________________\___
     //   (0, 0)  |      x      |  y/2  |                             (100, 0)
 
+    // Inverse of ternaryToPlot: convert plot-area pixel coords (px, py)
+    // back to ternary (a, b, c). Instead of repeating the triangle
+    // geometry, the mapping is derived from ternaryToPlot itself: the
+    // projection is affine in (a, b), so the pixel positions of the three
+    // triangle corners fully determine it and (a, b) follow from a 2x2
+    // linear solve. Any future change to ternaryToPlot carries over here
+    // automatically.
+    function plotToTernary(
+        chart: TernaryChart,
+        px: number,
+        py: number
+    ): [number, number, number] {
+        const sumTo = chart.ternaryOpts.sumTo,
+            [ox, oy] = chart.ternaryToPlot([0, 0], true),
+            [ax, ay] = chart.ternaryToPlot([sumTo, 0], true),
+            [bx, by] = chart.ternaryToPlot([0, sumTo], true),
+            ux = ax - ox,
+            uy = ay - oy,
+            vx = bx - ox,
+            vy = by - oy,
+            dx = px - ox,
+            dy = py - oy,
+            det = ux * vy - uy * vx,
+            a = (dx * vy - dy * vx) * sumTo / det,
+            b = (ux * dy - uy * dx) * sumTo / det;
+
+        return [a, b, sumTo - a - b];
+    }
 
     // Fix for NaN clip box width issue after v12.1.0
     // (getClipBox moved to Chart prototype)
@@ -994,7 +1063,145 @@ export default function TernaryPlotPlugin(H: HighchartsPlugin): void {
         });
     }
 
+    function hideCrosshair(chart: TernaryChart): void {
+        chart.ternaryCrosshair?.hide();
+    }
+
+    // Draw or update the crosshair: a single path with one segment per leg.
+    // The element is created once and updated via attr() afterwards — the
+    // Highcharts setters skip the DOM when values are unchanged.
+    function renderCrosshair(
+        chart: TernaryChart,
+        a: number,
+        b: number,
+        opts: CrosshairOpts
+    ): void {
+        const { plotLeft, plotTop } = chart,
+            sumTo = chart.ternaryOpts.sumTo,
+            near = chart.ternaryToPlot([a, b], true),
+            path: Array<string | number> = [];
+
+        // One leg per component, each parallel to that component's
+        // gridlines. Only a and b matter — the point position (and so the
+        // legs) never depends on c.
+        ([[a, 0], [sumTo - b, b], [0, a + b]] as Vec2[]).forEach(leg => {
+            const far = chart.ternaryToPlot(leg, true);
+
+            path.push(
+                'M', plotLeft + near[0], plotTop + near[1],
+                'L', plotLeft + far[0], plotTop + far[1]
+            );
+        });
+
+        chart.ternaryCrosshair ??= chart.renderer
+            .path()
+            .attr({ 'pointer-events': 'none' })
+            .add();
+
+        chart.ternaryCrosshair
+            .attr({
+                d: path as unknown as Highcharts.SVGPathArray,
+                stroke: opts.color,
+                'stroke-width': opts.width,
+                dashstyle: opts.dashStyle,
+                zIndex: opts.zIndex
+            })
+            .show();
+    }
+
+    // First visible series whose crosshair follows the pointer (snap: false)
+    function resolveFollowCrosshair(chart: TernaryChart): CrosshairOpts | null {
+        for (const series of chart.series) {
+            if (series.type !== 'ternaryscatter' || !series.visible) continue;
+
+            const opts = chart.resolveCrosshair(
+                (series.options as TernarySeriesOptions).crosshair
+            );
+
+            if (opts && !opts.snap) return opts;
+        }
+
+        return null;
+    }
+
+    // Single pointer-driven track, mirroring the native crosshair model:
+    // snap mode reads chart.hoverPoint, follow mode reads the pointer event.
+    // Called without an event on redraw to keep a snapped crosshair in sync.
+    function moveCrosshair(chart: TernaryChart, e?: PointerEvent): void {
+        const hoverPoint = chart.hoverPoint as TernaryPoint | null,
+            snapOpts = hoverPoint?.series.type === 'ternaryscatter' ?
+                chart.resolveCrosshair(
+                    (hoverPoint.series.options as TernarySeriesOptions)
+                        .crosshair
+                ) :
+                null;
+
+        if (
+            hoverPoint && snapOpts?.snap &&
+            isNumber(hoverPoint.a) && isNumber(hoverPoint.b)
+        ) {
+            renderCrosshair(chart, hoverPoint.a, hoverPoint.b, snapOpts);
+
+            return;
+        }
+
+        const followOpts = e ? resolveFollowCrosshair(chart) : null;
+
+        if (e && followOpts) {
+            const event = chart.pointer.normalize(e),
+                px = event.chartX - chart.plotLeft,
+                py = event.chartY - chart.plotTop;
+
+            if (chart.isInsidePlot(px, py)) {
+                const [a, b] = plotToTernary(chart, px, py);
+
+                renderCrosshair(chart, a, b, followOpts);
+
+                return;
+            }
+        }
+
+        hideCrosshair(chart);
+    }
+
+    // Pointer moves that change the hovered point fire mouseOver after
+    // chart.hoverPoint is set, but before our pointermove handler would run
+    // again — re-sync here so a snapped crosshair never lags one event
+    // behind (also covers programmatic hover and a11y keyboard navigation)
+    addEvent(Point, 'mouseOver', function (this: TernaryPoint) {
+        const chart = this.series.chart as TernaryChart;
+
+        if (chart.ternaryOpts) moveCrosshair(chart);
+    });
+
+    addEvent(Chart, 'render', function (this: TernaryChart) {
+        const chart = this;
+
+        if (!chart.ternaryOpts) return;
+
+        // Bind once; options are resolved inside the handler, so
+        // chart.update() needs no re-attach. Pointer events cover touch/pen.
+        if (!chart.ternaryCrosshairUnbinders) {
+            const onMove = (e: PointerEvent): void => moveCrosshair(chart, e),
+                onLeave = (): void => hideCrosshair(chart);
+
+            chart.ternaryCrosshairUnbinders = [
+                addEvent(chart.container, 'pointermove', onMove),
+                addEvent(chart.container, 'pointerleave', onLeave),
+                addEvent(chart.container, 'pointercancel', onLeave)
+            ] as Array<() => void>;
+        }
+
+        // Redraws (setData, addPoint...) don't re-fire mouseOver for an
+        // unchanged hoverPoint — re-sync the crosshair from hover state
+        moveCrosshair(chart);
+    });
+
     addEvent(Chart, 'destroy', function (this: TernaryChart) {
+        this.ternaryCrosshair?.destroy();
+        this.ternaryCrosshair = undefined;
+        this.ternaryCrosshairUnbinders?.forEach(unbind => unbind());
+        this.ternaryCrosshairUnbinders = undefined;
         destroyTernaryAxis(this);
     });
 

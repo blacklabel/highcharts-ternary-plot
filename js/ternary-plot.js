@@ -230,28 +230,18 @@ function TernaryPlotPlugin(H) {
         }
         return labels;
     };
-    // Triangle layout within the plot area — the single source of truth for
-    // both the forward (ternaryToPlot) and inverse (plotToTernary) projection
-    function getTriangleGeometry(chart) {
-        const ternaryOpts = chart.ternaryOpts, spacing = ternaryOpts.spacing * 2, 
+    // Convert ternary (a, b) to plot coordinates
+    // using 2D barycentric projection
+    Chart.prototype.ternaryToPlot = function (point, useSumTo) {
+        const chart = this, ternaryOpts = chart.ternaryOpts, spacing = ternaryOpts.spacing * 2, 
         // α — angle between the triangle side and the base (0° < α < 90°)
         alpha = clamp(ternaryOpts.angle, 1, 89) * Math.PI / 180, heightRatio = Math.tan(alpha) / 2, 
         // Determine the length of the triangle's base from available space
         baseWidth = Math.min(chart.plotWidth, chart.plotHeight / heightRatio), 
         // Shrink by spacing to get the final width
-        width = Math.max(baseWidth - spacing, 5);
-        return {
-            width,
-            heightRatio,
-            // Center within the plot area
-            centerX: (chart.plotWidth - width) / 2,
-            centerY: (chart.plotHeight - width * heightRatio) / 2
-        };
-    }
-    // Convert ternary (a, b) to plot coordinates
-    // using 2D barycentric projection
-    Chart.prototype.ternaryToPlot = function (point, useSumTo) {
-        const chart = this, { width, heightRatio, centerX, centerY } = getTriangleGeometry(chart), sumTo = useSumTo ? chart.ternaryOpts.sumTo : 100, a = pick(point.a, point[0]), b = pick(point.b, point[1]), x = a * width / sumTo, y = b * width / sumTo;
+        width = Math.max(baseWidth - spacing, 5), sumTo = useSumTo ? ternaryOpts.sumTo : 100, a = pick(point.a, point[0]), b = pick(point.b, point[1]), x = a * width / sumTo, y = b * width / sumTo, 
+        // Center within the plot area
+        centerX = (chart.plotWidth - width) / 2, centerY = (chart.plotHeight - width * heightRatio) / 2;
         return [
             x + y / 2 + centerX,
             chart.plotHeight - y * heightRatio - centerY
@@ -292,9 +282,14 @@ function TernaryPlotPlugin(H) {
     //           /_____________/_______|___________________________\___
     //   (0, 0)  |      x      |  y/2  |                             (100, 0)
     // Inverse of ternaryToPlot: convert plot-area pixel coords (px, py)
-    // back to ternary (a, b, c). Uses sumTo (matches ternaryToPlot useSumTo).
+    // back to ternary (a, b, c). Instead of repeating the triangle
+    // geometry, the mapping is derived from ternaryToPlot itself: the
+    // projection is affine in (a, b), so the pixel positions of the three
+    // triangle corners fully determine it and (a, b) follow from a 2x2
+    // linear solve. Any future change to ternaryToPlot carries over here
+    // automatically.
     function plotToTernary(chart, px, py) {
-        const { width, heightRatio, centerX, centerY } = getTriangleGeometry(chart), sumTo = chart.ternaryOpts.sumTo, y = (chart.plotHeight - centerY - py) / heightRatio, x = px - centerX - y / 2, a = x * sumTo / width, b = y * sumTo / width;
+        const sumTo = chart.ternaryOpts.sumTo, [ox, oy] = chart.ternaryToPlot([0, 0], true), [ax, ay] = chart.ternaryToPlot([sumTo, 0], true), [bx, by] = chart.ternaryToPlot([0, sumTo], true), ux = ax - ox, uy = ay - oy, vx = bx - ox, vy = by - oy, dx = px - ox, dy = py - oy, det = ux * vy - uy * vx, a = (dx * vy - dy * vx) * sumTo / det, b = (ux * dy - uy * dx) * sumTo / det;
         return [a, b, sumTo - a - b];
     }
     // Fix for NaN clip box width issue after v12.1.0
